@@ -33,8 +33,18 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints (including OpenAPI/Swagger)
-                .requestMatchers("/", "/login/**", "/oauth2/**", "/error",
-                        "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/swagger-ui/index.html").permitAll()
+                .requestMatchers("/", "/login/**", "/oauth2/**", "/error").permitAll()
+                // Swagger/OpenAPI endpoints - must be public
+                .requestMatchers(
+                    "/apis",
+                    "/apis/**",
+                    "/v3/api-docs",
+                    "/v3/api-docs/**",
+                    "/swagger-ui/**",
+                    "/swagger-ui.html",
+                    "/swagger-resources/**",
+                    "/webjars/**"
+                ).permitAll()
                 // Admin only endpoints
                 .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
                 // Teacher endpoints
