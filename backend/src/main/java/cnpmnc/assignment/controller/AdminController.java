@@ -32,10 +32,25 @@ public class AdminController {
 
     @GetMapping("/users")
     @PreAuthorize("hasAuthority('ADMIN')")
-    @Operation(summary = "Get all users", description = "Retrieve all users in the system")
+    @Operation(summary = "Get all users with filters", 
+               description = "Retrieve users with optional filters: mail (search by email) and activate (filter by activation status)")
     @SecurityRequirement(name = "cookieAuth")
-    public ApiResponse<List<UserDto>> getAllUsers() {
-        List<User> users = userRepository.findAll();
+    public ApiResponse<List<UserDto>> getAllUsers(
+            @Parameter(description = "Search by email (partial match, case-insensitive)")
+            @RequestParam(required = false) String mail,
+            @Parameter(description = "Filter by activation status (true/false)")
+            @RequestParam(required = false) Boolean activate) {
+        
+        List<User> users;
+        
+        // If no filters provided, get all users
+        if (mail == null && activate == null) {
+            users = userRepository.findAll();
+        } else {
+            // Apply filters
+            users = userRepository.findByFilters(mail, activate);
+        }
+        
         List<UserDto> userDtos = users.stream()
                 .map(UserDto::fromUser)
                 .collect(Collectors.toList());

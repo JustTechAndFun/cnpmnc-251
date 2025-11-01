@@ -102,7 +102,7 @@ public class ClassController {
     })
     public ResponseEntity<ApiResponse<StudentDto>> addStudentToClass(
             @Parameter(description = "Class ID") @PathVariable String id,
-            @RequestBody AddStudentRequest request,
+            @jakarta.validation.Valid @RequestBody AddStudentRequest request,
             HttpSession session) {
         
         User currentUser = (User) session.getAttribute("user");
