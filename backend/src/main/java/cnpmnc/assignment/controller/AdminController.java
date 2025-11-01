@@ -1,22 +1,25 @@
 package cnpmnc.assignment.controller;
 
-import cnpmnc.assignment.dto.ApiResponse;
-import cnpmnc.assignment.dto.ClassDto;
-import cnpmnc.assignment.dto.CreateClassRequest;
-import cnpmnc.assignment.dto.UserDto;
+import cnpmnc.assignment.dto.*;
 import cnpmnc.assignment.model.User;
 import cnpmnc.assignment.repository.UserRepository;
 import cnpmnc.assignment.service.ClassService;
+import cnpmnc.assignment.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import com.turkraft.springfilter.boot.Filter;
+import org.springframework.data.domain.Pageable;
+
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,6 +32,7 @@ public class AdminController {
 
     private final UserRepository userRepository;
     private final ClassService classService;
+    private final UserService userService;
 
     @GetMapping("/users")
     @PreAuthorize("hasAuthority('ADMIN')")
@@ -95,4 +99,42 @@ public class AdminController {
                 .body(ApiResponse.error(e.getMessage()));
         }
     }
+
+    @GetMapping("/users/teachers")
+    @Operation(summary = "Get all teacher with Specification and Paging",
+            description = "Retrieve teacher with Specification and Paging")
+    @SecurityRequirement(name = "cookieAuth")
+    public ResponseEntity<ApiResponse<ResultPaginationDTO>> getAllTeacher(
+            @Parameter(description = "Search by email (partial match, case-insensitive)")
+            @RequestParam(required = false) String mail,
+            @Parameter(description = "Filter by activation status (true/false)")
+            @RequestParam(required = false) Boolean activate,
+            @Parameter(description = "Phân trang")
+            Pageable pageable) {
+
+        ResultPaginationDTO paginationDTO = userService.getAllTeacher(mail,activate, pageable);
+        ApiResponse<ResultPaginationDTO> apiResponse = ApiResponse.success(paginationDTO, "fetch All Teacher success");
+        return  ResponseEntity.ok().body(apiResponse);
+    }
+    @PostMapping("/users/teachers")
+    @Operation(summary = "Create a Teacher Account",
+            description = "Create a teacher Account")
+    @SecurityRequirement(name = "cookieAuth")
+    public ResponseEntity<ApiResponse<TeacherDTO>> createTeacherAccout(
+            @Valid @RequestBody User user
+    ){
+            TeacherDTO createdUser = userService.createTeacherAccount(user);
+            ApiResponse<TeacherDTO> apiResponse = ApiResponse.success(createdUser, "Created teacher successful");
+            return ResponseEntity.ok().body(apiResponse);
+    }
+
+
+
+
+
+
+
+
+
+
 }

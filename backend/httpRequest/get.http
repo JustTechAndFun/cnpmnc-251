@@ -1,0 +1,7 @@
+### GET request to example server
+### Get all teachers (no filters)
+GET http://localhost:8000/api/admin/users/teachers
+Accept: application/json
+Cookie: JSESSIONID=1B0E7613FA967D5225649E48A45B8A82
+
+###
