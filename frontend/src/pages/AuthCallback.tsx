@@ -53,8 +53,8 @@ export const AuthCallbackPage = () => {
                 <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full text-center">
                     <h2 className="text-2xl font-bold text-red-600 mb-4">Authentication Error</h2>
                     <p className="text-gray-600 mb-6">{error}</p>
-                    <a 
-                        href="/login" 
+                    <a
+                        href="/login"
                         className="inline-block bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors"
                     >
                         Try Again

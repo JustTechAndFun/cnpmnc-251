@@ -23,7 +23,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 name: string;
                 picture: string;
                 role: string;
-            }>>(`${API_BASE_URL}/auth/user`, {
+            }>>(`${API_BASE_URL}/api/auth/user`, {
                 withCredentials: true
             });
 
@@ -47,16 +47,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const login = () => {
-        // Build Google OAuth2 authorization URL
+        // Build Google OAuth2 authorization URL - redirect to FRONTEND
         const params = new URLSearchParams({
             client_id: GOOGLE_CLIENT_ID,
-            redirect_uri: GOOGLE_REDIRECT_URI,
+            redirect_uri: GOOGLE_REDIRECT_URI, // Frontend callback URL
             response_type: 'code',
-            scope: 'openid email profile',
+            scope: 'email openid profile',
             access_type: 'offline',
             prompt: 'consent'
         });
-        
+        console.log(params.toString())
         window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
     };
 
@@ -67,7 +67,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 name: string;
                 picture: string;
                 role: string;
-            }>>(`${API_BASE_URL}/auth/google/callback`, {
+            }>>(`${API_BASE_URL}/api/auth/google/callback`, {
                 code,
                 redirectUri: GOOGLE_REDIRECT_URI
             }, {
@@ -95,7 +95,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const logout = async () => {
         try {
-            await axios.post(`${API_BASE_URL}/auth/logout`, {}, {
+            await axios.post(`${API_BASE_URL}/api/auth/logout`, {}, {
                 withCredentials: true
             });
         } catch (error) {
