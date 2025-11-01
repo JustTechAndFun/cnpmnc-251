@@ -1,7 +1,7 @@
 import { type ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router';
 import { Layout, Menu, Avatar, Button, Spin, Typography } from 'antd';
-import { DashboardOutlined, BookOutlined, FileTextOutlined, LineChartOutlined, ProfileOutlined, LogoutOutlined } from '@ant-design/icons';
+import { DashboardOutlined, BookOutlined, FileTextOutlined, LineChartOutlined, ProfileOutlined, LogoutOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
 
 const { Sider, Content } = Layout;
@@ -34,6 +34,11 @@ export const TeacherLayout = ({ children }: TeacherLayoutProps) => {
             key: '/teacher/assignments',
             icon: <FileTextOutlined />,
             label: 'Bài tập',
+        },
+        {
+            key: '/teacher/tests',
+            icon: <QuestionCircleOutlined />,
+            label: 'Quản lý Tests',
         },
         {
             key: '/teacher/grades',

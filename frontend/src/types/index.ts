@@ -50,3 +50,26 @@ export interface Profile {
         [key: string]: unknown; // Allow additional fields
     };
 }
+
+export interface Question {
+    id: string;
+    testId: string;
+    content: string;
+    questionType: 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER';
+    options?: string[]; // For multiple choice
+    correctAnswer: string | string[];
+    points: number;
+    order: number;
+}
+
+export interface Test {
+    id: string;
+    name: string;
+    description: string;
+    duration: number; // in minutes
+    passcode: string;
+    teacherId: string;
+    createdAt: string;
+    updatedAt: string;
+    questions: Question[];
+}

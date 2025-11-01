@@ -5,6 +5,7 @@ import { TeacherDashboard } from '../pages/teacher/TeacherDashboard';
 import { ManageClasses } from '../pages/teacher/ManageClasses';
 import { ManageAssignments } from '../pages/teacher/ManageAssignments';
 import { GradeStudents } from '../pages/teacher/GradeStudents';
+import { TestManagement } from '../pages/teacher/TestManagement';
 
 export const teacherRoutes: RouteObject[] = [
     {
@@ -36,6 +37,14 @@ export const teacherRoutes: RouteObject[] = [
         element: (
             <ProtectedRoute allowedRoles={[Role.ADMIN, Role.TEACHER]}>
                 <GradeStudents />
+            </ProtectedRoute>
+        )
+    },
+    {
+        path: '/teacher/tests',
+        element: (
+            <ProtectedRoute allowedRoles={[Role.ADMIN, Role.TEACHER]}>
+                <TestManagement />
             </ProtectedRoute>
         )
     }
