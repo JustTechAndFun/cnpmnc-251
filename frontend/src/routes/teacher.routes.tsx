@@ -2,9 +2,10 @@ import { type RouteObject } from 'react-router';
 import { Role } from '../types';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import { TeacherDashboard } from '../pages/teacher/TeacherDashboard';
-import { ManageClasses } from '../pages/teacher/ManageClasses';
 import { ManageAssignments } from '../pages/teacher/ManageAssignments';
 import { GradeStudents } from '../pages/teacher/GradeStudents';
+import { ClassPage } from '../pages/teacher/Class';
+import { TestDetail } from '../pages/teacher/TestDetail';
 
 export const teacherRoutes: RouteObject[] = [
     {
@@ -18,8 +19,8 @@ export const teacherRoutes: RouteObject[] = [
     {
         path: '/teacher/classes',
         element: (
-            <ProtectedRoute allowedRoles={[Role.ADMIN, Role.TEACHER]}>
-                <ManageClasses />
+            <ProtectedRoute allowedRoles={[Role.TEACHER]}>
+                <ClassPage />
             </ProtectedRoute>
         )
     },
@@ -36,6 +37,22 @@ export const teacherRoutes: RouteObject[] = [
         element: (
             <ProtectedRoute allowedRoles={[Role.ADMIN, Role.TEACHER]}>
                 <GradeStudents />
+            </ProtectedRoute>
+        )
+    },
+    {
+        path: '/teacher/classes/:classId',
+        element: (
+            <ProtectedRoute allowedRoles={[Role.TEACHER]}>
+                <ClassPage />
+            </ProtectedRoute>
+        )
+    },
+    {
+        path: '/teacher/tests/:testId',
+        element: (
+            <ProtectedRoute allowedRoles={[Role.TEACHER]}>
+                <TestDetail />
             </ProtectedRoute>
         )
     }

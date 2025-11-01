@@ -1,0 +1,200 @@
+/* Container chính */
+.class-container {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Header của lớp học */
+.class-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.class-info h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+}
+
+.description {
+    color: #6b7280;
+    margin-bottom: 1rem;
+}
+
+.stats {
+    display: flex;
+    gap: 2rem;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.stat-label {
+    color: #6b7280;
+}
+
+.stat-value {
+    font-weight: 600;
+    color: #1f2937;
+}
+
+/* Nút tạo bài kiểm tra */
+.create-test-btn {
+    background-color: #3b82f6;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.create-test-btn:hover {
+    background-color: #2563eb;
+}
+
+/* Section */
+.section {
+    margin-bottom: 2rem;
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.section h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+/* Nút thêm sinh viên */
+.add-student-btn {
+    background-color: #10b981;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.add-student-btn:hover {
+    background-color: #059669;
+}
+
+/* Bảng dữ liệu */
+.table-container {
+    overflow-x: auto;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.data-table th {
+    background-color: #f9fafb;
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    color: #4b5563;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.data-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    color: #1f2937;
+}
+
+/* Hàng có thể click */
+.clickable-row {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.clickable-row:hover {
+    background-color: #f9fafb;
+}
+
+/* Trạng thái */
+.status {
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.status.active {
+    background-color: #dcfce7;
+    color: #15803d;
+}
+
+.status.inactive {
+    background-color: #fee2e2;
+    color: #b91c1c;
+}
+
+.status.completed {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.status.in-progress {
+    background-color: #fef9c3;
+    color: #854d0e;
+}
+
+.status.upcoming {
+    background-color: #f3e8ff;
+    color: #6b21a8;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .class-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .create-test-btn {
+        width: 100%;
+    }
+
+    .stats {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .section-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .add-student-btn {
+        width: 100%;
+    }
+
+    .data-table {
+        font-size: 0.875rem;
+    }
+}
