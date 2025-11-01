@@ -2,10 +2,12 @@ import { type RouteObject } from 'react-router';
 import { Role } from '../types';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import { TeacherLayout } from '../components/TeacherLayout';
+import { TeacherDashboard } from '../pages/teacher/TeacherDashboard';
 import { ManageClasses } from '../pages/teacher/ManageClasses';
 import { ManageAssignments } from '../pages/teacher/ManageAssignments';
 import { GradeStudents } from '../pages/teacher/GradeStudents';
 import { TestManagement } from '../pages/teacher/TestManagement';
+import { ProfilePage } from '../pages/ProfilePage';
 
 export const teacherRoutes: RouteObject[] = [
     {
@@ -14,38 +16,32 @@ export const teacherRoutes: RouteObject[] = [
             <ProtectedRoute allowedRoles={[Role.ADMIN, Role.TEACHER]}>
                 <TeacherLayout />
             </ProtectedRoute>
-        )
-    },
-    {
-        path: '/teacher/classes',
-        element: (
-            <ProtectedRoute allowedRoles={[Role.ADMIN, Role.TEACHER]}>
-                <ManageClasses />
-            </ProtectedRoute>
-        )
-    },
-    {
-        path: '/teacher/assignments',
-        element: (
-            <ProtectedRoute allowedRoles={[Role.ADMIN, Role.TEACHER]}>
-                <ManageAssignments />
-            </ProtectedRoute>
-        )
-    },
-    {
-        path: '/teacher/grades',
-        element: (
-            <ProtectedRoute allowedRoles={[Role.ADMIN, Role.TEACHER]}>
-                <GradeStudents />
-            </ProtectedRoute>
-        )
-    },
-    {
-        path: '/teacher/tests',
-        element: (
-            <ProtectedRoute allowedRoles={[Role.ADMIN, Role.TEACHER]}>
-                <TestManagement />
-            </ProtectedRoute>
-        )
+        ),
+        children: [
+            {
+                index: true,
+                element: <TeacherDashboard />
+            },
+            {
+                path: 'classes',
+                element: <ManageClasses />
+            },
+            {
+                path: 'assignments',
+                element: <ManageAssignments />
+            },
+            {
+                path: 'grades',
+                element: <GradeStudents />
+            },
+            {
+                path: 'tests',
+                element: <TestManagement />
+            },
+            {
+                path: 'profile',
+                element: <ProfilePage />
+            }
+        ]
     }
 ];

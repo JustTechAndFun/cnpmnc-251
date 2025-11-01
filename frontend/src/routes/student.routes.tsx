@@ -6,6 +6,7 @@ import { StudentDashboard } from '../pages/student/StudentDashboard';
 import { MyCourses } from '../pages/student/MyCourses';
 import { MyAssignments } from '../pages/student/MyAssignments';
 import { MyGrades } from '../pages/student/MyGrades';
+import { ProfilePage } from '../pages/ProfilePage';
 
 export const studentRoutes: RouteObject[] = [
     {
@@ -31,6 +32,10 @@ export const studentRoutes: RouteObject[] = [
             {
                 path: 'grades',
                 element: <MyGrades />
+            },
+            {
+                path: 'profile',
+                element: <ProfilePage />
             }
         ]
     }

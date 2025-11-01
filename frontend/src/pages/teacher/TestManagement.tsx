@@ -23,7 +23,6 @@ import {
     ClockCircleOutlined,
     KeyOutlined
 } from '@ant-design/icons';
-import { TeacherLayout } from '../../components/TeacherLayout';
 import type { ApiResponse, Test, Question } from '../../types';
 
 const { Title, Text } = Typography;
@@ -35,12 +34,12 @@ export const TestManagement = () => {
     const [tests, setTests] = useState<Test[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedTest, setSelectedTest] = useState<Test | null>(null);
-    
+
     // Modals state
     const [testInfoModalVisible, setTestInfoModalVisible] = useState(false);
     const [questionModalVisible, setQuestionModalVisible] = useState(false);
     const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
-    
+
     // Forms
     const [testInfoForm] = Form.useForm();
     const [questionForm] = Form.useForm();
@@ -144,8 +143,8 @@ export const TestManagement = () => {
             console.error('Failed to update test', error);
             message.error('Không thể cập nhật test');
             // Update UI optimistically
-            setTests(tests.map(t => 
-                t.id === selectedTest.id 
+            setTests(tests.map(t =>
+                t.id === selectedTest.id
                     ? { ...t, ...values }
                     : t
             ));
@@ -179,7 +178,7 @@ export const TestManagement = () => {
             content: question.content,
             questionType: question.questionType,
             options: question.options?.join('\n') || '',
-            correctAnswer: Array.isArray(question.correctAnswer) 
+            correctAnswer: Array.isArray(question.correctAnswer)
                 ? question.correctAnswer.join('\n')
                 : question.correctAnswer,
             points: question.points
@@ -203,7 +202,7 @@ export const TestManagement = () => {
             console.error('Failed to delete question', error);
             message.error('Không thể xóa câu hỏi');
             // Update UI optimistically
-            setTests(tests.map(test => 
+            setTests(tests.map(test =>
                 test.id === testId
                     ? { ...test, questions: test.questions.filter(q => q.id !== questionId) }
                     : test
@@ -232,7 +231,7 @@ export const TestManagement = () => {
         if (!selectedTest) return;
 
         const questionType = values.questionType;
-        
+
         let correctAnswer: string | string[];
         if (questionType === 'TRUE_FALSE') {
             correctAnswer = values.correctAnswer.trim().toLowerCase();
@@ -245,8 +244,8 @@ export const TestManagement = () => {
         const questionData = {
             content: values.content,
             questionType: questionType,
-            options: questionType === 'MULTIPLE_CHOICE' && values.options 
-                ? values.options.split('\n').filter(o => o.trim()) 
+            options: questionType === 'MULTIPLE_CHOICE' && values.options
+                ? values.options.split('\n').filter(o => o.trim())
                 : undefined,
             correctAnswer,
             points: values.points
@@ -303,8 +302,8 @@ export const TestManagement = () => {
 
     const renderQuestionCard = (question: Question, index: number, test: Test) => {
         const questionTypeLabel = getQuestionTypeLabel(question.questionType);
-        const correctAnswerText = Array.isArray(question.correctAnswer) 
-            ? question.correctAnswer.join(', ') 
+        const correctAnswerText = Array.isArray(question.correctAnswer)
+            ? question.correctAnswer.join(', ')
             : question.correctAnswer;
 
         const handleEditClick = () => {
@@ -326,7 +325,7 @@ export const TestManagement = () => {
                             <Tag color="orange">{question.points} điểm</Tag>
                         </div>
                         <Text className="text-base font-medium block mb-2">{question.content}</Text>
-                        
+
                         {question.options && question.options.length > 0 && (
                             <div className="ml-4 mb-2">
                                 {question.options.map((option, optIndex) => (
@@ -336,7 +335,7 @@ export const TestManagement = () => {
                                 ))}
                             </div>
                         )}
-                    
+
                         <div className="mt-2">
                             <Text type="secondary" className="text-sm">
                                 Đáp án đúng: <Text strong>{correctAnswerText}</Text>
@@ -383,7 +382,7 @@ export const TestManagement = () => {
                         Thêm câu hỏi
                     </Button>
                 </div>
-                
+
                 {test.questions.length === 0 ? (
                     <Empty description="Chưa có câu hỏi nào" />
                 ) : (
@@ -463,185 +462,182 @@ export const TestManagement = () => {
     ];
 
     return (
-        <TeacherLayout>
-            <div className="p-8 max-w-7xl mx-auto">
-                <div className="mb-8">
-                    <Title level={2} className="mb-2 bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
-                        Quản lý Tests
-                    </Title>
-                    <Text type="secondary">Xem và quản lý tất cả các test bạn đã tạo</Text>
-                </div>
+        <div className="p-8 max-w-7xl mx-auto">
+            <div className="mb-8">
+                <Title level={2} className="mb-2 bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+                    Quản lý Tests
+                </Title>
+                <Text type="secondary">Xem và quản lý tất cả các test bạn đã tạo</Text>
+            </div>
 
-                <Card className="shadow-sm">
-                    {loading && (
-                        <div className="flex justify-center py-12">
-                            <Spin size="large" />
-                        </div>
-                    )}
-                    {!loading && tests.length === 0 && (
-                        <Empty description="Chưa có test nào" />
-                    )}
-                    {!loading && tests.length > 0 && (
-                        <Table
-                            columns={columns}
-                            dataSource={tests}
-                            rowKey="id"
-                            expandable={{
-                                expandedRowRender: expandableRowRender,
-                                expandIconColumnIndex: -1,
-                            }}
-                            pagination={{
-                                pageSize: 10,
-                                showSizeChanger: true,
-                                showTotal: (total) => `Tổng ${total} test`,
-                            }}
-                        />
-                    )}
-                </Card>
+            <Card className="shadow-sm">
+                {loading && (
+                    <div className="flex justify-center py-12">
+                        <Spin size="large" />
+                    </div>
+                )}
+                {!loading && tests.length === 0 && (
+                    <Empty description="Chưa có test nào" />
+                )}
+                {!loading && tests.length > 0 && (
+                    <Table
+                        columns={columns}
+                        dataSource={tests}
+                        rowKey="id"
+                        expandable={{
+                            expandedRowRender: expandableRowRender,
+                            expandIconColumnIndex: -1,
+                        }}
+                        pagination={{
+                            pageSize: 10,
+                            showSizeChanger: true,
+                            showTotal: (total) => `Tổng ${total} test`,
+                        }}
+                    />
+                )}
+            </Card>
 
-                {/* Test Info Modal */}
-                <Modal
-                    title="Chỉnh sửa thông tin test"
-                    open={testInfoModalVisible}
-                    onCancel={() => {
-                        setTestInfoModalVisible(false);
-                        setSelectedTest(null);
-                        testInfoForm.resetFields();
-                    }}
-                    onOk={() => testInfoForm.submit()}
-                    okText="Lưu"
-                    cancelText="Hủy"
-                    width={600}
+            {/* Test Info Modal */}
+            <Modal
+                title="Chỉnh sửa thông tin test"
+                open={testInfoModalVisible}
+                onCancel={() => {
+                    setTestInfoModalVisible(false);
+                    setSelectedTest(null);
+                    testInfoForm.resetFields();
+                }}
+                onOk={() => testInfoForm.submit()}
+                okText="Lưu"
+                cancelText="Hủy"
+                width={600}
+            >
+                <Form
+                    form={testInfoForm}
+                    layout="vertical"
+                    onFinish={handleUpdateTest}
                 >
-                    <Form
-                        form={testInfoForm}
-                        layout="vertical"
-                        onFinish={handleUpdateTest}
+                    <Form.Item
+                        label="Tên test"
+                        name="name"
+                        rules={[{ required: true, message: 'Vui lòng nhập tên test' }]}
                     >
-                        <Form.Item
-                            label="Tên test"
-                            name="name"
-                            rules={[{ required: true, message: 'Vui lòng nhập tên test' }]}
-                        >
-                            <Input placeholder="Nhập tên test" />
-                        </Form.Item>
+                        <Input placeholder="Nhập tên test" />
+                    </Form.Item>
 
-                        <Form.Item
-                            label="Mô tả"
-                            name="description"
-                            rules={[{ required: true, message: 'Vui lòng nhập mô tả' }]}
-                        >
-                            <TextArea rows={4} placeholder="Nhập mô tả test" />
-                        </Form.Item>
+                    <Form.Item
+                        label="Mô tả"
+                        name="description"
+                        rules={[{ required: true, message: 'Vui lòng nhập mô tả' }]}
+                    >
+                        <TextArea rows={4} placeholder="Nhập mô tả test" />
+                    </Form.Item>
 
-                        <Form.Item
-                            label="Thời gian (phút)"
-                            name="duration"
-                            rules={[{ required: true, message: 'Vui lòng nhập thời gian' }]}
-                        >
-                            <InputNumber min={1} className="w-full" placeholder="Nhập thời gian làm bài" />
-                        </Form.Item>
+                    <Form.Item
+                        label="Thời gian (phút)"
+                        name="duration"
+                        rules={[{ required: true, message: 'Vui lòng nhập thời gian' }]}
+                    >
+                        <InputNumber min={1} className="w-full" placeholder="Nhập thời gian làm bài" />
+                    </Form.Item>
 
-                        <Form.Item
-                            label="Mã truy cập"
-                            name="passcode"
-                            rules={[{ required: true, message: 'Vui lòng nhập mã truy cập' }]}
-                        >
-                            <Input placeholder="Nhập mã truy cập" />
-                        </Form.Item>
-                    </Form>
-                </Modal>
+                    <Form.Item
+                        label="Mã truy cập"
+                        name="passcode"
+                        rules={[{ required: true, message: 'Vui lòng nhập mã truy cập' }]}
+                    >
+                        <Input placeholder="Nhập mã truy cập" />
+                    </Form.Item>
+                </Form>
+            </Modal>
 
-                {/* Question Modal */}
-                <Modal
-                    title={editingQuestion ? 'Chỉnh sửa câu hỏi' : 'Thêm câu hỏi mới'}
-                    open={questionModalVisible}
-                    onCancel={() => {
-                        setQuestionModalVisible(false);
-                        setEditingQuestion(null);
-                        questionForm.resetFields();
-                    }}
-                    onOk={() => questionForm.submit()}
-                    okText={editingQuestion ? 'Cập nhật' : 'Thêm'}
-                    cancelText="Hủy"
-                    width={700}
+            {/* Question Modal */}
+            <Modal
+                title={editingQuestion ? 'Chỉnh sửa câu hỏi' : 'Thêm câu hỏi mới'}
+                open={questionModalVisible}
+                onCancel={() => {
+                    setQuestionModalVisible(false);
+                    setEditingQuestion(null);
+                    questionForm.resetFields();
+                }}
+                onOk={() => questionForm.submit()}
+                okText={editingQuestion ? 'Cập nhật' : 'Thêm'}
+                cancelText="Hủy"
+                width={700}
+            >
+                <Form
+                    form={questionForm}
+                    layout="vertical"
+                    onFinish={handleSaveQuestion}
                 >
-                    <Form
-                        form={questionForm}
-                        layout="vertical"
-                        onFinish={handleSaveQuestion}
+                    <Form.Item
+                        label="Nội dung câu hỏi"
+                        name="content"
+                        rules={[{ required: true, message: 'Vui lòng nhập nội dung câu hỏi' }]}
                     >
-                        <Form.Item
-                            label="Nội dung câu hỏi"
-                            name="content"
-                            rules={[{ required: true, message: 'Vui lòng nhập nội dung câu hỏi' }]}
-                        >
-                            <TextArea rows={3} placeholder="Nhập nội dung câu hỏi" />
-                        </Form.Item>
+                        <TextArea rows={3} placeholder="Nhập nội dung câu hỏi" />
+                    </Form.Item>
 
-                        <Form.Item
-                            label="Loại câu hỏi"
-                            name="questionType"
-                            rules={[{ required: true }]}
-                        >
-                            <Input disabled />
-                        </Form.Item>
+                    <Form.Item
+                        label="Loại câu hỏi"
+                        name="questionType"
+                        rules={[{ required: true }]}
+                    >
+                        <Input disabled />
+                    </Form.Item>
 
-                        <Form.Item
-                            noStyle
-                            shouldUpdate={(prevValues, currentValues) => prevValues.questionType !== currentValues.questionType}
-                        >
-                            {({ getFieldValue }) => {
-                                const questionType = getFieldValue('questionType');
-                                if (questionType === 'MULTIPLE_CHOICE') {
-                                    return (
-                                        <Form.Item
-                                            label="Các lựa chọn (mỗi dòng một lựa chọn)"
-                                            name="options"
-                                            rules={[{ required: true, message: 'Vui lòng nhập các lựa chọn' }]}
-                                        >
-                                            <TextArea 
-                                                rows={4} 
-                                                placeholder="Lựa chọn 1&#10;Lựa chọn 2&#10;Lựa chọn 3&#10;Lựa chọn 4" 
-                                            />
-                                        </Form.Item>
-                                    );
-                                }
-                                if (questionType === 'TRUE_FALSE') {
-                                    return (
-                                        <Form.Item
-                                            label="Đáp án đúng"
-                                            name="correctAnswer"
-                                            rules={[{ required: true, message: 'Vui lòng chọn đáp án' }]}
-                                        >
-                                            <Input placeholder="Nhập 'true' hoặc 'false'" />
-                                        </Form.Item>
-                                    );
-                                }
+                    <Form.Item
+                        noStyle
+                        shouldUpdate={(prevValues, currentValues) => prevValues.questionType !== currentValues.questionType}
+                    >
+                        {({ getFieldValue }) => {
+                            const questionType = getFieldValue('questionType');
+                            if (questionType === 'MULTIPLE_CHOICE') {
+                                return (
+                                    <Form.Item
+                                        label="Các lựa chọn (mỗi dòng một lựa chọn)"
+                                        name="options"
+                                        rules={[{ required: true, message: 'Vui lòng nhập các lựa chọn' }]}
+                                    >
+                                        <TextArea
+                                            rows={4}
+                                            placeholder="Lựa chọn 1&#10;Lựa chọn 2&#10;Lựa chọn 3&#10;Lựa chọn 4"
+                                        />
+                                    </Form.Item>
+                                );
+                            }
+                            if (questionType === 'TRUE_FALSE') {
                                 return (
                                     <Form.Item
                                         label="Đáp án đúng"
                                         name="correctAnswer"
-                                        rules={[{ required: true, message: 'Vui lòng nhập đáp án đúng' }]}
+                                        rules={[{ required: true, message: 'Vui lòng chọn đáp án' }]}
                                     >
-                                        <TextArea rows={3} placeholder="Nhập đáp án đúng" />
+                                        <Input placeholder="Nhập 'true' hoặc 'false'" />
                                     </Form.Item>
                                 );
-                            }}
-                        </Form.Item>
+                            }
+                            return (
+                                <Form.Item
+                                    label="Đáp án đúng"
+                                    name="correctAnswer"
+                                    rules={[{ required: true, message: 'Vui lòng nhập đáp án đúng' }]}
+                                >
+                                    <TextArea rows={3} placeholder="Nhập đáp án đúng" />
+                                </Form.Item>
+                            );
+                        }}
+                    </Form.Item>
 
 
-                        <Form.Item
-                            label="Điểm số"
-                            name="points"
-                            rules={[{ required: true, message: 'Vui lòng nhập điểm số' }]}
-                        >
-                            <InputNumber min={1} className="w-full" placeholder="Nhập điểm số" />
-                        </Form.Item>
-                    </Form>
-                </Modal>
-            </div>
-        </TeacherLayout>
+                    <Form.Item
+                        label="Điểm số"
+                        name="points"
+                        rules={[{ required: true, message: 'Vui lòng nhập điểm số' }]}
+                    >
+                        <InputNumber min={1} className="w-full" placeholder="Nhập điểm số" />
+                    </Form.Item>
+                </Form>
+            </Modal>
+        </div>
     );
 };
-

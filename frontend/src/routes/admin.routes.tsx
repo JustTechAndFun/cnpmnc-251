@@ -29,7 +29,7 @@ export const adminRoutes: RouteObject[] = [
                 element: <UserDetail />
             },
             {
-                path: '/admin/profile',
+                path: 'profile',
                 element: <ProfilePage />
             }
         ]
