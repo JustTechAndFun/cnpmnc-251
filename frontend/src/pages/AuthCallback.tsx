@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Navigate, useSearchParams } from 'react-router';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -7,8 +7,13 @@ export const AuthCallbackPage = () => {
     const { handleCallback, isAuthenticated } = useAuth();
     const [error, setError] = useState<string | null>(null);
     const [processing, setProcessing] = useState(true);
+    const hasProcessed = useRef(false);
 
     useEffect(() => {
+        // Prevent multiple calls
+        if (hasProcessed.current) return;
+        hasProcessed.current = true;
+
         const processCallback = async () => {
             const code = searchParams.get('code');
             const errorParam = searchParams.get('error');
