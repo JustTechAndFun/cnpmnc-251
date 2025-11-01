@@ -127,14 +127,4 @@ public class AdminController {
             ApiResponse<TeacherDTO> apiResponse = ApiResponse.success(createdUser, "Created teacher successful");
             return ResponseEntity.ok().body(apiResponse);
     }
-
-
-
-
-
-
-
-
-
-
 }
