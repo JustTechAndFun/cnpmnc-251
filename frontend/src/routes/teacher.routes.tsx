@@ -1,6 +1,7 @@
 import { type RouteObject } from 'react-router';
 import { Role } from '../types';
 import { ProtectedRoute } from '../components/ProtectedRoute';
+import { TeacherLayout } from '../components/TeacherLayout';
 import { TeacherDashboard } from '../pages/teacher/TeacherDashboard';
 import { ManageClasses } from '../pages/teacher/ManageClasses';
 import { ManageAssignments } from '../pages/teacher/ManageAssignments';
@@ -11,32 +12,26 @@ export const teacherRoutes: RouteObject[] = [
         path: '/teacher',
         element: (
             <ProtectedRoute allowedRoles={[Role.ADMIN, Role.TEACHER]}>
-                <TeacherDashboard />
+                <TeacherLayout />
             </ProtectedRoute>
-        )
-    },
-    {
-        path: '/teacher/classes',
-        element: (
-            <ProtectedRoute allowedRoles={[Role.ADMIN, Role.TEACHER]}>
-                <ManageClasses />
-            </ProtectedRoute>
-        )
-    },
-    {
-        path: '/teacher/assignments',
-        element: (
-            <ProtectedRoute allowedRoles={[Role.ADMIN, Role.TEACHER]}>
-                <ManageAssignments />
-            </ProtectedRoute>
-        )
-    },
-    {
-        path: '/teacher/grades',
-        element: (
-            <ProtectedRoute allowedRoles={[Role.ADMIN, Role.TEACHER]}>
-                <GradeStudents />
-            </ProtectedRoute>
-        )
+        ),
+        children: [
+            {
+                index: true,
+                element: <TeacherDashboard />
+            },
+            {
+                path: 'classes',
+                element: <ManageClasses />
+            },
+            {
+                path: 'assignments',
+                element: <ManageAssignments />
+            },
+            {
+                path: 'grades',
+                element: <GradeStudents />
+            }
+        ]
     }
 ];

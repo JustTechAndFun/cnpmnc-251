@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Card, Statistic, List, Avatar, Spin, Typography, Tag } from 'antd';
 import { BookOutlined, FileTextOutlined, ClockCircleOutlined, TeamOutlined } from '@ant-design/icons';
-import { TeacherLayout } from '../../components/TeacherLayout';
 import type { ApiResponse } from '../../types';
 
 const { Title, Text } = Typography;
@@ -103,52 +102,50 @@ export const TeacherDashboard = () => {
     ];
 
     return (
-        <TeacherLayout>
-            <div className="p-8 max-w-7xl mx-auto">
-                <div className="mb-8">
-                    <Title level={2} className="mb-2 bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
-                        Dashboard
-                    </Title>
-                    <Text className="text-gray-600">Tổng quan công việc</Text>
-                </div>
-
-                {loading ? (
-                    <div className="flex flex-col items-center justify-center py-32">
-                        <Spin size="large" />
-                        <Text className="mt-4 text-gray-600">Đang tải dữ liệu...</Text>
-                    </div>
-                ) : (
-                    <>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                            {statCards.map((card) => (
-                                <Card key={card.title} className="hover:shadow-lg transition-shadow">
-                                    <Statistic
-                                        title={card.title}
-                                        value={card.value}
-                                        prefix={card.prefix}
-                                        suffix={card.suffix}
-                                    />
-                                </Card>
-                            ))}
-                        </div>
-
-                        <Card title="Hoạt động gần đây" className="shadow-sm">
-                            <List
-                                dataSource={activities}
-                                renderItem={(item) => (
-                                    <List.Item className="hover:bg-gray-50 rounded-lg px-4 py-3 transition-colors">
-                                        <List.Item.Meta
-                                            avatar={<Avatar icon={<span>{item.icon}</span>} className="bg-gray-100" />}
-                                            title={<Text strong>{item.title}</Text>}
-                                            description={<Text type="secondary" className="text-xs">{item.time}</Text>}
-                                        />
-                                    </List.Item>
-                                )}
-                            />
-                        </Card>
-                    </>
-                )}
+        <div className="p-8 max-w-7xl mx-auto">
+            <div className="mb-8">
+                <Title level={2} className="mb-2 bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+                    Dashboard
+                </Title>
+                <Text className="text-gray-600">Tổng quan công việc</Text>
             </div>
-        </TeacherLayout>
+
+            {loading ? (
+                <div className="flex flex-col items-center justify-center py-32">
+                    <Spin size="large" />
+                    <Text className="mt-4 text-gray-600">Đang tải dữ liệu...</Text>
+                </div>
+            ) : (
+                <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        {statCards.map((card) => (
+                            <Card key={card.title} className="hover:shadow-lg transition-shadow">
+                                <Statistic
+                                    title={card.title}
+                                    value={card.value}
+                                    prefix={card.prefix}
+                                    suffix={card.suffix}
+                                />
+                            </Card>
+                        ))}
+                    </div>
+
+                    <Card title="Hoạt động gần đây" className="shadow-sm">
+                        <List
+                            dataSource={activities}
+                            renderItem={(item) => (
+                                <List.Item className="hover:bg-gray-50 rounded-lg px-4 py-3 transition-colors">
+                                    <List.Item.Meta
+                                        avatar={<Avatar icon={<span>{item.icon}</span>} className="bg-gray-100" />}
+                                        title={<Text strong>{item.title}</Text>}
+                                        description={<Text type="secondary" className="text-xs">{item.time}</Text>}
+                                    />
+                                </List.Item>
+                            )}
+                        />
+                    </Card>
+                </>
+            )}
+        </div>
     );
 };

@@ -8,7 +8,6 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 const GOOGLE_REDIRECT_URI = import.meta.env.VITE_GOOGLE_REDIRECT_URI || 'http://localhost:3000/authenticate';
 
-const TOKEN_KEY = 'auth_token';
 const USER_KEY = 'user_data';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -22,14 +21,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const checkAuth = async () => {
         const isDevMode = import.meta.env.DEV;
-        
+
         try {
-            // Check if token exists in localStorage
-            const storedToken = localStorage.getItem(TOKEN_KEY);
+            // Check if user exists in localStorage
             const storedUser = localStorage.getItem(USER_KEY);
 
-            // If token exists, set user from localStorage first (for immediate UI update)
-            if (storedToken && storedUser) {
+            // If user exists, set user from localStorage first (for immediate UI update)
+            if (storedUser) {
                 try {
                     const parsedUser = JSON.parse(storedUser);
                     setUser(parsedUser);
@@ -53,12 +51,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 name: string;
                 picture: string;
                 role: string;
-                token?: string;
-            }>>(`${API_BASE_URL}/auth/user`, {
-                withCredentials: true,
-                headers: storedToken ? {
-                    Authorization: `Bearer ${storedToken}`
-                } : {}
+            }>>(`${API_BASE_URL}/api/auth/user`, {
+                withCredentials: true
             });
 
             if (!response.data.error && response.data.data) {
@@ -71,22 +65,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     role: userData.role as Role,
                     activate: true
                 };
-                
+
                 setUser(userObject);
-                
+
                 // Save user data to localStorage
                 localStorage.setItem(USER_KEY, JSON.stringify(userObject));
-                
-                // If backend returns token, save it
-                if (userData.token) {
-                    localStorage.setItem(TOKEN_KEY, userData.token);
-                } else if (storedToken) {
-                    // Keep existing token if backend doesn't return new one
-                    localStorage.setItem(TOKEN_KEY, storedToken);
-                }
             } else {
                 // Clear invalid data
-                localStorage.removeItem(TOKEN_KEY);
                 localStorage.removeItem(USER_KEY);
                 setUser(null);
             }
@@ -95,7 +80,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             // In dev mode, don't clear user data to allow bypassing login
             if (!isDevMode) {
                 // Clear invalid data on error
-                localStorage.removeItem(TOKEN_KEY);
                 localStorage.removeItem(USER_KEY);
                 setUser(null);
             }
@@ -132,8 +116,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 name: string;
                 picture: string;
                 role: string;
-                token?: string;
-            }>>(`${API_BASE_URL}/auth/google/callback`, {
+            }>>(`${API_BASE_URL}/api/auth/google/callback`, {
                 code,
                 redirectUri: GOOGLE_REDIRECT_URI
             }, {
@@ -150,28 +133,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     role: userData.role as Role,
                     activate: true
                 };
-                
+
                 setUser(userObject);
-                
+
                 // Save user data to localStorage
                 localStorage.setItem(USER_KEY, JSON.stringify(userObject));
-                
-                // Save token to localStorage
-                if (userData.token) {
-                    localStorage.setItem(TOKEN_KEY, userData.token);
-                } else {
-                    // Generate a session token if backend doesn't provide one
-                    const sessionToken = `session_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-                    localStorage.setItem(TOKEN_KEY, sessionToken);
-                }
-                
+
                 return true;
             }
             return false;
         } catch (error) {
             console.error('Callback error', error);
             // Clear any partial data on error
-            localStorage.removeItem(TOKEN_KEY);
             localStorage.removeItem(USER_KEY);
             return false;
         }
@@ -180,18 +153,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const logoutCallback = useCallback(async () => {
         setIsLoggingOut(true);
         try {
-            const token = localStorage.getItem(TOKEN_KEY);
-            await axios.post(`${API_BASE_URL}/auth/logout`, {}, {
-                withCredentials: true,
-                headers: token ? {
-                    Authorization: `Bearer ${token}`
-                } : {}
+            await axios.post(`${API_BASE_URL}/api/auth/logout`, {}, {
+                withCredentials: true
             });
         } catch (error) {
             console.error('Logout error', error);
         } finally {
             // Clear all stored data
-            localStorage.removeItem(TOKEN_KEY);
             localStorage.removeItem(USER_KEY);
             setUser(null);
             // Small delay to show loading, then redirect to login page
@@ -230,12 +198,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         };
 
         const fakeUser = fakeUsers[role];
-        const fakeToken = `fake_token_${role}_${Date.now()}`;
 
         setUser(fakeUser);
-        localStorage.setItem(TOKEN_KEY, fakeToken);
         localStorage.setItem(USER_KEY, JSON.stringify(fakeUser));
-        
+
         // Redirect to appropriate dashboard based on role
         let redirectPath = '/dashboard';
         switch (role) {
@@ -249,7 +215,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 redirectPath = '/student';
                 break;
         }
-        
+
         window.location.href = redirectPath;
     }, []);
 

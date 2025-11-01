@@ -1,5 +1,4 @@
-import { type ReactNode } from 'react';
-import { useNavigate, useLocation } from 'react-router';
+import { useNavigate, useLocation, Outlet } from 'react-router';
 import { Layout, Menu, Avatar, Button, Spin, Typography } from 'antd';
 import { DashboardOutlined, UserOutlined, ProfileOutlined, LogoutOutlined } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
@@ -7,11 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 const { Sider, Content } = Layout;
 const { Text } = Typography;
 
-interface AdminLayoutProps {
-    children: ReactNode;
-}
-
-export const AdminLayout = ({ children }: AdminLayoutProps) => {
+export const AdminLayout = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const auth = useAuth();
@@ -118,7 +113,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
             {/* Main Content */}
             <Layout>
                 <Content className="min-h-screen">
-                    {children}
+                    <Outlet />
                 </Content>
             </Layout>
         </Layout>

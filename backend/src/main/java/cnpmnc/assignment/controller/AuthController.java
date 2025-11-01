@@ -2,16 +2,15 @@ package cnpmnc.assignment.controller;
 
 import cnpmnc.assignment.dto.ApiResponse;
 import cnpmnc.assignment.dto.GoogleCallbackRequest;
+import cnpmnc.assignment.dto.UserDto;
+import cnpmnc.assignment.model.User;
 import cnpmnc.assignment.service.GoogleAuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -25,24 +24,26 @@ public class AuthController {
     }
 
     @PostMapping("/google/callback")
-    @Operation(summary = "Handle Google OAuth2 callback (POST)", 
-               description = "Exchange authorization code for user information via POST request",
+    @Operation(summary = "Handle Google OAuth2 callback", 
+               description = "Exchange authorization code for user information",
                security = {})
-    public ResponseEntity<ApiResponse<Map<String, Object>>> handleGoogleCallbackPost(
+    public ResponseEntity<ApiResponse<UserDto>> handleGoogleCallback(
             @RequestBody GoogleCallbackRequest request,
             HttpSession session
     ) {
         try {
-            Map<String, Object> userData = googleAuthService.handleCallback(
+            User user = googleAuthService.handleCallback(
                     request.getCode(),
                     request.getRedirectUri()
             );
 
             // Store user info in session
-            session.setAttribute("user", userData);
+            session.setAttribute("user", user);
             session.setAttribute("authenticated", true);
 
-            return ResponseEntity.ok(ApiResponse.success(userData, "Login successful"));
+            // Return UserDto without accessToken
+            UserDto userDto = UserDto.fromUser(user);
+            return ResponseEntity.ok(ApiResponse.success(userDto, "Login successful"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(
                     ApiResponse.error("Authentication failed: " + e.getMessage())
@@ -50,43 +51,20 @@ public class AuthController {
         }
     }
 
-    @GetMapping("/google/callback")
-    @Operation(summary = "Handle Google OAuth2 callback (GET)", 
-               description = "Receives authorization code from Google and redirects to frontend",
-               security = {})
-    public ResponseEntity<?> handleGoogleCallbackGet(
-            @Parameter(description = "Authorization code from Google") @RequestParam("code") String code,
-            @Parameter(description = "Frontend redirect URI") @RequestParam("redirect_uri") String redirectUri,
-            HttpSession session
-    ) {
-        try {
-            Map<String, Object> userData = googleAuthService.handleCallback(code, redirectUri);
-
-            // Store user info in session
-            session.setAttribute("user", userData);
-            session.setAttribute("authenticated", true);
-
-            // Redirect to frontend success page
-            return ResponseEntity.status(302)
-                    .header("Location", "http://localhost:3000/dashboard")
-                    .build();
-        } catch (Exception e) {
-            // Redirect to frontend error page
-            return ResponseEntity.status(302)
-                    .header("Location", "http://localhost:3000/login?error=" + e.getMessage())
-                    .build();
-        }
-    }
-
     @GetMapping("/user")
     @Operation(summary = "Get current user", description = "Retrieve currently authenticated user information")
     @SecurityRequirement(name = "cookieAuth")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getCurrentUser(HttpSession session) {
+    public ResponseEntity<ApiResponse<UserDto>> getCurrentUser(HttpSession session) {
         Boolean authenticated = (Boolean) session.getAttribute("authenticated");
         if (authenticated != null && authenticated) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> user = (Map<String, Object>) session.getAttribute("user");
-            return ResponseEntity.ok(ApiResponse.success(user, "User retrieved"));
+            Object userObj = session.getAttribute("user");
+            
+            if (userObj instanceof User) {
+                User user = (User) userObj;
+                // Return UserDto without accessToken
+                UserDto userDto = UserDto.fromUser(user);
+                return ResponseEntity.ok(ApiResponse.success(userDto, "User retrieved"));
+            }
         }
         return ResponseEntity.status(401).body(ApiResponse.error("Not authenticated"));
     }

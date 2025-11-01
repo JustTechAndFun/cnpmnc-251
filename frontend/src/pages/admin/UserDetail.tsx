@@ -3,7 +3,6 @@ import { useParams, Navigate, useNavigate } from 'react-router';
 import axios from 'axios';
 import { Card, Descriptions, Avatar, Tag, Typography, Spin, Button, Space, Result } from 'antd';
 import { ArrowLeftOutlined, UserOutlined } from '@ant-design/icons';
-import { AdminLayout } from '../../components/AdminLayout';
 import { Role } from '../../types';
 import type { User, ApiResponse } from '../../types';
 
@@ -119,96 +118,92 @@ export const UserDetail = () => {
 
     if (notFound) {
         return (
-            <AdminLayout>
-                <div className="p-8 max-w-7xl mx-auto">
-                    <Result
-                        status="404"
-                        title="Không tìm thấy người dùng"
-                        subTitle="Người dùng với ID này không tồn tại trong hệ thống."
-                        extra={
-                            <Button type="primary" onClick={() => navigate('/admin/users')}>
-                                Quay lại danh sách
-                            </Button>
-                        }
-                    />
-                </div>
-            </AdminLayout>
+            <div className="p-8 max-w-7xl mx-auto">
+                <Result
+                    status="404"
+                    title="Không tìm thấy người dùng"
+                    subTitle="Người dùng với ID này không tồn tại trong hệ thống."
+                    extra={
+                        <Button type="primary" onClick={() => navigate('/admin/users')}>
+                            Quay lại danh sách
+                        </Button>
+                    }
+                />
+            </div>
         );
     }
 
     return (
-        <AdminLayout>
-            <div className="p-8 max-w-7xl mx-auto">
-                <div className="mb-6">
-                    <Button 
-                        icon={<ArrowLeftOutlined />} 
-                        onClick={() => navigate('/admin/users')}
-                        className="mb-4"
-                    >
-                        Quay lại
-                    </Button>
-                    <Title level={2}>Chi tiết người dùng</Title>
+        <div className="p-8 max-w-7xl mx-auto">
+            <div className="mb-6">
+                <Button 
+                    icon={<ArrowLeftOutlined />} 
+                    onClick={() => navigate('/admin/users')}
+                    className="mb-4"
+                >
+                    Quay lại
+                </Button>
+                <Title level={2}>Chi tiết người dùng</Title>
+            </div>
+
+            {loading ? (
+                <div className="flex flex-col items-center justify-center py-32">
+                    <Spin size="large" />
+                    <Text className="mt-4 text-gray-600">Đang tải thông tin người dùng...</Text>
                 </div>
-
-                {loading ? (
-                    <div className="flex flex-col items-center justify-center py-32">
-                        <Spin size="large" />
-                        <Text className="mt-4 text-gray-600">Đang tải thông tin người dùng...</Text>
-                    </div>
-                ) : (
-                    user ? (
-                    <Space direction="vertical" size="large" className="w-full">
-                        <Card className="shadow-sm">
-                            <div className="flex items-center gap-6">
-                                <Avatar 
-                                    src={user.picture} 
-                                    size={80}
-                                    icon={<UserOutlined />}
-                                    className="bg-gradient-to-br from-purple-500 to-indigo-600"
-                                >
-                                    {user.name?.[0] || user.email[0]?.toUpperCase()}
-                                </Avatar>
-                                <div className="flex-1">
-                                    <Title level={3} className="mb-2">{user.name || 'Chưa có tên'}</Title>
-                                    <Text type="secondary" className="block mb-3">{user.email}</Text>
-                                    <Space>
-                                        <Tag color={getRoleColor(user.role)}>{getRoleLabel(user.role)}</Tag>
-                                        <Tag color={user.activate ? 'success' : 'error'}>
-                                            {user.activate ? 'Hoạt động' : 'Không hoạt động'}
-                                        </Tag>
-                                    </Space>
-                                </div>
-                            </div>
-                        </Card>
-
-                        <Card title="Thông tin cơ bản" className="shadow-sm">
-                            <Descriptions column={{ xxl: 2, xl: 2, lg: 2, md: 1, sm: 1, xs: 1 }} bordered>
-                                <Descriptions.Item label="ID người dùng">{user.id}</Descriptions.Item>
-                                <Descriptions.Item label="Email">{user.email}</Descriptions.Item>
-                                <Descriptions.Item label="Họ và tên">{user.name || 'Chưa có tên'}</Descriptions.Item>
-                                <Descriptions.Item label="Vai trò">
+            ) : (
+                user ? (
+                <Space direction="vertical" size="large" className="w-full">
+                    <Card className="shadow-sm">
+                        <div className="flex items-center gap-6">
+                            <Avatar 
+                                src={user.picture} 
+                                size={80}
+                                icon={<UserOutlined />}
+                                className="bg-gradient-to-br from-purple-500 to-indigo-600"
+                            >
+                                {user.name?.[0] || user.email[0]?.toUpperCase()}
+                            </Avatar>
+                            <div className="flex-1">
+                                <Title level={3} className="mb-2">{user.name || 'Chưa có tên'}</Title>
+                                <Text type="secondary" className="block mb-3">{user.email}</Text>
+                                <Space>
                                     <Tag color={getRoleColor(user.role)}>{getRoleLabel(user.role)}</Tag>
-                                </Descriptions.Item>
-                                <Descriptions.Item label="Trạng thái">
                                     <Tag color={user.activate ? 'success' : 'error'}>
                                         {user.activate ? 'Hoạt động' : 'Không hoạt động'}
                                     </Tag>
+                                </Space>
+                            </div>
+                        </div>
+                    </Card>
+
+                    <Card title="Thông tin cơ bản" className="shadow-sm">
+                        <Descriptions column={{ xxl: 2, xl: 2, lg: 2, md: 1, sm: 1, xs: 1 }} bordered>
+                            <Descriptions.Item label="ID người dùng">{user.id}</Descriptions.Item>
+                            <Descriptions.Item label="Email">{user.email}</Descriptions.Item>
+                            <Descriptions.Item label="Họ và tên">{user.name || 'Chưa có tên'}</Descriptions.Item>
+                            <Descriptions.Item label="Vai trò">
+                                <Tag color={getRoleColor(user.role)}>{getRoleLabel(user.role)}</Tag>
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Trạng thái">
+                                <Tag color={user.activate ? 'success' : 'error'}>
+                                    {user.activate ? 'Hoạt động' : 'Không hoạt động'}
+                                </Tag>
+                            </Descriptions.Item>
+                            {user.picture && (
+                                <Descriptions.Item label="Ảnh đại diện" span={2}>
+                                    <Avatar src={user.picture} size={64} />
                                 </Descriptions.Item>
-                                {user.picture && (
-                                    <Descriptions.Item label="Ảnh đại diện" span={2}>
-                                        <Avatar src={user.picture} size={64} />
-                                    </Descriptions.Item>
-                                )}
-                            </Descriptions>
-                        </Card>
-                    </Space>
-                ) : (
-                        <Card className="shadow-sm">
-                            <Text type="secondary">Không thể tải thông tin người dùng</Text>
-                        </Card>
-                    )
-                )}
-            </div>
-        </AdminLayout>
+                            )}
+                        </Descriptions>
+                    </Card>
+                </Space>
+            ) : (
+                    <Card className="shadow-sm">
+                        <Text type="secondary">Không thể tải thông tin người dùng</Text>
+                    </Card>
+                )
+            )}
+        </div>
     );
 };
