@@ -3,11 +3,13 @@ import { Role } from '../types';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import { TeacherLayout } from '../components/TeacherLayout';
 import { TeacherDashboard } from '../pages/teacher/TeacherDashboard';
-import { ManageClasses } from '../pages/teacher/ManageClasses';
 import { ManageAssignments } from '../pages/teacher/ManageAssignments';
 import { GradeStudents } from '../pages/teacher/GradeStudents';
+import { ClassPage } from '../pages/teacher/Class';
+import { TestDetail } from '../pages/teacher/TestDetail';
 import { TestManagement } from '../pages/teacher/TestManagement';
 import { ProfilePage } from '../pages/ProfilePage';
+import { ManageClasses } from '../pages/teacher/ManageClasses';
 
 export const teacherRoutes: RouteObject[] = [
     {

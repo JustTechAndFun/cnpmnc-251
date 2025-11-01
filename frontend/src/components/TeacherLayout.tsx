@@ -54,7 +54,7 @@ export const TeacherLayout = () => {
     const selectedKeys = [location.pathname];
 
     return (
-        <Layout className="min-h-screen bg-gray-50">
+        <Layout className="min-h-screen bg-gray-50 flex">
             {/* Logout Loading Overlay */}
             {isLoggingOut && (
                 <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[9999] flex items-center justify-center">
@@ -67,7 +67,7 @@ export const TeacherLayout = () => {
 
             <Sider
                 width={280}
-                className="fixed left-0 top-0 h-screen bg-white shadow-lg"
+                className="bg-white shadow-lg min-h-screen flex-shrink-0"
                 theme="light"
             >
                 {/* Header */}
@@ -107,23 +107,58 @@ export const TeacherLayout = () => {
                                 {user?.email}
                             </Text>
                         </div>
+                        <Text strong className="text-lg bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+                            Giáo viên
+                        </Text>
                     </div>
-                    <Button
-                        type="default"
-                        danger
-                        icon={<LogoutOutlined />}
-                        onClick={() => logout?.()}
-                        disabled={!logout || isLoggingOut}
-                        block
-                        className="border-red-200 text-red-600 hover:bg-red-50"
-                    >
-                        Đăng xuất
-                    </Button>
+
+                    {/* Menu - Scrollable */}
+                    <div className="flex-1 overflow-y-auto">
+                        <Menu
+                            mode="inline"
+                            selectedKeys={selectedKeys}
+                            items={menuItems}
+                            onClick={handleMenuClick}
+                            className="border-r-0 pt-4"
+                        />
+                    </div>
+
+                    {/* Footer */}
+                    <div className="border-t border-gray-200 bg-gray-50 p-4 flex-shrink-0">
+                        <div className="flex items-center gap-3 mb-4">
+                            <Avatar 
+                                src={user?.picture} 
+                                size={48}
+                                className="bg-gradient-to-br from-purple-500 to-purple-700"
+                            >
+                                {user?.name?.[0] || user?.email[0]?.toUpperCase()}
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                                <Text strong className="block text-sm truncate">
+                                    {user?.name || 'Giáo viên'}
+                                </Text>
+                                <Text className="text-xs text-gray-500 truncate block">
+                                    {user?.email}
+                                </Text>
+                            </div>
+                        </div>
+                        <Button
+                            type="default"
+                            danger
+                            icon={<LogoutOutlined />}
+                            onClick={() => logout?.()}
+                            disabled={!logout || isLoggingOut}
+                            block
+                            className="border-red-200 text-red-600 hover:bg-red-50"
+                        >
+                            Đăng xuất
+                        </Button>
+                    </div>
                 </div>
             </Sider>
 
             {/* Main Content */}
-            <Layout>
+            <Layout className="flex-1">
                 <Content className="min-h-screen">
                     <Outlet />
                 </Content>
