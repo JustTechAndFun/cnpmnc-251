@@ -58,7 +58,7 @@ public class ClassController {
                 .body(ApiResponse.error(e.getMessage()));
         }
     }
-    
+
     @GetMapping("/{id}/students")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'TEACHER')")
     @Operation(summary = "Get students in a class", description = "Retrieve list of all students enrolled in a class. Teacher can only access their own classes.")
