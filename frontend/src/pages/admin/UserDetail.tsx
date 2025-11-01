@@ -136,8 +136,8 @@ export const UserDetail = () => {
     return (
         <div className="p-8 max-w-7xl mx-auto">
             <div className="mb-6">
-                <Button 
-                    icon={<ArrowLeftOutlined />} 
+                <Button
+                    icon={<ArrowLeftOutlined />}
                     onClick={() => navigate('/admin/users')}
                     className="mb-4"
                 >
@@ -153,52 +153,52 @@ export const UserDetail = () => {
                 </div>
             ) : (
                 user ? (
-                <Space direction="vertical" size="large" className="w-full">
-                    <Card className="shadow-sm">
-                        <div className="flex items-center gap-6">
-                            <Avatar 
-                                src={user.picture} 
-                                size={80}
-                                icon={<UserOutlined />}
-                                className="bg-gradient-to-br from-purple-500 to-indigo-600"
-                            >
-                                {user.name?.[0] || user.email[0]?.toUpperCase()}
-                            </Avatar>
-                            <div className="flex-1">
-                                <Title level={3} className="mb-2">{user.name || 'Chưa có tên'}</Title>
-                                <Text type="secondary" className="block mb-3">{user.email}</Text>
-                                <Space>
+                    <Space direction="vertical" size="large" className="w-full">
+                        <Card className="shadow-sm">
+                            <div className="flex items-center gap-6">
+                                <Avatar
+                                    src={user.picture}
+                                    size={80}
+                                    icon={<UserOutlined />}
+                                    className="bg-gradient-to-br from-purple-500 to-indigo-600"
+                                >
+                                    {user.name?.[0] || user.email[0]?.toUpperCase()}
+                                </Avatar>
+                                <div className="flex-1">
+                                    <Title level={3} className="mb-2">{user.name || 'Chưa có tên'}</Title>
+                                    <Text type="secondary" className="block mb-3">{user.email}</Text>
+                                    <Space>
+                                        <Tag color={getRoleColor(user.role)}>{getRoleLabel(user.role)}</Tag>
+                                        <Tag color={user.activate ? 'success' : 'error'}>
+                                            {user.activate ? 'Hoạt động' : 'Không hoạt động'}
+                                        </Tag>
+                                    </Space>
+                                </div>
+                            </div>
+                        </Card>
+
+                        <Card title="Thông tin cơ bản" className="shadow-sm">
+                            <Descriptions column={{ xxl: 2, xl: 2, lg: 2, md: 1, sm: 1, xs: 1 }} bordered>
+                                <Descriptions.Item label="ID người dùng">{user.id}</Descriptions.Item>
+                                <Descriptions.Item label="Email">{user.email}</Descriptions.Item>
+                                <Descriptions.Item label="Họ và tên">{user.name || 'Chưa có tên'}</Descriptions.Item>
+                                <Descriptions.Item label="Vai trò">
                                     <Tag color={getRoleColor(user.role)}>{getRoleLabel(user.role)}</Tag>
+                                </Descriptions.Item>
+                                <Descriptions.Item label="Trạng thái">
                                     <Tag color={user.activate ? 'success' : 'error'}>
                                         {user.activate ? 'Hoạt động' : 'Không hoạt động'}
                                     </Tag>
-                                </Space>
-                            </div>
-                        </div>
-                    </Card>
-
-                    <Card title="Thông tin cơ bản" className="shadow-sm">
-                        <Descriptions column={{ xxl: 2, xl: 2, lg: 2, md: 1, sm: 1, xs: 1 }} bordered>
-                            <Descriptions.Item label="ID người dùng">{user.id}</Descriptions.Item>
-                            <Descriptions.Item label="Email">{user.email}</Descriptions.Item>
-                            <Descriptions.Item label="Họ và tên">{user.name || 'Chưa có tên'}</Descriptions.Item>
-                            <Descriptions.Item label="Vai trò">
-                                <Tag color={getRoleColor(user.role)}>{getRoleLabel(user.role)}</Tag>
-                            </Descriptions.Item>
-                            <Descriptions.Item label="Trạng thái">
-                                <Tag color={user.activate ? 'success' : 'error'}>
-                                    {user.activate ? 'Hoạt động' : 'Không hoạt động'}
-                                </Tag>
-                            </Descriptions.Item>
-                            {user.picture && (
-                                <Descriptions.Item label="Ảnh đại diện" span={2}>
-                                    <Avatar src={user.picture} size={64} />
                                 </Descriptions.Item>
-                            )}
-                        </Descriptions>
-                    </Card>
-                </Space>
-            ) : (
+                                {user.picture && (
+                                    <Descriptions.Item label="Ảnh đại diện" span={2}>
+                                        <Avatar src={user.picture} size={64} />
+                                    </Descriptions.Item>
+                                )}
+                            </Descriptions>
+                        </Card>
+                    </Space>
+                ) : (
                     <Card className="shadow-sm">
                         <Text type="secondary">Không thể tải thông tin người dùng</Text>
                     </Card>

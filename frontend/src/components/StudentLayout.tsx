@@ -87,8 +87,8 @@ export const StudentLayout = () => {
                 {/* Footer */}
                 <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-gray-50">
                     <div className="flex items-center gap-3 mb-4">
-                        <Avatar 
-                            src={user?.picture} 
+                        <Avatar
+                            src={user?.picture}
                             size={48}
                             className="bg-gradient-to-br from-green-500 to-green-700"
                         >

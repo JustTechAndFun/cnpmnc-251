@@ -148,8 +148,8 @@ export const UserList = () => {
             title: 'Thao tác',
             key: 'action',
             render: (_: unknown, record: User) => (
-                <Button 
-                    type="link" 
+                <Button
+                    type="link"
                     onClick={() => navigate(`/admin/users/${record.id}`)}
                     className="p-0"
                 >

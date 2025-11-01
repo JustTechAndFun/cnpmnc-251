@@ -5,6 +5,7 @@ import { AdminLayout } from '../components/AdminLayout';
 import { AdminDashboard } from '../pages/admin/AdminDashboard';
 import { UserList } from '../pages/admin/UserList';
 import { UserDetail } from '../pages/admin/UserDetail';
+import { ProfilePage } from '../pages/ProfilePage';
 
 export const adminRoutes: RouteObject[] = [
     {
@@ -26,6 +27,10 @@ export const adminRoutes: RouteObject[] = [
             {
                 path: 'users/:id',
                 element: <UserDetail />
+            },
+            {
+                path: '/admin/profile',
+                element: <ProfilePage />
             }
         ]
     }
