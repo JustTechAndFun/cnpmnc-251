@@ -13,7 +13,7 @@ export const studentRoutes: RouteObject[] = [
         path: '/student',
         element: (
             <ProtectedRoute allowedRoles={[Role.ADMIN, Role.TEACHER, Role.STUDENT]}>
-                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
+                <div className="min-h-screen from-blue-50 to-indigo-50">
                     <nav className="bg-indigo-600 text-white p-4 mb-4">
                         <h2 className="text-xl font-bold">Student Portal</h2>
                     </nav>
