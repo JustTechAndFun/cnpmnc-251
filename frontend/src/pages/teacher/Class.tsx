@@ -550,7 +550,6 @@ export const ClassPage = () => {
     ];
 
     return (
-        <TeacherLayout>
             <div className="p-8 max-w-7xl mx-auto">
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-32">
@@ -719,7 +718,6 @@ export const ClassPage = () => {
                     </Form>
                 </Modal>
             </div>
-        </TeacherLayout>
     );
 };
 

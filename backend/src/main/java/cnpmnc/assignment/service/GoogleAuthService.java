@@ -13,9 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.HashMap;
-import java.util.Map;
-
 @Service
 public class GoogleAuthService {
 
@@ -34,7 +31,7 @@ public class GoogleAuthService {
     }
 
     @Transactional
-    public Map<String, Object> handleCallback(String code, String redirectUri) {
+    public User handleCallback(String code, String redirectUri) {
         try {
             // Exchange code for access token
             GoogleTokenResponse tokenResponse = new GoogleAuthorizationCodeTokenRequest(
@@ -83,14 +80,8 @@ public class GoogleAuthService {
                 }
             }
 
-            // Return user data
-            Map<String, Object> result = new HashMap<>();
-            result.put("email", user.getEmail());
-            result.put("name", userInfo.getName());
-            result.put("picture", userInfo.getPicture());
-            result.put("role", user.getRole().name());
-
-            return result;
+            // Return the user object directly
+            return user;
         } catch (Exception e) {
             throw new RuntimeException("Error processing Google callback: " + e.getMessage(), e);
         }

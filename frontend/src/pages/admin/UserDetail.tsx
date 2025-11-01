@@ -3,7 +3,6 @@ import { useParams, Navigate, useNavigate } from 'react-router';
 import axios from 'axios';
 import { Card, Descriptions, Avatar, Tag, Typography, Spin, Button, Space, Result } from 'antd';
 import { ArrowLeftOutlined, UserOutlined } from '@ant-design/icons';
-import { AdminLayout } from '../../components/AdminLayout';
 import { Role } from '../../types';
 import type { User, ApiResponse } from '../../types';
 
@@ -119,49 +118,46 @@ export const UserDetail = () => {
 
     if (notFound) {
         return (
-            <AdminLayout>
-                <div className="p-8 max-w-7xl mx-auto">
-                    <Result
-                        status="404"
-                        title="Không tìm thấy người dùng"
-                        subTitle="Người dùng với ID này không tồn tại trong hệ thống."
-                        extra={
-                            <Button type="primary" onClick={() => navigate('/admin/users')}>
-                                Quay lại danh sách
-                            </Button>
-                        }
-                    />
-                </div>
-            </AdminLayout>
+            <div className="p-8 max-w-7xl mx-auto">
+                <Result
+                    status="404"
+                    title="Không tìm thấy người dùng"
+                    subTitle="Người dùng với ID này không tồn tại trong hệ thống."
+                    extra={
+                        <Button type="primary" onClick={() => navigate('/admin/users')}>
+                            Quay lại danh sách
+                        </Button>
+                    }
+                />
+            </div>
         );
     }
 
     return (
-        <AdminLayout>
-            <div className="p-8 max-w-7xl mx-auto">
-                <div className="mb-6">
-                    <Button 
-                        icon={<ArrowLeftOutlined />} 
-                        onClick={() => navigate('/admin/users')}
-                        className="mb-4"
-                    >
-                        Quay lại
-                    </Button>
-                    <Title level={2}>Chi tiết người dùng</Title>
-                </div>
+        <div className="p-8 max-w-7xl mx-auto">
+            <div className="mb-6">
+                <Button
+                    icon={<ArrowLeftOutlined />}
+                    onClick={() => navigate('/admin/users')}
+                    className="mb-4"
+                >
+                    Quay lại
+                </Button>
+                <Title level={2}>Chi tiết người dùng</Title>
+            </div>
 
-                {loading ? (
-                    <div className="flex flex-col items-center justify-center py-32">
-                        <Spin size="large" />
-                        <Text className="mt-4 text-gray-600">Đang tải thông tin người dùng...</Text>
-                    </div>
-                ) : (
-                    user ? (
+            {loading ? (
+                <div className="flex flex-col items-center justify-center py-32">
+                    <Spin size="large" />
+                    <Text className="mt-4 text-gray-600">Đang tải thông tin người dùng...</Text>
+                </div>
+            ) : (
+                user ? (
                     <Space direction="vertical" size="large" className="w-full">
                         <Card className="shadow-sm">
                             <div className="flex items-center gap-6">
-                                <Avatar 
-                                    src={user.picture} 
+                                <Avatar
+                                    src={user.picture}
                                     size={80}
                                     icon={<UserOutlined />}
                                     className="bg-gradient-to-br from-purple-500 to-indigo-600"
@@ -203,12 +199,11 @@ export const UserDetail = () => {
                         </Card>
                     </Space>
                 ) : (
-                        <Card className="shadow-sm">
-                            <Text type="secondary">Không thể tải thông tin người dùng</Text>
-                        </Card>
-                    )
-                )}
-            </div>
-        </AdminLayout>
+                    <Card className="shadow-sm">
+                        <Text type="secondary">Không thể tải thông tin người dùng</Text>
+                    </Card>
+                )
+            )}
+        </div>
     );
 };

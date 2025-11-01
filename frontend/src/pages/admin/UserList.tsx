@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router';
 import axios from 'axios';
 import { Table, Input, Select, Card, Tag, Avatar, Typography, Space, Button } from 'antd';
 import { SearchOutlined, UserOutlined } from '@ant-design/icons';
-import { AdminLayout } from '../../components/AdminLayout';
 import { Role } from '../../types';
 import type { User, ApiResponse } from '../../types';
 
@@ -149,8 +148,8 @@ export const UserList = () => {
             title: 'Thao tác',
             key: 'action',
             render: (_: unknown, record: User) => (
-                <Button 
-                    type="link" 
+                <Button
+                    type="link"
                     onClick={() => navigate(`/admin/users/${record.id}`)}
                     className="p-0"
                 >
@@ -161,68 +160,66 @@ export const UserList = () => {
     ];
 
     return (
-        <AdminLayout>
-            <div className="p-8 max-w-7xl mx-auto">
-                <div className="mb-8 flex justify-between items-start">
-                    <div>
-                        <Title level={2} className="mb-2">Quản lý người dùng</Title>
-                        <Text type="secondary">Danh sách tất cả người dùng trong hệ thống</Text>
-                    </div>
-                    <div className="text-right">
-                        <div className="text-3xl font-bold text-purple-600">{filteredUsers.length}</div>
-                        <Text type="secondary" className="text-sm">người dùng</Text>
-                    </div>
+        <div className="p-8 max-w-7xl mx-auto">
+            <div className="mb-8 flex justify-between items-start">
+                <div>
+                    <Title level={2} className="mb-2">Quản lý người dùng</Title>
+                    <Text type="secondary">Danh sách tất cả người dùng trong hệ thống</Text>
                 </div>
-
-                <Card className="mb-6 shadow-sm">
-                    <Space direction="vertical" size="middle" className="w-full">
-                        <Search
-                            placeholder="Tìm kiếm theo email hoặc tên..."
-                            prefix={<SearchOutlined />}
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full"
-                            size="large"
-                        />
-                        <div className="flex items-center gap-4">
-                            <Text className="font-medium">Lọc theo vai trò:</Text>
-                            <Select
-                                value={filterRole}
-                                onChange={(value) => setFilterRole(value)}
-                                style={{ width: 200 }}
-                                size="large"
-                            >
-                                <Select.Option value="ALL">Tất cả</Select.Option>
-                                <Select.Option value={Role.ADMIN}>Quản trị viên</Select.Option>
-                                <Select.Option value={Role.TEACHER}>Giảng viên</Select.Option>
-                                <Select.Option value={Role.STUDENT}>Sinh viên</Select.Option>
-                            </Select>
-                        </div>
-                    </Space>
-                </Card>
-
-                <Card className="shadow-sm">
-                    <Table
-                        columns={columns}
-                        dataSource={filteredUsers}
-                        rowKey="id"
-                        loading={loading}
-                        pagination={{
-                            pageSize: 10,
-                            showSizeChanger: true,
-                            showTotal: (total) => `Tổng ${total} người dùng`,
-                        }}
-                        locale={{
-                            emptyText: (
-                                <div className="py-12 text-center">
-                                    <UserOutlined className="text-5xl text-gray-300 mb-4" />
-                                    <Text type="secondary">Không tìm thấy người dùng nào</Text>
-                                </div>
-                            ),
-                        }}
-                    />
-                </Card>
+                <div className="text-right">
+                    <div className="text-3xl font-bold text-purple-600">{filteredUsers.length}</div>
+                    <Text type="secondary" className="text-sm">người dùng</Text>
+                </div>
             </div>
-        </AdminLayout>
+
+            <Card className="mb-6 shadow-sm">
+                <Space direction="vertical" size="middle" className="w-full">
+                    <Search
+                        placeholder="Tìm kiếm theo email hoặc tên..."
+                        prefix={<SearchOutlined />}
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full"
+                        size="large"
+                    />
+                    <div className="flex items-center gap-4">
+                        <Text className="font-medium">Lọc theo vai trò:</Text>
+                        <Select
+                            value={filterRole}
+                            onChange={(value) => setFilterRole(value)}
+                            style={{ width: 200 }}
+                            size="large"
+                        >
+                            <Select.Option value="ALL">Tất cả</Select.Option>
+                            <Select.Option value={Role.ADMIN}>Quản trị viên</Select.Option>
+                            <Select.Option value={Role.TEACHER}>Giảng viên</Select.Option>
+                            <Select.Option value={Role.STUDENT}>Sinh viên</Select.Option>
+                        </Select>
+                    </div>
+                </Space>
+            </Card>
+
+            <Card className="shadow-sm">
+                <Table
+                    columns={columns}
+                    dataSource={filteredUsers}
+                    rowKey="id"
+                    loading={loading}
+                    pagination={{
+                        pageSize: 10,
+                        showSizeChanger: true,
+                        showTotal: (total) => `Tổng ${total} người dùng`,
+                    }}
+                    locale={{
+                        emptyText: (
+                            <div className="py-12 text-center">
+                                <UserOutlined className="text-5xl text-gray-300 mb-4" />
+                                <Text type="secondary">Không tìm thấy người dùng nào</Text>
+                            </div>
+                        ),
+                    }}
+                />
+            </Card>
+        </div>
     );
 };

@@ -1,5 +1,4 @@
-import { type ReactNode } from 'react';
-import { useNavigate, useLocation } from 'react-router';
+import { useNavigate, useLocation, Outlet } from 'react-router';
 import { Layout, Menu, Avatar, Button, Spin, Typography } from 'antd';
 import { DashboardOutlined, BookOutlined, FileTextOutlined, LineChartOutlined, ProfileOutlined, LogoutOutlined } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
@@ -7,11 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 const { Sider, Content } = Layout;
 const { Text } = Typography;
 
-interface StudentLayoutProps {
-    children: ReactNode;
-}
-
-export const StudentLayout = ({ children }: StudentLayoutProps) => {
+export const StudentLayout = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const auth = useAuth();
@@ -92,8 +87,8 @@ export const StudentLayout = ({ children }: StudentLayoutProps) => {
                 {/* Footer */}
                 <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-gray-50">
                     <div className="flex items-center gap-3 mb-4">
-                        <Avatar 
-                            src={user?.picture} 
+                        <Avatar
+                            src={user?.picture}
                             size={48}
                             className="bg-gradient-to-br from-green-500 to-green-700"
                         >
@@ -125,7 +120,7 @@ export const StudentLayout = ({ children }: StudentLayoutProps) => {
             {/* Main Content */}
             <Layout>
                 <Content className="min-h-screen">
-                    {children}
+                    <Outlet />
                 </Content>
             </Layout>
         </Layout>
