@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useParams, Navigate, useNavigate } from 'react-router-dom';
+import { useParams, Navigate, useNavigate } from 'react-router';
 import { useAuth } from '../../contexts/AuthContext';
 import { Role } from '../../types';
-import { TeacherLayout } from '../../components/TeacherLayout';
 import { Card, Typography, Button, Spin, Descriptions, Tag } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import axios from 'axios';
@@ -82,64 +81,62 @@ export const TestDetail = () => {
     };
 
     return (
-        <TeacherLayout>
-            <div className="p-8 max-w-7xl mx-auto">
-                <Button
-                    icon={<ArrowLeftOutlined />}
-                    onClick={() => navigate(-1)}
-                    className="mb-4"
-                >
-                    Quay lại
-                </Button>
+        <div className="p-8 max-w-7xl mx-auto">
+            <Button
+                icon={<ArrowLeftOutlined />}
+                onClick={() => navigate(-1)}
+                className="mb-4"
+            >
+                Quay lại
+            </Button>
 
-                {loading ? (
-                    <div className="flex flex-col items-center justify-center py-32">
-                        <Spin size="large" />
-                        <Text className="mt-4 text-gray-600">Đang tải thông tin bài kiểm tra...</Text>
+            {loading ? (
+                <div className="flex flex-col items-center justify-center py-32">
+                    <Spin size="large" />
+                    <Text className="mt-4 text-gray-600">Đang tải thông tin bài kiểm tra...</Text>
+                </div>
+            ) : test ? (
+                <Card className="shadow-sm">
+                    <Title level={2} className="mb-4 bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+                        {test.title}
+                    </Title>
+
+                    <Descriptions bordered column={1} className="mt-6">
+                        <Descriptions.Item label="Mô tả">
+                            {test.description || 'Chưa có mô tả'}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Lớp học">
+                            {test.className || 'N/A'}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Ngày tạo">
+                            {test.createdAt}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Thời gian làm bài">
+                            {test.duration} phút
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Trạng thái">
+                            <Tag color={getStatusColor(test.status)}>
+                                {test.status}
+                            </Tag>
+                        </Descriptions.Item>
+                    </Descriptions>
+
+                    <div className="mt-6">
+                        <Text type="secondary">
+                            Tính năng xem chi tiết bài kiểm tra đang được phát triển.
+                            Tại đây bạn có thể xem danh sách câu hỏi, kết quả của sinh viên, và các thông tin khác.
+                        </Text>
                     </div>
-                ) : test ? (
-                    <Card className="shadow-sm">
-                        <Title level={2} className="mb-4 bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
-                            {test.title}
-                        </Title>
-
-                        <Descriptions bordered column={1} className="mt-6">
-                            <Descriptions.Item label="Mô tả">
-                                {test.description || 'Chưa có mô tả'}
-                            </Descriptions.Item>
-                            <Descriptions.Item label="Lớp học">
-                                {test.className || 'N/A'}
-                            </Descriptions.Item>
-                            <Descriptions.Item label="Ngày tạo">
-                                {test.createdAt}
-                            </Descriptions.Item>
-                            <Descriptions.Item label="Thời gian làm bài">
-                                {test.duration} phút
-                            </Descriptions.Item>
-                            <Descriptions.Item label="Trạng thái">
-                                <Tag color={getStatusColor(test.status)}>
-                                    {test.status}
-                                </Tag>
-                            </Descriptions.Item>
-                        </Descriptions>
-
-                        <div className="mt-6">
-                            <Text type="secondary">
-                                Tính năng xem chi tiết bài kiểm tra đang được phát triển. 
-                                Tại đây bạn có thể xem danh sách câu hỏi, kết quả của sinh viên, và các thông tin khác.
-                            </Text>
-                        </div>
-                    </Card>
-                ) : (
-                    <Card>
-                        <div className="text-center py-12">
-                            <Title level={4} type="secondary">Không tìm thấy bài kiểm tra</Title>
-                            <Text className="text-gray-500">Bài kiểm tra với ID {testId} không tồn tại</Text>
-                        </div>
-                    </Card>
-                )}
-            </div>
-        </TeacherLayout>
+                </Card>
+            ) : (
+                <Card>
+                    <div className="text-center py-12">
+                        <Title level={4} type="secondary">Không tìm thấy bài kiểm tra</Title>
+                        <Text className="text-gray-500">Bài kiểm tra với ID {testId} không tồn tại</Text>
+                    </div>
+                </Card>
+            )}
+        </div>
     );
 };
 

@@ -126,8 +126,8 @@ export const TeacherLayout = () => {
                     {/* Footer */}
                     <div className="border-t border-gray-200 bg-gray-50 p-4 flex-shrink-0">
                         <div className="flex items-center gap-3 mb-4">
-                            <Avatar 
-                                src={user?.picture} 
+                            <Avatar
+                                src={user?.picture}
                                 size={48}
                                 className="bg-gradient-to-br from-purple-500 to-purple-700"
                             >

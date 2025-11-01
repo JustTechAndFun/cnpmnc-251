@@ -1,15 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Navigate, useParams, useNavigate } from 'react-router-dom';
+import { Navigate, useParams, useNavigate } from 'react-router';
 import { useAuth } from '../../contexts/AuthContext';
 import { Role } from '../../types';
-import { TeacherLayout } from '../../components/TeacherLayout';
-import { 
-    Card, 
-    Table, 
-    Button, 
-    Typography, 
-    Tag, 
-    Spin, 
+import {
+    Card,
+    Table,
+    Button,
+    Typography,
+    Tag,
+    Spin,
     message,
     Modal,
     Input,
@@ -19,13 +18,13 @@ import {
     Col,
     Select
 } from 'antd';
-import { 
-    PlusOutlined, 
-    FileAddOutlined, 
-    UserOutlined, 
+import {
+    PlusOutlined,
+    FileAddOutlined,
+    UserOutlined,
     BookOutlined,
     TeamOutlined,
-    FileTextOutlined 
+    FileTextOutlined
 } from '@ant-design/icons';
 import axios from 'axios';
 import type { ApiResponse } from '../../types';
@@ -116,7 +115,7 @@ export const ClassPage = () => {
             } catch (error) {
                 console.error('Failed to fetch classes list', error);
             }
-            
+
             // If no classes found, use default/mock data
             const mockClasses: ClassInfo[] = [
                 {
@@ -181,7 +180,7 @@ export const ClassPage = () => {
     const fetchClassDataForClass = async (targetClassId: string) => {
         try {
             const token = localStorage.getItem('auth_token');
-            
+
             // Fetch students
             try {
                 const studentsResponse = await axios.get<ApiResponse<Student[]>>(
@@ -200,7 +199,7 @@ export const ClassPage = () => {
                 console.error('Failed to fetch students, using mock data', error);
                 // Mock data fallback - different data for different classes
                 let mockStudents: Student[] = [];
-                
+
                 if (targetClassId === '1') {
                     // Công nghệ phần mềm nâng cao
                     mockStudents = [
@@ -225,7 +224,7 @@ export const ClassPage = () => {
                         { id: '11', name: 'Đinh Thị K', email: 'dinhthik@example.com', studentId: 'ST011', status: 'Active' },
                     ];
                 }
-                
+
                 setStudents(mockStudents);
                 setClassInfo(prev => ({ ...prev, totalStudents: mockStudents.length }));
             }
@@ -248,7 +247,7 @@ export const ClassPage = () => {
                 console.error('Failed to fetch tests, using mock data', error);
                 // Mock data fallback - different tests for different classes
                 let mockTests: Test[] = [];
-                
+
                 if (targetClassId === '1') {
                     // Công nghệ phần mềm nâng cao
                     mockTests = [
@@ -272,7 +271,7 @@ export const ClassPage = () => {
                         { id: '10', title: 'Final Database Project', createdAt: '2025-03-01', duration: 120, status: 'Upcoming' },
                     ];
                 }
-                
+
                 setTests(mockTests);
                 setClassInfo(prev => ({ ...prev, totalTests: mockTests.length }));
             }
@@ -285,7 +284,7 @@ export const ClassPage = () => {
         setLoading(true);
         try {
             const token = localStorage.getItem('auth_token');
-            
+
             // Fetch class information
             try {
                 const classResponse = await axios.get<ApiResponse<ClassInfo>>(
@@ -381,7 +380,7 @@ export const ClassPage = () => {
                 console.error('Failed to fetch tests, using mock data', error);
                 // Mock data fallback - different tests for different classes
                 let mockTests: Test[] = [];
-                
+
                 if (classId === '1') {
                     // Công nghệ phần mềm nâng cao
                     mockTests = [
@@ -405,7 +404,7 @@ export const ClassPage = () => {
                         { id: '10', title: 'Final Database Project', createdAt: '2025-03-01', duration: 120, status: 'Upcoming' },
                     ];
                 }
-                
+
                 setTests(mockTests);
                 setClassInfo(prev => ({ ...prev, totalTests: mockTests.length }));
             }
@@ -550,174 +549,174 @@ export const ClassPage = () => {
     ];
 
     return (
-            <div className="p-8 max-w-7xl mx-auto">
-                {loading ? (
-                    <div className="flex flex-col items-center justify-center py-32">
-                        <Spin size="large" />
-                        <Text className="mt-4 text-gray-600">Đang tải dữ liệu...</Text>
-                    </div>
-                ) : (
-                    <>
-                        {/* Class Information Header */}
-                        <div className="mb-8">
-                            <div className="flex justify-between items-start mb-6">
-                                <div className="flex-1">
-                                    <div className="flex items-center gap-4 mb-4">
-                                        <Title level={2} className="mb-0 bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
-                                            {classInfo.name}
-                                        </Title>
-                                        {classes.length > 1 && (
-                                            <Select
-                                                value={classInfo.id}
-                                                onChange={handleClassChange}
-                                                style={{ width: 250 }}
-                                                placeholder="Chọn lớp học"
-                                            >
-                                                {classes.map(cls => (
-                                                    <Select.Option key={cls.id} value={cls.id}>
-                                                        {cls.name}
-                                                    </Select.Option>
-                                                ))}
-                                            </Select>
-                                        )}
-                                    </div>
-                                    <Text className="text-gray-600 text-base block mb-4">
-                                        {classInfo.description}
-                                    </Text>
-                                    <Row gutter={16} className="mt-4">
-                                        <Col span={12}>
-                                            <Card>
-                                                <Statistic
-                                                    title="Tổng số sinh viên"
-                                                    value={classInfo.totalStudents}
-                                                    prefix={<TeamOutlined />}
-                                                    valueStyle={{ color: '#3f8600' }}
-                                                />
-                                            </Card>
-                                        </Col>
-                                        <Col span={12}>
-                                            <Card>
-                                                <Statistic
-                                                    title="Tổng số bài kiểm tra"
-                                                    value={classInfo.totalTests}
-                                                    prefix={<FileTextOutlined />}
-                                                    valueStyle={{ color: '#1890ff' }}
-                                                />
-                                            </Card>
-                                        </Col>
-                                    </Row>
+        <div className="p-8 max-w-7xl mx-auto">
+            {loading ? (
+                <div className="flex flex-col items-center justify-center py-32">
+                    <Spin size="large" />
+                    <Text className="mt-4 text-gray-600">Đang tải dữ liệu...</Text>
+                </div>
+            ) : (
+                <>
+                    {/* Class Information Header */}
+                    <div className="mb-8">
+                        <div className="flex justify-between items-start mb-6">
+                            <div className="flex-1">
+                                <div className="flex items-center gap-4 mb-4">
+                                    <Title level={2} className="mb-0 bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+                                        {classInfo.name}
+                                    </Title>
+                                    {classes.length > 1 && (
+                                        <Select
+                                            value={classInfo.id}
+                                            onChange={handleClassChange}
+                                            style={{ width: 250 }}
+                                            placeholder="Chọn lớp học"
+                                        >
+                                            {classes.map(cls => (
+                                                <Select.Option key={cls.id} value={cls.id}>
+                                                    {cls.name}
+                                                </Select.Option>
+                                            ))}
+                                        </Select>
+                                    )}
                                 </div>
-                                <div className="ml-4">
-                                    <Button
-                                        type="primary"
-                                        icon={<FileAddOutlined />}
-                                        size="large"
-                                        onClick={handleCreateTest}
-                                        className="bg-gradient-to-r from-purple-600 to-purple-800 border-none"
-                                    >
-                                        Tạo bài kiểm tra mới
-                                    </Button>
-                                </div>
+                                <Text className="text-gray-600 text-base block mb-4">
+                                    {classInfo.description}
+                                </Text>
+                                <Row gutter={16} className="mt-4">
+                                    <Col span={12}>
+                                        <Card>
+                                            <Statistic
+                                                title="Tổng số sinh viên"
+                                                value={classInfo.totalStudents}
+                                                prefix={<TeamOutlined />}
+                                                valueStyle={{ color: '#3f8600' }}
+                                            />
+                                        </Card>
+                                    </Col>
+                                    <Col span={12}>
+                                        <Card>
+                                            <Statistic
+                                                title="Tổng số bài kiểm tra"
+                                                value={classInfo.totalTests}
+                                                prefix={<FileTextOutlined />}
+                                                valueStyle={{ color: '#1890ff' }}
+                                            />
+                                        </Card>
+                                    </Col>
+                                </Row>
                             </div>
-                        </div>
-
-                        {/* Students Table */}
-                        <Card
-                            title={
-                                <div className="flex items-center gap-2">
-                                    <UserOutlined />
-                                    <span>Danh sách sinh viên</span>
-                                </div>
-                            }
-                            extra={
+                            <div className="ml-4">
                                 <Button
                                     type="primary"
-                                    icon={<PlusOutlined />}
-                                    onClick={() => setAddStudentModalVisible(true)}
+                                    icon={<FileAddOutlined />}
+                                    size="large"
+                                    onClick={handleCreateTest}
+                                    className="bg-gradient-to-r from-purple-600 to-purple-800 border-none"
                                 >
-                                    Thêm sinh viên
+                                    Tạo bài kiểm tra mới
                                 </Button>
-                            }
-                            className="mb-6 shadow-sm"
-                        >
-                            <Table
-                                columns={studentColumns}
-                                dataSource={students}
-                                rowKey="id"
-                                pagination={{ pageSize: 10 }}
-                                locale={{ emptyText: 'Chưa có sinh viên nào' }}
-                            />
-                        </Card>
+                            </div>
+                        </div>
+                    </div>
 
-                        {/* Tests Table */}
-                        <Card
-                            title={
-                                <div className="flex items-center gap-2">
-                                    <BookOutlined />
-                                    <span>Danh sách bài kiểm tra</span>
-                                </div>
-                            }
-                            className="shadow-sm"
-                        >
-                            <Table
-                                columns={testColumns}
-                                dataSource={tests}
-                                rowKey="id"
-                                pagination={{ pageSize: 10 }}
-                                onRow={(record) => ({
-                                    onClick: () => handleTestClick(record.id),
-                                    style: { cursor: 'pointer' },
-                                })}
-                                locale={{ emptyText: 'Chưa có bài kiểm tra nào' }}
-                            />
-                        </Card>
-                    </>
-                )}
-
-                {/* Add Student Modal */}
-                <Modal
-                    title="Thêm sinh viên vào lớp"
-                    open={addStudentModalVisible}
-                    onCancel={() => {
-                        setAddStudentModalVisible(false);
-                        addStudentForm.resetFields();
-                    }}
-                    onOk={() => addStudentForm.submit()}
-                    okText="Thêm"
-                    cancelText="Hủy"
-                >
-                    <Form
-                        form={addStudentForm}
-                        layout="vertical"
-                        onFinish={handleAddStudent}
+                    {/* Students Table */}
+                    <Card
+                        title={
+                            <div className="flex items-center gap-2">
+                                <UserOutlined />
+                                <span>Danh sách sinh viên</span>
+                            </div>
+                        }
+                        extra={
+                            <Button
+                                type="primary"
+                                icon={<PlusOutlined />}
+                                onClick={() => setAddStudentModalVisible(true)}
+                            >
+                                Thêm sinh viên
+                            </Button>
+                        }
+                        className="mb-6 shadow-sm"
                     >
-                        <Form.Item
-                            name="name"
-                            label="Họ và tên"
-                            rules={[{ required: true, message: 'Vui lòng nhập họ và tên' }]}
-                        >
-                            <Input placeholder="Nhập họ và tên sinh viên" />
-                        </Form.Item>
-                        <Form.Item
-                            name="email"
-                            label="Email"
-                            rules={[
-                                { required: true, message: 'Vui lòng nhập email' },
-                                { type: 'email', message: 'Email không hợp lệ' }
-                            ]}
-                        >
-                            <Input placeholder="Nhập email sinh viên" />
-                        </Form.Item>
-                        <Form.Item
-                            name="studentId"
-                            label="MSSV"
-                            rules={[{ required: true, message: 'Vui lòng nhập MSSV' }]}
-                        >
-                            <Input placeholder="Nhập mã số sinh viên" />
-                        </Form.Item>
-                    </Form>
-                </Modal>
-            </div>
+                        <Table
+                            columns={studentColumns}
+                            dataSource={students}
+                            rowKey="id"
+                            pagination={{ pageSize: 10 }}
+                            locale={{ emptyText: 'Chưa có sinh viên nào' }}
+                        />
+                    </Card>
+
+                    {/* Tests Table */}
+                    <Card
+                        title={
+                            <div className="flex items-center gap-2">
+                                <BookOutlined />
+                                <span>Danh sách bài kiểm tra</span>
+                            </div>
+                        }
+                        className="shadow-sm"
+                    >
+                        <Table
+                            columns={testColumns}
+                            dataSource={tests}
+                            rowKey="id"
+                            pagination={{ pageSize: 10 }}
+                            onRow={(record) => ({
+                                onClick: () => handleTestClick(record.id),
+                                style: { cursor: 'pointer' },
+                            })}
+                            locale={{ emptyText: 'Chưa có bài kiểm tra nào' }}
+                        />
+                    </Card>
+                </>
+            )}
+
+            {/* Add Student Modal */}
+            <Modal
+                title="Thêm sinh viên vào lớp"
+                open={addStudentModalVisible}
+                onCancel={() => {
+                    setAddStudentModalVisible(false);
+                    addStudentForm.resetFields();
+                }}
+                onOk={() => addStudentForm.submit()}
+                okText="Thêm"
+                cancelText="Hủy"
+            >
+                <Form
+                    form={addStudentForm}
+                    layout="vertical"
+                    onFinish={handleAddStudent}
+                >
+                    <Form.Item
+                        name="name"
+                        label="Họ và tên"
+                        rules={[{ required: true, message: 'Vui lòng nhập họ và tên' }]}
+                    >
+                        <Input placeholder="Nhập họ và tên sinh viên" />
+                    </Form.Item>
+                    <Form.Item
+                        name="email"
+                        label="Email"
+                        rules={[
+                            { required: true, message: 'Vui lòng nhập email' },
+                            { type: 'email', message: 'Email không hợp lệ' }
+                        ]}
+                    >
+                        <Input placeholder="Nhập email sinh viên" />
+                    </Form.Item>
+                    <Form.Item
+                        name="studentId"
+                        label="MSSV"
+                        rules={[{ required: true, message: 'Vui lòng nhập MSSV' }]}
+                    >
+                        <Input placeholder="Nhập mã số sinh viên" />
+                    </Form.Item>
+                </Form>
+            </Modal>
+        </div>
     );
 };
 
