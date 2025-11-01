@@ -20,6 +20,7 @@ export interface AuthContextType {
     logout: () => void;
     isAuthenticated: boolean;
     hasRole: (roles: Role | Role[]) => boolean;
+    handleCallback: (code: string) => Promise<boolean>;
 }
 
 export interface ApiResponse<T> {

@@ -5,6 +5,8 @@ import { Role, type User, type AuthContextType, type ApiResponse } from '../type
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+const GOOGLE_REDIRECT_URI = import.meta.env.VITE_GOOGLE_REDIRECT_URI || 'http://localhost:3000/authenticate';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
@@ -20,21 +22,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 email: string;
                 name: string;
                 picture: string;
-                authorities: Array<{ authority: string }>;
-            }>>(`${API_BASE_URL}/api/user/info`, {
+                role: string;
+            }>>(`${API_BASE_URL}/auth/user`, {
                 withCredentials: true
             });
 
             if (!response.data.error && response.data.data) {
                 const userData = response.data.data;
-                const role = userData.authorities[0]?.authority as Role;
-
                 setUser({
                     id: userData.email,
                     email: userData.email,
                     name: userData.name,
                     picture: userData.picture,
-                    role: role,
+                    role: userData.role as Role,
                     activate: true
                 });
             }
@@ -47,12 +47,55 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const login = () => {
-        window.location.href = `${API_BASE_URL}/oauth2/authorization/google`;
+        // Build Google OAuth2 authorization URL
+        const params = new URLSearchParams({
+            client_id: GOOGLE_CLIENT_ID,
+            redirect_uri: GOOGLE_REDIRECT_URI,
+            response_type: 'code',
+            scope: 'openid email profile',
+            access_type: 'offline',
+            prompt: 'consent'
+        });
+        
+        window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+    };
+
+    const handleCallback = async (code: string) => {
+        try {
+            const response = await axios.post<ApiResponse<{
+                email: string;
+                name: string;
+                picture: string;
+                role: string;
+            }>>(`${API_BASE_URL}/auth/google/callback`, {
+                code,
+                redirectUri: GOOGLE_REDIRECT_URI
+            }, {
+                withCredentials: true
+            });
+
+            if (!response.data.error && response.data.data) {
+                const userData = response.data.data;
+                setUser({
+                    id: userData.email,
+                    email: userData.email,
+                    name: userData.name,
+                    picture: userData.picture,
+                    role: userData.role as Role,
+                    activate: true
+                });
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error('Callback error', error);
+            return false;
+        }
     };
 
     const logout = async () => {
         try {
-            await axios.post(`${API_BASE_URL}/logout`, {}, {
+            await axios.post(`${API_BASE_URL}/auth/logout`, {}, {
                 withCredentials: true
             });
         } catch (error) {
@@ -77,7 +120,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 login,
                 logout,
                 isAuthenticated: !!user,
-                hasRole
+                hasRole,
+                handleCallback
             }}
         >
             {children}

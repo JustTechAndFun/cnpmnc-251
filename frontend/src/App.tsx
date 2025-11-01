@@ -1,12 +1,15 @@
 import { AuthProvider } from './contexts/AuthContext';
 import { AppRouter } from './routes';
+import { StyleProvider } from '@ant-design/cssinjs';
 import './App.css';
 
 function App() {
   return (
-    <AuthProvider>
-      <AppRouter />
-    </AuthProvider>
+    <StyleProvider hashPriority="high">
+      <AuthProvider>
+        <AppRouter />
+      </AuthProvider>
+    </StyleProvider >
   );
 }
 

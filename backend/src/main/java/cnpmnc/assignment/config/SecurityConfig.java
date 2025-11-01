@@ -34,6 +34,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints (including OpenAPI/Swagger)
                 .requestMatchers("/", "/login/**", "/oauth2/**", "/error").permitAll()
+                // Auth endpoints for manual OAuth2 flow
+                .requestMatchers("/api/auth/**").permitAll()
                 // Swagger/OpenAPI endpoints - must be public
                 .requestMatchers(
                     "/apis",

@@ -4,6 +4,7 @@ import { Role } from '../types';
 import { adminRoutes } from './admin.routes';
 import { teacherRoutes } from './teacher.routes';
 import { studentRoutes } from './student.routes';
+import { AuthCallbackPage } from '../pages/AuthCallback';
 
 // Public pages
 const LoginPage = () => {
@@ -84,6 +85,10 @@ export const router = createBrowserRouter([
     {
         path: '/login',
         element: <LoginPage />
+    },
+    {
+        path: '/authenticate',
+        element: <AuthCallbackPage />
     },
     {
         path: '/dashboard',
