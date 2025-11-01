@@ -1,6 +1,6 @@
 import { useNavigate, useLocation, Outlet } from 'react-router';
 import { Layout, Menu, Avatar, Button, Spin, Typography } from 'antd';
-import { DashboardOutlined, BookOutlined, FileTextOutlined, LineChartOutlined, ProfileOutlined, LogoutOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+import { DashboardOutlined, BookOutlined, FileTextOutlined, LineChartOutlined, ProfileOutlined, LogoutOutlined } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
 
 const { Sider, Content } = Layout;
@@ -31,17 +31,12 @@ export const TeacherLayout = () => {
             label: 'Bài tập',
         },
         {
-            key: '/teacher/tests',
-            icon: <QuestionCircleOutlined />,
-            label: 'Quản lý Tests',
-        },
-        {
             key: '/teacher/grades',
             icon: <LineChartOutlined />,
             label: 'Chấm điểm',
         },
         {
-            key: '/teacher/profile',
+            key: '/profile',
             icon: <ProfileOutlined />,
             label: 'Thông tin cá nhân',
         },
@@ -70,42 +65,11 @@ export const TeacherLayout = () => {
                 className="bg-white shadow-lg min-h-screen flex-shrink-0"
                 theme="light"
             >
-                {/* Header */}
-                <div className="flex items-center gap-3 p-6 border-b border-gray-200">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white">
-                        <BookOutlined className="text-xl" />
-                    </div>
-                    <Text strong className="text-lg bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
-                        Giáo viên
-                    </Text>
-                </div>
-
-                {/* Menu */}
-                <Menu
-                    mode="inline"
-                    selectedKeys={selectedKeys}
-                    items={menuItems}
-                    onClick={handleMenuClick}
-                    className="border-r-0 pt-4"
-                />
-
-                {/* Footer */}
-                <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-gray-50">
-                    <div className="flex items-center gap-3 mb-4">
-                        <Avatar
-                            src={user?.picture}
-                            size={48}
-                            className="bg-gradient-to-br from-purple-500 to-purple-700"
-                        >
-                            {user?.name?.[0] || user?.email[0]?.toUpperCase()}
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                            <Text strong className="block text-sm truncate">
-                                {user?.name || 'Giáo viên'}
-                            </Text>
-                            <Text className="text-xs text-gray-500 truncate block">
-                                {user?.email}
-                            </Text>
+                <div className="flex flex-col h-full">
+                    {/* Header */}
+                    <div className="flex items-center gap-3 p-6 border-b border-gray-200 flex-shrink-0">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white">
+                            <BookOutlined className="text-xl" />
                         </div>
                         <Text strong className="text-lg bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
                             Giáo viên
@@ -113,7 +77,7 @@ export const TeacherLayout = () => {
                     </div>
 
                     {/* Menu - Scrollable */}
-                    <div className="flex-1 overflow-y-auto">
+                    <div className="flex-1 overflow-y-auto min-h-0">
                         <Menu
                             mode="inline"
                             selectedKeys={selectedKeys}
