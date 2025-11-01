@@ -1,0 +1,214 @@
+import { useEffect, useState } from 'react';
+import { useParams, Navigate, useNavigate } from 'react-router';
+import axios from 'axios';
+import { Card, Descriptions, Avatar, Tag, Typography, Spin, Button, Space, Result } from 'antd';
+import { ArrowLeftOutlined, UserOutlined } from '@ant-design/icons';
+import { AdminLayout } from '../../components/AdminLayout';
+import { Role } from '../../types';
+import type { User, ApiResponse } from '../../types';
+
+const { Title, Text } = Typography;
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+export const UserDetail = () => {
+    const { id } = useParams<{ id: string }>();
+    const navigate = useNavigate();
+    const [user, setUser] = useState<User | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [notFound, setNotFound] = useState(false);
+
+    useEffect(() => {
+        if (id) {
+            fetchUserDetail(id);
+        }
+    }, [id]);
+
+    const fetchUserDetail = async (userId: string) => {
+        try {
+            const token = localStorage.getItem('auth_token');
+            const response = await axios.get<ApiResponse<User>>(
+                `${API_BASE_URL}/admin/users/${userId}`,
+                {
+                    headers: token ? { Authorization: `Bearer ${token}` } : {},
+                    withCredentials: true
+                }
+            );
+
+            if (!response.data.error && response.data.data) {
+                setUser(response.data.data);
+            } else {
+                setNotFound(true);
+            }
+        } catch (error) {
+            console.error('Failed to fetch user detail', error);
+            // Mock data for demo
+            if (userId === '1' || userId === '2' || userId === '3' || userId === '4') {
+                const mockUsers: Record<string, User> = {
+                    '1': {
+                        id: '1',
+                        email: 'admin@example.com',
+                        name: 'Nguyễn Văn Admin',
+                        role: Role.ADMIN,
+                        activate: true,
+                        picture: 'https://ui-avatars.com/api/?name=Nguyen+Van+Admin&background=667eea&color=fff'
+                    },
+                    '2': {
+                        id: '2',
+                        email: 'teacher1@example.com',
+                        name: 'Trần Thị Giáo',
+                        role: Role.TEACHER,
+                        activate: true,
+                        picture: 'https://ui-avatars.com/api/?name=Tran+Thi+Giao&background=a855f7&color=fff'
+                    },
+                    '3': {
+                        id: '3',
+                        email: 'student1@example.com',
+                        name: 'Lê Văn Sinh',
+                        role: Role.STUDENT,
+                        activate: true,
+                        picture: 'https://ui-avatars.com/api/?name=Le+Van+Sinh&background=10b981&color=fff'
+                    },
+                    '4': {
+                        id: '4',
+                        email: 'student2@example.com',
+                        name: 'Phạm Thị Học',
+                        role: Role.STUDENT,
+                        activate: false,
+                        picture: 'https://ui-avatars.com/api/?name=Pham+Thi+Hoc&background=f59e0b&color=fff'
+                    }
+                };
+                setUser(mockUsers[userId] || null);
+            } else {
+                setNotFound(true);
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const getRoleColor = (role: Role) => {
+        switch (role) {
+            case Role.ADMIN:
+                return 'purple';
+            case Role.TEACHER:
+                return 'blue';
+            case Role.STUDENT:
+                return 'green';
+            default:
+                return 'default';
+        }
+    };
+
+    const getRoleLabel = (role: Role) => {
+        switch (role) {
+            case Role.ADMIN:
+                return 'Quản trị viên';
+            case Role.TEACHER:
+                return 'Giảng viên';
+            case Role.STUDENT:
+                return 'Sinh viên';
+            default:
+                return role;
+        }
+    };
+
+    if (!id) {
+        return <Navigate to="/admin/users" replace />;
+    }
+
+    if (notFound) {
+        return (
+            <AdminLayout>
+                <div className="p-8 max-w-7xl mx-auto">
+                    <Result
+                        status="404"
+                        title="Không tìm thấy người dùng"
+                        subTitle="Người dùng với ID này không tồn tại trong hệ thống."
+                        extra={
+                            <Button type="primary" onClick={() => navigate('/admin/users')}>
+                                Quay lại danh sách
+                            </Button>
+                        }
+                    />
+                </div>
+            </AdminLayout>
+        );
+    }
+
+    return (
+        <AdminLayout>
+            <div className="p-8 max-w-7xl mx-auto">
+                <div className="mb-6">
+                    <Button 
+                        icon={<ArrowLeftOutlined />} 
+                        onClick={() => navigate('/admin/users')}
+                        className="mb-4"
+                    >
+                        Quay lại
+                    </Button>
+                    <Title level={2}>Chi tiết người dùng</Title>
+                </div>
+
+                {loading ? (
+                    <div className="flex flex-col items-center justify-center py-32">
+                        <Spin size="large" />
+                        <Text className="mt-4 text-gray-600">Đang tải thông tin người dùng...</Text>
+                    </div>
+                ) : (
+                    user ? (
+                    <Space direction="vertical" size="large" className="w-full">
+                        <Card className="shadow-sm">
+                            <div className="flex items-center gap-6">
+                                <Avatar 
+                                    src={user.picture} 
+                                    size={80}
+                                    icon={<UserOutlined />}
+                                    className="bg-gradient-to-br from-purple-500 to-indigo-600"
+                                >
+                                    {user.name?.[0] || user.email[0]?.toUpperCase()}
+                                </Avatar>
+                                <div className="flex-1">
+                                    <Title level={3} className="mb-2">{user.name || 'Chưa có tên'}</Title>
+                                    <Text type="secondary" className="block mb-3">{user.email}</Text>
+                                    <Space>
+                                        <Tag color={getRoleColor(user.role)}>{getRoleLabel(user.role)}</Tag>
+                                        <Tag color={user.activate ? 'success' : 'error'}>
+                                            {user.activate ? 'Hoạt động' : 'Không hoạt động'}
+                                        </Tag>
+                                    </Space>
+                                </div>
+                            </div>
+                        </Card>
+
+                        <Card title="Thông tin cơ bản" className="shadow-sm">
+                            <Descriptions column={{ xxl: 2, xl: 2, lg: 2, md: 1, sm: 1, xs: 1 }} bordered>
+                                <Descriptions.Item label="ID người dùng">{user.id}</Descriptions.Item>
+                                <Descriptions.Item label="Email">{user.email}</Descriptions.Item>
+                                <Descriptions.Item label="Họ và tên">{user.name || 'Chưa có tên'}</Descriptions.Item>
+                                <Descriptions.Item label="Vai trò">
+                                    <Tag color={getRoleColor(user.role)}>{getRoleLabel(user.role)}</Tag>
+                                </Descriptions.Item>
+                                <Descriptions.Item label="Trạng thái">
+                                    <Tag color={user.activate ? 'success' : 'error'}>
+                                        {user.activate ? 'Hoạt động' : 'Không hoạt động'}
+                                    </Tag>
+                                </Descriptions.Item>
+                                {user.picture && (
+                                    <Descriptions.Item label="Ảnh đại diện" span={2}>
+                                        <Avatar src={user.picture} size={64} />
+                                    </Descriptions.Item>
+                                )}
+                            </Descriptions>
+                        </Card>
+                    </Space>
+                ) : (
+                        <Card className="shadow-sm">
+                            <Text type="secondary">Không thể tải thông tin người dùng</Text>
+                        </Card>
+                    )
+                )}
+            </div>
+        </AdminLayout>
+    );
+};
