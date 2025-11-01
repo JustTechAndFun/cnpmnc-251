@@ -1,7 +1,5 @@
 package cnpmnc.assignment.config;
 
-import cnpmnc.assignment.service.CustomOAuth2UserService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,10 +16,7 @@ import java.util.Arrays;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
-@RequiredArgsConstructor
 public class SecurityConfig {
-
-    private final CustomOAuth2UserService customOAuth2UserService;
     
     @Value("${cors.allowed-origins}")
     private String allowedOrigins;
@@ -36,7 +31,7 @@ public class SecurityConfig {
                 .requestMatchers("/", "/login/**", "/oauth2/**", "/error").permitAll()
                 // Auth endpoints for manual OAuth2 flow
                 .requestMatchers("/api/auth/**").permitAll()
-                // Swagger/OpenAPI endpoints - must be public
+                // Swagger/OpenAPI endpoints - public access
                 .requestMatchers(
                     "/apis",
                     "/apis/**",
@@ -56,13 +51,14 @@ public class SecurityConfig {
                 // All authenticated users
                 .anyRequest().authenticated()
             )
-            .oauth2Login(oauth2 -> oauth2
-                .userInfoEndpoint(userInfo -> userInfo
-                    .userService(customOAuth2UserService)
-                )
-                .defaultSuccessUrl("/oauth2/success", true)
-                .failureUrl("/oauth2/failure")
-            )
+            // Disable default OAuth2 login - using manual flow instead
+            // .oauth2Login(oauth2 -> oauth2
+            //     .userInfoEndpoint(userInfo -> userInfo
+            //         .userService(customOAuth2UserService)
+            //     )
+            //     .defaultSuccessUrl("/oauth2/success", true)
+            //     .failureUrl("/oauth2/failure")
+            // )
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
             );

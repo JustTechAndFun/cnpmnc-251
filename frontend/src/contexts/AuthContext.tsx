@@ -47,16 +47,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const login = () => {
-        // Build Google OAuth2 authorization URL
+        // Build Google OAuth2 authorization URL with backend callback
+        const backendRedirectUri = `${API_BASE_URL}/auth/google/callback`;
         const params = new URLSearchParams({
             client_id: GOOGLE_CLIENT_ID,
-            redirect_uri: GOOGLE_REDIRECT_URI,
+            redirect_uri: backendRedirectUri,
             response_type: 'code',
             scope: 'openid email profile',
             access_type: 'offline',
-            prompt: 'consent'
+            prompt: 'consent',
+            state: encodeURIComponent(JSON.stringify({
+                redirect_uri: GOOGLE_REDIRECT_URI
+            }))
         });
-        
+
         window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
     };
 
