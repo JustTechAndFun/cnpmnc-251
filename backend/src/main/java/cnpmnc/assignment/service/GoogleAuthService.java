@@ -53,34 +53,39 @@ public class GoogleAuthService {
             if (userInfo == null || userInfo.getEmail() == null) {
                 throw new RuntimeException("Failed to get user info from Google");
             }
+            System.out.println("Google User Info: " + userInfo);
+            // Check if user exists
+            User user = userRepository.findByEmail(userInfo.getEmail())
+                    .orElse(null);
 
-            // Create or update user with retry logic for duplicate key
-            User user;
-            try {
-                user = userRepository.findByEmail(userInfo.getEmail())
-                        .orElseGet(() -> {
-                            User newUser = new User();
-                            newUser.setEmail(userInfo.getEmail());
-                            newUser.setRole(Role.STUDENT); // Default role
-                            newUser.setActivate(true);
-                            return newUser;
-                        });
-
+            if (user == null) {
+                // User doesn't exist - create new user
+                user = new User();
+                user.setEmail(userInfo.getEmail());
+                user.setRole(Role.STUDENT); // Default role for new users
+                user.setActivate(true);
+                user.setAccessToken(accessToken);
+                
+                try {
+                    user = userRepository.save(user);
+                } catch (Exception e) {
+                    // Handle race condition: user might have been created by another thread
+                    if (e.getMessage() != null && e.getMessage().contains("duplicate key")) {
+                        user = userRepository.findByEmail(userInfo.getEmail())
+                                .orElseThrow(() -> new RuntimeException("User not found after duplicate key error"));
+                        user.setAccessToken(accessToken);
+                        user = userRepository.save(user);
+                    } else {
+                        throw new RuntimeException("Failed to create new user: " + e.getMessage(), e);
+                    }
+                }
+            } else {
+                // User exists - update access token and continue with existing logic
                 user.setAccessToken(accessToken);
                 user = userRepository.save(user);
-            } catch (Exception e) {
-                // If duplicate key error, fetch the existing user
-                if (e.getMessage() != null && e.getMessage().contains("duplicate key")) {
-                    user = userRepository.findByEmail(userInfo.getEmail())
-                            .orElseThrow(() -> new RuntimeException("User not found after duplicate key error"));
-                    user.setAccessToken(accessToken);
-                    user = userRepository.save(user);
-                } else {
-                    throw e;
-                }
             }
 
-            // Return the user object directly
+            // Return the user object
             return user;
         } catch (Exception e) {
             throw new RuntimeException("Error processing Google callback: " + e.getMessage(), e);

@@ -29,6 +29,10 @@ export const teacherRoutes: RouteObject[] = [
                 element: <ManageClasses />
             },
             {
+                path: 'classes/:classId',
+                element: <ClassPage />
+            },
+            {
                 path: 'assignments',
                 element: <ManageAssignments />
             },
@@ -39,6 +43,10 @@ export const teacherRoutes: RouteObject[] = [
             {
                 path: 'tests',
                 element: <TestManagement />
+            },
+            {
+                path: 'tests/:testId',
+                element: <TestDetail />
             },
             {
                 path: 'profile',
