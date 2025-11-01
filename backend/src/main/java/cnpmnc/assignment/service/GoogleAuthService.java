@@ -10,6 +10,7 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
@@ -32,6 +33,7 @@ public class GoogleAuthService {
         this.restTemplate = new RestTemplate();
     }
 
+    @Transactional
     public Map<String, Object> handleCallback(String code, String redirectUri) {
         try {
             // Exchange code for access token
@@ -55,18 +57,31 @@ public class GoogleAuthService {
                 throw new RuntimeException("Failed to get user info from Google");
             }
 
-            // Create or update user
-            User user = userRepository.findByEmail(userInfo.getEmail())
-                    .orElseGet(() -> {
-                        User newUser = new User();
-                        newUser.setEmail(userInfo.getEmail());
-                        newUser.setRole(Role.STUDENT); // Default role
-                        newUser.setActivate(true);
-                        return newUser;
-                    });
+            // Create or update user with retry logic for duplicate key
+            User user;
+            try {
+                user = userRepository.findByEmail(userInfo.getEmail())
+                        .orElseGet(() -> {
+                            User newUser = new User();
+                            newUser.setEmail(userInfo.getEmail());
+                            newUser.setRole(Role.STUDENT); // Default role
+                            newUser.setActivate(true);
+                            return newUser;
+                        });
 
-            user.setAccessToken(accessToken);
-            userRepository.save(user);
+                user.setAccessToken(accessToken);
+                user = userRepository.save(user);
+            } catch (Exception e) {
+                // If duplicate key error, fetch the existing user
+                if (e.getMessage() != null && e.getMessage().contains("duplicate key")) {
+                    user = userRepository.findByEmail(userInfo.getEmail())
+                            .orElseThrow(() -> new RuntimeException("User not found after duplicate key error"));
+                    user.setAccessToken(accessToken);
+                    user = userRepository.save(user);
+                } else {
+                    throw e;
+                }
+            }
 
             // Return user data
             Map<String, Object> result = new HashMap<>();
