@@ -36,7 +36,7 @@ export const StudentLayout = () => {
             label: 'Điểm số',
         },
         {
-            key: '/profile',
+            key: '/student/profile',
             icon: <ProfileOutlined />,
             label: 'Thông tin cá nhân',
         },

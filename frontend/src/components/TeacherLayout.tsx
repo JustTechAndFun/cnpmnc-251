@@ -41,7 +41,7 @@ export const TeacherLayout = () => {
             label: 'Chấm điểm',
         },
         {
-            key: '/profile',
+            key: '/teacher/profile',
             icon: <ProfileOutlined />,
             label: 'Thông tin cá nhân',
         },

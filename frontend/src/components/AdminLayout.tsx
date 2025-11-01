@@ -26,7 +26,7 @@ export const AdminLayout = () => {
             label: 'Quản lý người dùng',
         },
         {
-            key: '/profile',
+            key: '/admin/profile',
             icon: <ProfileOutlined />,
             label: 'Thông tin cá nhân',
         },

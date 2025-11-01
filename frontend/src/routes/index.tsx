@@ -6,7 +6,6 @@ import { studentRoutes } from './student.routes';
 import { AuthCallbackPage } from '../pages/AuthCallback';
 import { LoginPage } from '../pages/LoginPage';
 import { HomePage } from '../pages/HomePage';
-import { ProfilePage } from '../pages/ProfilePage';
 import { UnauthorizedPage } from '../pages/UnauthorizedPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
 import { useAuth } from '../contexts/AuthContext';
@@ -52,10 +51,6 @@ export const AppRouter = () => {
         {
             path: '/dashboard',
             element: <HomePage />
-        },
-        {
-            path: '/profile',
-            element: <ProfilePage />
         },
         {
             path: '/unauthorized',
