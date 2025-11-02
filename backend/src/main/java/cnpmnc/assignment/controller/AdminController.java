@@ -101,6 +101,7 @@ public class AdminController {
     }
 
     @GetMapping("/users/teachers")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Get all teacher with Specification and Paging",
             description = "Retrieve teacher with Specification and Paging")
     @SecurityRequirement(name = "cookieAuth")
@@ -117,14 +118,25 @@ public class AdminController {
         return  ResponseEntity.ok().body(apiResponse);
     }
     @PostMapping("/users/teachers")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Create a Teacher Account",
             description = "Create a teacher Account")
     @SecurityRequirement(name = "cookieAuth")
     public ResponseEntity<ApiResponse<TeacherDTO>> createTeacherAccout(
             @Valid @RequestBody User user
     ){
+        try {
             TeacherDTO createdUser = userService.createTeacherAccount(user);
             ApiResponse<TeacherDTO> apiResponse = ApiResponse.success(createdUser, "Created teacher successful");
             return ResponseEntity.ok().body(apiResponse);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(e.getMessage()));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error(e.getMessage()));
+        }
     }
+
+
 }

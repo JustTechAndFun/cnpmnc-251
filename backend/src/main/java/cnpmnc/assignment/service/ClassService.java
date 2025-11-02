@@ -1,11 +1,10 @@
 package cnpmnc.assignment.service;
 
-import cnpmnc.assignment.dto.AddStudentRequest;
-import cnpmnc.assignment.dto.ClassDto;
-import cnpmnc.assignment.dto.CreateClassRequest;
-import cnpmnc.assignment.dto.StudentDto;
+import cnpmnc.assignment.dto.*;
+import cnpmnc.assignment.dto.requestDTO.AddTestDTO;
 import cnpmnc.assignment.model.Class;
 import cnpmnc.assignment.model.Role;
+import cnpmnc.assignment.model.Test;
 import cnpmnc.assignment.model.User;
 import cnpmnc.assignment.repository.ClassRepository;
 import cnpmnc.assignment.repository.UserRepository;
@@ -145,7 +144,22 @@ public class ClassService {
         }
         classRepository.deleteById(classId);
     }
-    
+
+    public List<TestDTO> getTestClass(String classId, User currentUser) {
+        Class classEntity = classRepository.findById(classId)
+                .orElseThrow(() -> new IllegalArgumentException("Class not found"));
+
+        // Check authorization
+        if (!classEntity.getTeacher().getId().equals(currentUser.getId()) ) {
+            throw new SecurityException("You are not authorized to access this class");
+        }
+        return classEntity.getTests().stream()
+                .map(TestDTO::fromTest)
+                .collect(Collectors.toList());
+    }
+
+
+
     private ClassDto convertToClassDto(Class classEntity) {
         return ClassDto.builder()
             .id(classEntity.getId())
