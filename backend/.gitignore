@@ -33,9 +33,9 @@ build/
 .vscode/
 
 ### SSL Certificates ###
-*.pem
-*.crt
-*.key
+# *.pem
+# *.crt
+# *.key
 
 ### Configuration Files with Sensitive Data ###
 src/main/resources/application.properties

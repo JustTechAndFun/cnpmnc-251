@@ -29,7 +29,7 @@ export const UserList = () => {
         if (debounceTimer.current) {
             clearTimeout(debounceTimer.current);
         }
-        
+
         debounceTimer.current = setTimeout(() => {
             fetchUsers(searchMail, filterActivate);
         }, 500);
@@ -45,7 +45,7 @@ export const UserList = () => {
         setLoading(true);
         try {
             const token = localStorage.getItem('auth_token');
-            
+
             // Build query params
             const params = new URLSearchParams();
             if (mail && mail.trim()) {
@@ -54,10 +54,10 @@ export const UserList = () => {
             if (activate !== null) {
                 params.append('activate', String(activate));
             }
-            
+
             const queryString = params.toString();
             const url = `${API_BASE_URL}/api/admin/users${queryString ? `?${queryString}` : ''}`;
-            
+
             const response = await axios.get<ApiResponse<User[]>>(
                 url,
                 {
