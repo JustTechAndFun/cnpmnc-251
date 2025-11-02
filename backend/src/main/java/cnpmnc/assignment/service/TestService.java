@@ -14,6 +14,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class TestService {
@@ -42,5 +46,33 @@ public class TestService {
         //save
         testRepository.save(newTest);
         return TestDTO.fromTest(newTest);
+    }
+
+    public List<TestDTO> getTestClass(String classId, User currentUser) {
+        Class classEntity = classRepository.findById(classId)
+                .orElseThrow(() -> new IllegalArgumentException("Class not found"));
+
+        // Check authorization
+        //Student or Teacher in class
+        Set<User> students=classEntity.getStudents();
+        if (!classEntity.getTeacher().getId().equals(currentUser.getId())
+        && !students.contains(currentUser)) {
+            throw new SecurityException("You are not authorized to access this class");
+        }
+        return classEntity.getTests().stream()
+                .map(TestDTO::fromTest)
+                .collect(Collectors.toList());
+    }
+    public TestDTO getTestDetail(String testId, User currentUser) {
+        Test testEntity=testRepository.findById(testId).orElseThrow(() -> new IllegalArgumentException("Test not found"));
+        Class classEntity = classRepository.findById(testEntity.getClazz().getId()).get();
+        //authentication
+        //Student or Teacher in class
+        Set<User> students=classEntity.getStudents();
+        if (!classEntity.getTeacher().getId().equals(currentUser.getId())
+        && !students.contains(currentUser)) {
+            throw new SecurityException("You are not authorized to access this test");
+        }
+        return TestDTO.fromTest(testEntity);
     }
 }

@@ -1,0 +1,120 @@
+package cnpmnc.assignment.controller;
+
+import cnpmnc.assignment.dto.ApiResponse;
+import cnpmnc.assignment.dto.TestDTO;
+import cnpmnc.assignment.dto.requestDTO.AddTestDTO;
+import cnpmnc.assignment.model.Test;
+import cnpmnc.assignment.model.User;
+import cnpmnc.assignment.service.TestService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api")
+@RequiredArgsConstructor
+@Tag(name = "Test Management ", description = "Test management endpoints")
+public class TestController {
+    private final TestService testService;
+    @GetMapping("classes/{id}/tests")
+    @PreAuthorize("hasAnyAuthority('TEACHER')")
+    @Operation(summary = "Get tests in a class", description = "Retrieve list of all students enrolled in a class. Teacher can only access their own classes.")
+    @SecurityRequirement(name = "cookieAuth")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Student list retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Not authorized to access this class"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Class not found")
+    })
+    public ResponseEntity<ApiResponse<List<TestDTO>>> getTestClass(
+            @Parameter(description = "Class ID") @PathVariable String id,
+            HttpSession session) {
+
+        User currentUser = (User) session.getAttribute("user");
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("User not authenticated"));
+        }
+        try {
+            List<TestDTO> students = testService.getTestClass(id, currentUser);
+            return ResponseEntity.ok(ApiResponse.success(students, "Test retrieved successfully"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error(e.getMessage()));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @PostMapping("classes/{id}/tests")
+    @PreAuthorize("hasAnyAuthority('TEACHER','ADMIN')")
+    @Operation(summary = "Add test to class", description = "Add a test to a class")
+    @SecurityRequirement(name = "cookieAuth")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Test added successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Not authorized to manage this class"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Class or student not found")
+    })
+    public ResponseEntity<ApiResponse<TestDTO>> addTestToClass(
+            @Parameter(description = "Class ID") @PathVariable String id,
+            @Valid @RequestBody AddTestDTO test,
+            HttpSession session
+    ) {
+        User currentUser = (User) session.getAttribute("user");
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("User not authenticated"));
+        }
+        try{
+            TestDTO dto=testService.createTest(id, test, currentUser);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(ApiResponse.success(dto, "Test created to class successfully"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error(e.getMessage()));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error(e.getMessage()));
+        }
+    }
+    @GetMapping("classes/tests/{id}")
+    @PreAuthorize("hasAnyAuthority('TEACHER')")
+    @Operation(summary = "Get test detail", description = "Retrieve test detail by ID")
+    @SecurityRequirement(name = "cookieAuth")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Test Detail retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Not authorized to access this class"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Test not found")
+    })
+    public ResponseEntity<ApiResponse<TestDTO>> getTestDetails(
+            @Parameter(description = "Test ID") @PathVariable String id,
+            HttpSession session) {
+
+        User currentUser = (User) session.getAttribute("user");
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("User not authenticated"));
+        }
+        try {
+            TestDTO dto = testService.getTestDetail(id, currentUser);
+            return ResponseEntity.ok(ApiResponse.success(dto, "Test Detail retrieved successfully"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error(e.getMessage()));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error(e.getMessage()));
+        }
+    }
+}

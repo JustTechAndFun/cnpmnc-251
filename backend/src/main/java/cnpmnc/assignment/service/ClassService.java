@@ -145,18 +145,7 @@ public class ClassService {
         classRepository.deleteById(classId);
     }
 
-    public List<TestDTO> getTestClass(String classId, User currentUser) {
-        Class classEntity = classRepository.findById(classId)
-                .orElseThrow(() -> new IllegalArgumentException("Class not found"));
 
-        // Check authorization
-        if (!classEntity.getTeacher().getId().equals(currentUser.getId()) ) {
-            throw new SecurityException("You are not authorized to access this class");
-        }
-        return classEntity.getTests().stream()
-                .map(TestDTO::fromTest)
-                .collect(Collectors.toList());
-    }
 
 
 
