@@ -24,8 +24,13 @@ public class UserService {
             predicate = cb.and(predicate, cb.equal(root.get("role"), Role.TEACHER));
             //Nếu Có filter
             if (email != null && !email.isEmpty()) {
+
+                String raw = email.trim().toLowerCase();
+                String escaped = escapeForLike(raw);
+                // sử dụng escape char '\'
+                predicate = cb.and(predicate,
+                        cb.like(cb.lower(root.get("email")), "%" + escaped + "%", '\\'));
                 // Email chứa chuỗi (nếu có)
-                predicate = cb.and(predicate, cb.like(cb.lower(root.get("email")), "%" + email.toLowerCase() + "%"));
             }
             // Active (nếu có)
             if (activate != null) {
@@ -38,6 +43,12 @@ public class UserService {
                 .map(TeacherDTO::fromUser).collect(Collectors.toList());
     }
     public TeacherDTO createTeacherAccount(User user) {
+        if (user == null) {
+            throw new IllegalArgumentException("User must not be null");
+        }
+        if (user.getEmail() == null) {
+            throw new IllegalArgumentException("User email must not be null");
+        }
         String email = user.getEmail();
         if (userRepository.existsByEmail(email)) {
             throw new IllegalArgumentException("Email address already in use");
@@ -53,4 +64,12 @@ public class UserService {
                 "Your teacher account has been created. Please login to activate your account.");
         return TeacherDTO.fromUser(createdUser);
     }
+    private String escapeForLike(String input) {
+        // escape backslash first, then % and _
+        return input.replace("\\", "\\\\")
+                .replace("%", "\\%")
+                .replace("_", "\\_");
+    }
+
 }
+

@@ -97,8 +97,8 @@ public class AdminController {
 
     @GetMapping("/users/teachers")
     @PreAuthorize("hasAuthority('ADMIN')")
-    @Operation(summary = "Get all teacher with Specification",
-            description = "Retrieve teacher with Specification")
+    @Operation(summary = "Get all teachers with specification",
+            description = "Retrieve teachers with specification")
     @SecurityRequirement(name = "cookieAuth")
     public ResponseEntity<ApiResponse<List<TeacherDTO>>> getAllTeacher(
             @Parameter(description = "Search by email (partial match, case-insensitive)")
@@ -112,14 +112,14 @@ public class AdminController {
     @PostMapping("/users/teachers")
     @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Create a Teacher Account",
-            description = "Create a teacher Account")
+            description = "Create a teacher account")
     @SecurityRequirement(name = "cookieAuth")
     public ResponseEntity<ApiResponse<TeacherDTO>> createTeacherAccount(
             @Valid @RequestBody User user
     ){
         try {
             TeacherDTO createdUser = userService.createTeacherAccount(user);
-            ApiResponse<TeacherDTO> apiResponse = ApiResponse.success(createdUser, "Created teacher successful");
+            ApiResponse<TeacherDTO> apiResponse = ApiResponse.success(createdUser, "Teacher account created successfully");
             return ResponseEntity.ok().body(apiResponse);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
