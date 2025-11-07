@@ -109,4 +109,25 @@ public class AdminController {
         List<TeacherDTO> teachers = userService.getAllTeacher(mail, activate);
         return ResponseEntity.ok(ApiResponse.success(teachers, "Teachers retrieved successfully"));
     }
+    @PostMapping("/users/teachers")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @Operation(summary = "Create a Teacher Account",
+            description = "Create a teacher Account")
+    @SecurityRequirement(name = "cookieAuth")
+    public ResponseEntity<ApiResponse<TeacherDTO>> createTeacherAccount(
+            @Valid @RequestBody User user
+    ){
+        try {
+            TeacherDTO createdUser = userService.createTeacherAccount(user);
+            ApiResponse<TeacherDTO> apiResponse = ApiResponse.success(createdUser, "Created teacher successful");
+            return ResponseEntity.ok().body(apiResponse);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(e.getMessage()));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
 }

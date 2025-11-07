@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    private final EmailService emailService;
     public List<TeacherDTO> getAllTeacher(String email, Boolean activate) {
         Specification<User> spec = (root, query, cb) -> {
             Predicate predicate = cb.conjunction(); // bắt đầu với điều kiện luôn đúng
@@ -35,5 +36,21 @@ public class UserService {
         List<User> teachers = userRepository.findAll(spec);
         return teachers.stream()
                 .map(TeacherDTO::fromUser).collect(Collectors.toList());
+    }
+    public TeacherDTO createTeacherAccount(User user) {
+        String email = user.getEmail();
+        if (userRepository.existsByEmail(email)) {
+            throw new IllegalArgumentException("Email address already in use");
+        }
+        User newUser = new User();
+        newUser.setRole(Role.TEACHER);
+        newUser.setActivate(Boolean.FALSE);
+        newUser.setEmail(user.getEmail());
+        User createdUser = userRepository.save(newUser);
+        // Gửi email thông báo đã tạo
+        emailService.sendSimpleMail(newUser.getEmail(),
+                "Teacher Account Created",
+                "Your teacher account has been created. Please login to activate your account.");
+        return TeacherDTO.fromUser(createdUser);
     }
 }
