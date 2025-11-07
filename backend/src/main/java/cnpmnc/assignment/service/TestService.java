@@ -74,5 +74,15 @@ public class TestService {
                 .map(TestDTO::fromTest)
                 .collect(Collectors.toList());
     }
-
+    public TestDTO getTestDetail(String testId, User currentUser) {
+        Test testEntity = testRepository.findById(testId).orElseThrow(() -> new IllegalArgumentException("Test not found"));
+        Class classEntity = classRepository.findById(testEntity.getClazz().getId())
+                .orElseThrow(() -> new IllegalArgumentException("Class not found for test"));        // Check authorization
+        Set<User> students = classEntity.getStudents();
+        if (!classEntity.getTeacher().getId().equals(currentUser.getId())
+                && !students.contains(currentUser)) {
+            throw new SecurityException("You are not authorized to access this test");
+        }
+        return TestDTO.fromTest(testEntity);
+    }
 }

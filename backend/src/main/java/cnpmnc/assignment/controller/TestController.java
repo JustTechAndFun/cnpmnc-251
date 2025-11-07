@@ -93,4 +93,34 @@ public class TestController {
                     .body(ApiResponse.error(e.getMessage()));
         }
     }
+    @GetMapping("classes/{classId}/tests/{id}")
+    @PreAuthorize("hasAnyAuthority('TEACHER', 'STUDENT')")
+    @Operation(summary = "Get test detail", description = "Retrieve test detail by ID")
+    @SecurityRequirement(name = "cookieAuth")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Test Detail retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Not authorized to access this class"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Test not found")
+    })
+    public ResponseEntity<ApiResponse<TestDTO>> getTestDetails(
+            @Parameter(description = "Class ID") @PathVariable String classId,
+            @Parameter(description = "Test ID") @PathVariable String id,
+            HttpSession session) {
+
+        User currentUser = (User) session.getAttribute("user");
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("User not authenticated"));
+        }
+        try {
+            TestDTO dto = testService.getTestDetail(id, currentUser);
+            return ResponseEntity.ok(ApiResponse.success(dto, "Test Detail retrieved successfully"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error(e.getMessage()));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error(e.getMessage()));
+        }
+    }
 }
