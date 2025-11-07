@@ -1,12 +1,10 @@
 package cnpmnc.assignment.controller;
 
-import cnpmnc.assignment.dto.ApiResponse;
-import cnpmnc.assignment.dto.ClassDto;
-import cnpmnc.assignment.dto.CreateClassRequest;
-import cnpmnc.assignment.dto.UserDto;
+import cnpmnc.assignment.dto.*;
 import cnpmnc.assignment.model.User;
 import cnpmnc.assignment.repository.UserRepository;
 import cnpmnc.assignment.service.ClassService;
+import cnpmnc.assignment.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -29,6 +27,7 @@ public class AdminController {
 
     private final UserRepository userRepository;
     private final ClassService classService;
+    private final UserService userService;
 
     @GetMapping("/users")
     @PreAuthorize("hasAuthority('ADMIN')")
@@ -94,5 +93,20 @@ public class AdminController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ApiResponse.error(e.getMessage()));
         }
+    }
+
+    @GetMapping("/users/teachers")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @Operation(summary = "Get all teacher with Specification",
+            description = "Retrieve teacher with Specification")
+    @SecurityRequirement(name = "cookieAuth")
+    public ResponseEntity<ApiResponse<List<TeacherDTO>>> getAllTeacher(
+            @Parameter(description = "Search by email (partial match, case-insensitive)")
+            @RequestParam(required = false) String mail,
+            @Parameter(description = "Filter by activation status (true/false)")
+            @RequestParam(required = false) Boolean activate) {
+
+        List<TeacherDTO> teachers = userService.getAllTeacher(mail, activate);
+        return ResponseEntity.ok(ApiResponse.success(teachers, "Teachers retrieved successfully"));
     }
 }
