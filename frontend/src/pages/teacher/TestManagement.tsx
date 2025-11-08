@@ -21,8 +21,10 @@ import {
     DeleteOutlined,
     PlusOutlined,
     ClockCircleOutlined,
-    KeyOutlined
+    KeyOutlined,
+    EyeOutlined
 } from '@ant-design/icons';
+import { useNavigate } from 'react-router';
 import type { ApiResponse, Test, Question } from '../../types';
 
 const { Title, Text } = Typography;
@@ -34,6 +36,7 @@ export const TestManagement = () => {
     const [tests, setTests] = useState<Test[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedTest, setSelectedTest] = useState<Test | null>(null);
+    const navigate = useNavigate();
 
     // Modals state
     const [testInfoModalVisible, setTestInfoModalVisible] = useState(false);
