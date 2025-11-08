@@ -3,10 +3,14 @@ package cnpmnc.assignment.controller;
 
 import cnpmnc.assignment.dto.ApiResponse;
 import cnpmnc.assignment.dto.QuestionDTO;
+import cnpmnc.assignment.dto.QuestionDTOforStudent;
 import cnpmnc.assignment.dto.RequestDTO.AddTestRequestDTO;
 import cnpmnc.assignment.dto.TestDTO;
-import cnpmnc.assignment.dto.TestResultsResponseDTO;
+import cnpmnc.assignment.model.Class;
+import cnpmnc.assignment.model.Question;
+import cnpmnc.assignment.model.Test;
 import cnpmnc.assignment.model.User;
+import cnpmnc.assignment.repository.TestRepository;
 import cnpmnc.assignment.service.TestService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -29,6 +33,7 @@ import java.util.List;
 @Tag(name = "Test", description = "Test management endpoints")
 public class TestController {
     private final TestService testService;
+    private final TestRepository testRepository;
 
     @PostMapping("classes/{id}/tests")
     @PreAuthorize("hasAnyAuthority('TEACHER')")
@@ -246,9 +251,32 @@ public class TestController {
         }
     }
 
+    @GetMapping("/exams/{id}/questions")
+    @PreAuthorize("hasAnyAuthority('STUDENT')")
+    @Operation(summary = "Get question of test For Student", description = "Retrieve list of all question of test")
+    @SecurityRequirement(name = "cookieAuth")
+    public ResponseEntity<ApiResponse<List<QuestionDTOforStudent>>> takeATest(
+            @Parameter(description = "Test ID") @PathVariable String id,
+            @Parameter(description = "passcode") @RequestParam String passcode,
+            HttpSession session) {
+        User currentUser = (User) session.getAttribute("user");
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("User not authenticated"));
+        }
 
-
-
+        Test testEntity = testRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Test not found"));
+        if (!testEntity.getPasscode().equals(passcode)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Invalid passcode"));
+        }
+        if (testEntity.getClazz().getStudents().stream().noneMatch(student -> student.getId().equals(currentUser.getId()))) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("You are not authorized to access this test"));
+        }
+        List<QuestionDTOforStudent> dto = testService.getQuestionsForStudent(testEntity);
+        return ResponseEntity.ok(ApiResponse.success(dto, "Test retrieved successfully"));
+    }
 
 
 
