@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Navigate } from 'react-router';
 import { useAuth } from '../contexts/AuthContext';
 import { Role } from '../types';

@@ -10,8 +10,6 @@ const { Title, Text } = Typography;
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export const ProfilePage = () => {
-    const auth = useAuth();
-    const user = auth?.user ?? null;
     const [profile, setProfile] = useState<Profile | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
