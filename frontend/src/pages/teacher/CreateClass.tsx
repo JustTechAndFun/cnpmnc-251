@@ -153,3 +153,5 @@ export const CreateClass = () => {
         </div>
     );
 };
+
+export default CreateClass;

@@ -43,7 +43,7 @@ export const TestDetail = () => {
             // For now, we'll try to fetch from the tests list endpoint
             // since we don't have classId in the route
             const classesResponse = await teacherApi.getMyClasses();
-            
+
             if (!classesResponse.error && classesResponse.data && classesResponse.data.length > 0) {
                 // Try to fetch test from each class
                 for (const classItem of classesResponse.data) {
@@ -154,7 +154,7 @@ export const TestDetail = () => {
                     </Card>
 
                     {/* Questions Section */}
-                    <Card 
+                    <Card
                         title={
                             <div className="flex items-center gap-2">
                                 <FileTextOutlined />
@@ -203,7 +203,7 @@ export const TestDetail = () => {
                     </Card>
 
                     {/* Student Results Section - Placeholder */}
-                    <Card 
+                    <Card
                         title={
                             <div className="flex items-center gap-2">
                                 <ClockCircleOutlined />

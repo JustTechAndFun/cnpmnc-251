@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, Typography, Form, Input, Button, message, Select, InputNumber } from 'antd';
 import { PlusOutlined, FileTextOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router';
+import { useNavigate, useLocation } from 'react-router';
 import { teacherApi } from '../../apis';
 import type { ClassDto } from '../../apis/teacherApi';
 
@@ -22,10 +22,19 @@ export const CreateTest = () => {
     const [classes, setClasses] = useState<ClassDto[]>([]);
     const [loadingClasses, setLoadingClasses] = useState(true);
     const navigate = useNavigate();
+    const location = useLocation();
+    const preselectedClassId = location.state?.preselectedClassId;
 
     useEffect(() => {
         fetchClasses();
     }, []);
+
+    useEffect(() => {
+        // Set preselected class if available and classes are loaded
+        if (preselectedClassId && classes.length > 0) {
+            form.setFieldsValue({ classId: preselectedClassId });
+        }
+    }, [preselectedClassId, classes, form]);
 
     const fetchClasses = async () => {
         setLoadingClasses(true);
@@ -47,8 +56,13 @@ export const CreateTest = () => {
     const handleSubmit = async (values: CreateTestRequest) => {
         setLoading(true);
         try {
-            const { classId, ...testData } = values;
-            const response = await teacherApi.addTestToClass(classId, testData);
+            const { classId, name, ...testData } = values;
+            // Map 'name' to 'title' for backend
+            const requestData = {
+                title: name,
+                ...testData
+            };
+            const response = await teacherApi.addTestToClass(classId, requestData);
 
             if (!response.error) {
                 message.success('Tạo bài kiểm tra thành công!');
@@ -220,3 +234,5 @@ export const CreateTest = () => {
         </div>
     );
 };
+
+export default CreateTest;

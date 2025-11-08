@@ -1,13 +1,13 @@
 import { useNavigate, useLocation, Outlet } from 'react-router';
 import { Layout, Menu, Avatar, Button, Spin, Typography } from 'antd';
-import { 
-    DashboardOutlined, 
-    BookOutlined, 
-    FileTextOutlined, 
-    ProfileOutlined, 
-    LogoutOutlined, 
+import {
+    DashboardOutlined,
+    BookOutlined,
+    FileTextOutlined,
+    ProfileOutlined,
+    LogoutOutlined,
     PlusCircleOutlined,
-    FileAddOutlined 
+    FileAddOutlined
 } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
 

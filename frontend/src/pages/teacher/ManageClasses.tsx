@@ -301,3 +301,4 @@ export const ManageClasses = () => {
     );
 };
 
+export default ManageClasses;

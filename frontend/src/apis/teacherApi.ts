@@ -38,7 +38,7 @@ export interface TestDTO {
 }
 
 export interface AddTestRequestDTO {
-    name: string;
+    title: string;
     description?: string;
     duration: number;
     passcode?: string;

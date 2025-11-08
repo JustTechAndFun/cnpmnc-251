@@ -560,13 +560,11 @@ export const ClassPage = () => {
     };
 
     const handleCreateTest = () => {
-        // Navigate to create test page or open modal
+        // Navigate to create test page with classId pre-selected
         const targetClassId = classId || classInfo.id;
-        if (targetClassId) {
-            navigate(`/teacher/classes/${targetClassId}/tests/create`);
-        } else {
-            message.info('Điều hướng đến trang tạo bài kiểm tra');
-        }
+        navigate('/teacher/tests/create', {
+            state: { preselectedClassId: targetClassId }
+        });
     };
 
     const handleTestClick = (testId: string) => {
