@@ -1,6 +1,7 @@
 package cnpmnc.assignment.model;
 
 import cnpmnc.assignment.util.constant.TestStatus;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -9,6 +10,7 @@ import lombok.*;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.List;
 
 
 @Entity
@@ -47,5 +49,9 @@ public class Test {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "class_id", nullable = false)
     private Class clazz;
+
+    @OneToMany(mappedBy = "test", fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<Question> questions;
 
 }

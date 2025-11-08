@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card, Typography, Table, Button, Space, Tag, Spin, Empty, Alert, Modal, Form, Input, Select, message } from 'antd';
-import { UserAddOutlined, ReloadOutlined, TeamOutlined } from '@ant-design/icons';
+import { UserAddOutlined, ReloadOutlined, TeamOutlined, PlusOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router';
 import { teacherApi } from '../../apis';
 import type { ClassDto } from '../../apis/teacherApi';
@@ -56,7 +56,7 @@ export const ManageClasses = () => {
 
         setSubmitting(true);
         try {
-            const request = values.searchType === 'email' 
+            const request = values.searchType === 'email'
                 ? { email: values.searchValue }
                 : { studentId: values.searchValue };
 
@@ -82,10 +82,10 @@ export const ManageClasses = () => {
     const columns: ColumnsType<ClassDto> = [
         {
             title: 'Tên lớp',
-            dataIndex: 'className',
-            key: 'className',
+            dataIndex: 'name',
+            key: 'name',
             render: (text: string) => <Text strong>{text}</Text>,
-            sorter: (a, b) => a.className.localeCompare(b.className)
+            sorter: (a, b) => (a.name || '').localeCompare(b.name || '')
         },
         {
             title: 'Mã lớp',
@@ -97,14 +97,14 @@ export const ManageClasses = () => {
             title: 'Học kỳ',
             dataIndex: 'semester',
             key: 'semester',
-            sorter: (a, b) => a.semester.localeCompare(b.semester)
+            sorter: (a, b) => (a.semester || '').localeCompare(b.semester || '')
         },
         {
             title: 'Năm học',
             dataIndex: 'year',
             key: 'year',
             align: 'center',
-            sorter: (a, b) => a.year - b.year
+            sorter: (a, b) => (a.year || 0) - (b.year || 0)
         },
         {
             title: 'Số học sinh',
@@ -149,19 +149,29 @@ export const ManageClasses = () => {
         <div className="p-8 max-w-7xl mx-auto">
             <div className="mb-8 flex justify-between items-center">
                 <div>
-                    <Title level={2} className="mb-2 bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+                    <Title level={2} className="mb-2 bg-linear-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
                         Quản lý lớp học
                     </Title>
                     <Text type="secondary">Danh sách các lớp học bạn đang giảng dạy</Text>
                 </div>
-                <Button
-                    type="primary"
-                    icon={<ReloadOutlined />}
-                    onClick={fetchClasses}
-                    loading={loading}
-                >
-                    Làm mới
-                </Button>
+                <Space>
+                    <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        onClick={() => navigate('/teacher/classes/create')}
+                        size="large"
+                    >
+                        Tạo lớp học
+                    </Button>
+                    <Button
+                        type="default"
+                        icon={<ReloadOutlined />}
+                        onClick={fetchClasses}
+                        loading={loading}
+                    >
+                        Làm mới
+                    </Button>
+                </Space>
             </div>
 
             {loading && !classes.length ? (
@@ -240,7 +250,7 @@ export const ManageClasses = () => {
 
                     <Form.Item
                         noStyle
-                        shouldUpdate={(prevValues, currentValues) => 
+                        shouldUpdate={(prevValues, currentValues) =>
                             prevValues.searchType !== currentValues.searchType
                         }
                     >
@@ -252,7 +262,7 @@ export const ManageClasses = () => {
                                     label={searchType === 'email' ? 'Email sinh viên' : 'Mã số sinh viên'}
                                     rules={[
                                         { required: true, message: `Vui lòng nhập ${searchType === 'email' ? 'email' : 'mã số sinh viên'}` },
-                                        searchType === 'email' 
+                                        searchType === 'email'
                                             ? { type: 'email', message: 'Email không hợp lệ' }
                                             : {}
                                     ]}
@@ -291,3 +301,4 @@ export const ManageClasses = () => {
     );
 };
 
+export default ManageClasses;

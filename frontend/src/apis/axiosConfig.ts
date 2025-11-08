@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 // Create axios instance with default configuration
 const apiClient = axios.create({
@@ -14,8 +14,27 @@ const apiClient = axios.create({
 // Request interceptor
 apiClient.interceptors.request.use(
     (config) => {
-        // You can add additional headers here if needed
-        // For example, CSRF tokens or other custom headers
+        // Check if session is about to expire (within 7 days) and refresh it
+        const expiryTime = localStorage.getItem('auth_expiry');
+        const authTimestamp = localStorage.getItem('auth_timestamp');
+        
+        if (expiryTime && authTimestamp) {
+            const now = Date.now();
+            const expiry = parseInt(expiryTime);
+            const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000;
+            
+            // If session expires in less than 7 days, refresh the timestamps
+            if (expiry - now < sevenDaysInMs && expiry > now) {
+                const newExpiry = now + (30 * 24 * 60 * 60 * 1000); // Reset to 30 days
+                localStorage.setItem('auth_expiry', newExpiry.toString());
+                localStorage.setItem('auth_timestamp', now.toString());
+                
+                if (import.meta.env.DEV) {
+                    console.log('[API] Session refreshed. New expiry:', new Date(newExpiry).toLocaleString());
+                }
+            }
+        }
+        
         return config;
     },
     (error) => {
@@ -32,13 +51,13 @@ apiClient.interceptors.response.use(
             if (setCookieHeader) {
                 console.log('[API] Received Set-Cookie header:', setCookieHeader);
             }
-            
+
             // Log all cookies currently in browser
             if (typeof document !== 'undefined') {
                 console.log('[API] Current browser cookies:', document.cookie);
             }
         }
-        
+
         return response;
     },
     (error) => {

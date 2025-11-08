@@ -3,6 +3,7 @@ package cnpmnc.assignment.service;
 import cnpmnc.assignment.dto.AddStudentRequest;
 import cnpmnc.assignment.dto.ClassDto;
 import cnpmnc.assignment.dto.CreateClassRequest;
+import cnpmnc.assignment.dto.CreateClassRequestDTO;
 import cnpmnc.assignment.dto.StudentDto;
 import cnpmnc.assignment.model.Class;
 import cnpmnc.assignment.model.Role;
@@ -103,6 +104,24 @@ public class ClassService {
             .collect(Collectors.toList());
     }
     
+    @Transactional(readOnly = true)
+    public List<ClassDto> getStudentClasses(User student) {
+        return classRepository.findAll().stream()
+            .filter(classEntity -> classEntity.getStudents().contains(student))
+            .map(this::convertToClassDto)
+            .collect(Collectors.toList());
+    }
+    
+    @Transactional(readOnly = true)
+    public List<ClassDto> getMyClasses(User user) {
+        if (user.getRole() == Role.TEACHER) {
+            return getTeacherClasses(user);
+        } else if (user.getRole() == Role.STUDENT) {
+            return getStudentClasses(user);
+        }
+        return List.of();
+    }
+    
     @Transactional
     public ClassDto createClass(CreateClassRequest request) {
         // Check if class code already exists
@@ -146,12 +165,39 @@ public class ClassService {
         classRepository.deleteById(classId);
     }
     
+    @Transactional
+    public ClassDto createClassForTeacher(CreateClassRequestDTO request, User teacher) {
+        // Verify the user is actually a teacher
+        if (teacher.getRole() != Role.TEACHER) {
+            throw new IllegalArgumentException("User is not a teacher");
+        }
+        
+        // Check if class code already exists
+        if (classRepository.existsByClassCode(request.getClassCode())) {
+            throw new IllegalArgumentException("Class code already exists");
+        }
+        
+        // Create class
+        Class classEntity = new Class();
+        classEntity.setName(request.getClassName());
+        classEntity.setClassCode(request.getClassCode());
+        classEntity.setSemester(request.getSemester());
+        classEntity.setYear(request.getYear());
+        classEntity.setTeacher(teacher);
+        
+        classEntity = classRepository.save(classEntity);
+        
+        return convertToClassDto(classEntity);
+    }
+    
     private ClassDto convertToClassDto(Class classEntity) {
         return ClassDto.builder()
             .id(classEntity.getId())
             .name(classEntity.getName())
             .description(classEntity.getDescription())
             .classCode(classEntity.getClassCode())
+            .semester(classEntity.getSemester())
+            .year(classEntity.getYear())
             .teacher(ClassDto.TeacherDto.builder()
                 .id(classEntity.getTeacher().getId())
                 .email(classEntity.getTeacher().getEmail())

@@ -560,13 +560,11 @@ export const ClassPage = () => {
     };
 
     const handleCreateTest = () => {
-        // Navigate to create test page or open modal
+        // Navigate to create test page with classId pre-selected
         const targetClassId = classId || classInfo.id;
-        if (targetClassId) {
-            navigate(`/teacher/classes/${targetClassId}/tests/create`);
-        } else {
-            message.info('Điều hướng đến trang tạo bài kiểm tra');
-        }
+        navigate('/teacher/tests/create', {
+            state: { preselectedClassId: targetClassId }
+        });
     };
 
     const handleTestClick = (testId: string) => {
@@ -665,7 +663,7 @@ export const ClassPage = () => {
                         <div className="flex justify-between items-start mb-6">
                             <div className="flex-1">
                                 <div className="flex items-center gap-4 mb-4">
-                                    <Title level={2} className="mb-0 bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+                                    <Title level={2} className="mb-0 bg-linear-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
                                         {classInfo.name}
                                     </Title>
                                     {classes.length > 0 && (
@@ -722,7 +720,7 @@ export const ClassPage = () => {
                                     icon={<FileAddOutlined />}
                                     size="large"
                                     onClick={handleCreateTest}
-                                    className="bg-gradient-to-r from-purple-600 to-purple-800 border-none"
+                                    className="bg-linear-to-r from-purple-600 to-purple-800 border-none"
                                 >
                                     Tạo bài kiểm tra mới
                                 </Button>
