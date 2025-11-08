@@ -383,7 +383,7 @@ export const TestManagement = () => {
     };
 
     const expandableRowRender = (test: Test) => {
-        const sortedQuestions = [...test.questions].sort((a, b) => a.order - b.order);
+        const sortedQuestions = test.questions ? [...test.questions].sort((a, b) => a.order - b.order) : [];
         const handleAddQuestionClick = () => {
             setSelectedTest(test);
             handleAddQuestion();
@@ -392,7 +392,7 @@ export const TestManagement = () => {
         return (
             <div className="p-4 bg-gray-50">
                 <div className="flex justify-between items-center mb-4">
-                    <Title level={4} className="mb-0">Danh sách câu hỏi ({test.questions.length})</Title>
+                    <Title level={4} className="mb-0">Danh sách câu hỏi ({test.questions?.length || 0})</Title>
                     <Button
                         type="primary"
                         icon={<PlusOutlined />}
@@ -402,7 +402,7 @@ export const TestManagement = () => {
                     </Button>
                 </div>
 
-                {test.questions.length === 0 ? (
+                {!test.questions || test.questions.length === 0 ? (
                     <Empty description="Chưa có câu hỏi nào" />
                 ) : (
                     <div className="space-y-4">
@@ -416,14 +416,17 @@ export const TestManagement = () => {
     const columns = [
         {
             title: 'Tên test',
-            dataIndex: 'name',
-            key: 'name',
-            render: (_: string, record: Test) => (
-                <div>
-                    <Text strong className="block">{record.name}</Text>
-                    <Text type="secondary" className="text-xs">{record.description}</Text>
-                </div>
-            ),
+            dataIndex: 'title',
+            key: 'title',
+            render: (_: string, record: Test) => {
+                const testRecord = record as any;
+                return (
+                    <div>
+                        <Text strong className="block">{testRecord.title || record.name}</Text>
+                        <Text type="secondary" className="text-xs">{record.description}</Text>
+                    </div>
+                );
+            },
         },
         {
             title: 'Thời gian',
@@ -449,7 +452,7 @@ export const TestManagement = () => {
             title: 'Số câu hỏi',
             key: 'questionsCount',
             render: (_: unknown, record: Test) => {
-                const count = record.questions.length;
+                const count = record.questions?.length || 0;
                 return <Tag color="blue">{count} câu</Tag>;
             },
         },
