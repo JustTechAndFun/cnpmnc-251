@@ -199,7 +199,7 @@ public class TestService {
         newQuestion.setChoiceB(questionDTO.getChoiceB());
         newQuestion.setChoiceC(questionDTO.getChoiceC());
         newQuestion.setChoiceD(questionDTO.getChoiceD());
-        newQuestion.setAnswer(questionDTO.getAnswer());
+        newQuestion.setAnswer(questionDTO.getAnswer().name());
         newQuestion.setTest(testEntity);
 
         Question savedQuestion = questionRepository.save(newQuestion);
@@ -248,7 +248,7 @@ public class TestService {
             questionEntity.setChoiceD(updateDTO.getChoiceD());
         }
         if (updateDTO.getAnswer() != null) {
-            questionEntity.setAnswer(updateDTO.getAnswer());
+            questionEntity.setAnswer(updateDTO.getAnswer().name());
         }
 
         Question savedQuestion = questionRepository.save(questionEntity);
@@ -374,5 +374,10 @@ public class TestService {
                 submissionDTOs,
                 summary
         );
+    }
+    public List<QuestionDTOforStudent> getQuestionsForStudent(Test testEntity) {
+        return testEntity.getQuestions().stream()
+                .map(QuestionDTOforStudent::fromEntity)
+                .collect(Collectors.toList());
     }
 }

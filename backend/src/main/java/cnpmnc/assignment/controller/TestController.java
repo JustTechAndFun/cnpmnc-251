@@ -1,15 +1,13 @@
 package cnpmnc.assignment.controller;
 
 
-import cnpmnc.assignment.dto.ApiResponse;
-import cnpmnc.assignment.dto.QuestionDTO;
-import cnpmnc.assignment.dto.QuestionDTOforStudent;
+import cnpmnc.assignment.dto.*;
 import cnpmnc.assignment.dto.RequestDTO.AddTestRequestDTO;
-import cnpmnc.assignment.dto.TestDTO;
 import cnpmnc.assignment.model.Class;
 import cnpmnc.assignment.model.Question;
 import cnpmnc.assignment.model.Test;
 import cnpmnc.assignment.model.User;
+import cnpmnc.assignment.repository.ClassRepository;
 import cnpmnc.assignment.repository.TestRepository;
 import cnpmnc.assignment.service.TestService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -26,6 +24,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/")
@@ -34,6 +33,8 @@ import java.util.List;
 public class TestController {
     private final TestService testService;
     private final TestRepository testRepository;
+    private final ClassRepository classRepository;
+
 
     @PostMapping("classes/{id}/tests")
     @PreAuthorize("hasAnyAuthority('TEACHER')")
@@ -54,8 +55,8 @@ public class TestController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.error("User not authenticated"));
         }
-        try{
-            TestDTO dto=testService.createTest(id, test, currentUser);
+        try {
+            TestDTO dto = testService.createTest(id, test, currentUser);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success(dto, "Test created to class successfully"));
         } catch (IllegalArgumentException e) {
@@ -66,6 +67,7 @@ public class TestController {
                     .body(ApiResponse.error(e.getMessage()));
         }
     }
+
     @GetMapping("classes/{id}/tests")
     @PreAuthorize("hasAnyAuthority('TEACHER', 'STUDENT')")
     @Operation(summary = "Get tests in a class", description = "Retrieve list of all students enrolled in a class. Teacher can only access their own classes.")
@@ -95,6 +97,7 @@ public class TestController {
                     .body(ApiResponse.error(e.getMessage()));
         }
     }
+
     @GetMapping("classes/{classId}/tests/{id}")
     @PreAuthorize("hasAnyAuthority('TEACHER', 'STUDENT')")
     @Operation(summary = "Get test detail", description = "Retrieve test detail by ID")
@@ -240,7 +243,7 @@ public class TestController {
                     .body(ApiResponse.error("User not authenticated"));
         }
         try {
-            List<QuestionDTO> dto = testService.getQuestionOfTest(classId,id, currentUser);
+            List<QuestionDTO> dto = testService.getQuestionOfTest(classId, id, currentUser);
             return ResponseEntity.ok(ApiResponse.success(dto, "Test retrieved successfully"));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -278,6 +281,29 @@ public class TestController {
         return ResponseEntity.ok(ApiResponse.success(dto, "Test retrieved successfully"));
     }
 
+    @GetMapping("student/tests")
+    @PreAuthorize("hasAnyAuthority('STUDENT')")
+    @Operation(summary = "Get tests of student", description = "Retrieve list of all test of student")
+    @SecurityRequirement(name = "cookieAuth")
+    public ResponseEntity<ApiResponse<List<TestDTO>>> getTestofStudent(
+            HttpSession session) {
+
+        User currentUser = (User) session.getAttribute("user");
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("User not authenticated"));
+        }
+        //Get All class of student
+        List<Class> classes = classRepository.findByStudentsContaining(currentUser);
+        List<TestDTO> tests = classes.stream()
+                .flatMap(c -> c.getTests().stream())
+                .map(TestDTO::fromTest)
+                .toList();
+        return ResponseEntity.ok(ApiResponse.success(tests, "Test retrieved successfully"));
+    }
 
 
 }
+
+
+

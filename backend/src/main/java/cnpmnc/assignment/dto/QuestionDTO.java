@@ -35,7 +35,7 @@ public class QuestionDTO {
                 q.getChoiceB(),
                 q.getChoiceC(),
                 q.getChoiceD(),
-                q.getAnswer() != null ? q.getAnswer().name() : null,
+                q.getAnswer() != null ? q.getAnswer() : null,
                 q.getTest() != null ? q.getTest().getId() : null
         );
     }
