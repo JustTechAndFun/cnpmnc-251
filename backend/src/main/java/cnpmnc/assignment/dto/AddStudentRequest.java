@@ -1,5 +1,6 @@
 package cnpmnc.assignment.dto;
 
+import jakarta.validation.constraints.Email;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,6 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AddStudentRequest {
     
+    @Email(message = "Email must be valid")
     private String email;
     
     private String studentId;

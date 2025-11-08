@@ -259,10 +259,27 @@ export const ClassPage = () => {
         try {
             const token = localStorage.getItem('auth_token');
 
+            // Fetch class information first
+            try {
+                const classInfoResponse = await axios.get<ApiResponse<ClassInfo>>(
+                    `${API_BASE_URL}/api/classes/${targetClassId}`,
+                    {
+                        headers: token ? { Authorization: `Bearer ${token}` } : {},
+                        withCredentials: true
+                    }
+                );
+
+                if (!classInfoResponse.data.error && classInfoResponse.data.data) {
+                    setClassInfo(classInfoResponse.data.data);
+                }
+            } catch (error) {
+                console.error('Failed to fetch class info', error);
+            }
+
             // Fetch students
             try {
                 const studentsResponse = await axios.get<ApiResponse<Student[]>>(
-                    `${API_BASE_URL}/api/teacher/classes/${targetClassId}/students`,
+                    `${API_BASE_URL}/api/classes/${targetClassId}/students`,
                     {
                         headers: token ? { Authorization: `Bearer ${token}` } : {},
                         withCredentials: true
@@ -371,7 +388,7 @@ export const ClassPage = () => {
             // Fetch class information
             try {
                 const classResponse = await axios.get<ApiResponse<ClassInfo>>(
-                    `${API_BASE_URL}/api/teacher/classes/${classId}`,
+                    `${API_BASE_URL}/api/classes/${classId}`,
                     {
                         headers: token ? { Authorization: `Bearer ${token}` } : {},
                         withCredentials: true
@@ -401,7 +418,7 @@ export const ClassPage = () => {
             // Fetch students
             try {
                 const studentsResponse = await axios.get<ApiResponse<Student[]>>(
-                    `${API_BASE_URL}/api/teacher/classes/${classId}/students`,
+                    `${API_BASE_URL}/api/classes/${classId}/students`,
                     {
                         headers: token ? { Authorization: `Bearer ${token}` } : {},
                         withCredentials: true
@@ -509,8 +526,8 @@ export const ClassPage = () => {
         try {
             const token = localStorage.getItem('auth_token');
             await axios.post<ApiResponse<Student>>(
-                `${API_BASE_URL}/api/teacher/classes/${targetClassId}/students`,
-                values,
+                `${API_BASE_URL}/api/classes/${targetClassId}/students`,
+                { email: values.email, studentId: values.studentId },
                 {
                     headers: token ? { Authorization: `Bearer ${token}` } : {},
                     withCredentials: true
@@ -786,17 +803,9 @@ export const ClassPage = () => {
                     onFinish={handleAddStudent}
                 >
                     <Form.Item
-                        name="name"
-                        label="Họ và tên"
-                        rules={[{ required: true, message: 'Vui lòng nhập họ và tên' }]}
-                    >
-                        <Input placeholder="Nhập họ và tên sinh viên" />
-                    </Form.Item>
-                    <Form.Item
                         name="email"
                         label="Email"
                         rules={[
-                            { required: true, message: 'Vui lòng nhập email' },
                             { type: 'email', message: 'Email không hợp lệ' }
                         ]}
                     >
@@ -805,10 +814,12 @@ export const ClassPage = () => {
                     <Form.Item
                         name="studentId"
                         label="MSSV"
-                        rules={[{ required: true, message: 'Vui lòng nhập MSSV' }]}
                     >
                         <Input placeholder="Nhập mã số sinh viên" />
                     </Form.Item>
+                    <p className="text-gray-500 text-sm mt-2">
+                        * Cần cung cấp ít nhất một trong hai: Email hoặc MSSV
+                    </p>
                 </Form>
             </Modal>
         </div>

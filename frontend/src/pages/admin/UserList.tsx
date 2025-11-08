@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import axios from 'axios';
 import { Table, Input, Select, Card, Tag, Avatar, Typography, Space, Button } from 'antd';
@@ -15,18 +15,51 @@ export const UserList = () => {
     const navigate = useNavigate();
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState('');
+    const [searchMail, setSearchMail] = useState('');
+    const [filterActivate, setFilterActivate] = useState<boolean | null>(null);
     const [filterRole, setFilterRole] = useState<Role | 'ALL'>('ALL');
+    const debounceTimer = useRef<number | null>(null);
 
     useEffect(() => {
-        fetchUsers();
+        fetchUsers('', null);
     }, []);
 
-    const fetchUsers = async () => {
+    useEffect(() => {
+        // Debounce the API call
+        if (debounceTimer.current) {
+            clearTimeout(debounceTimer.current);
+        }
+
+        debounceTimer.current = setTimeout(() => {
+            fetchUsers(searchMail, filterActivate);
+        }, 500);
+
+        return () => {
+            if (debounceTimer.current) {
+                clearTimeout(debounceTimer.current);
+            }
+        };
+    }, [searchMail, filterActivate]);
+
+    const fetchUsers = async (mail: string, activate: boolean | null) => {
+        setLoading(true);
         try {
             const token = localStorage.getItem('auth_token');
+
+            // Build query params
+            const params = new URLSearchParams();
+            if (mail && mail.trim()) {
+                params.append('mail', mail.trim());
+            }
+            if (activate !== null) {
+                params.append('activate', String(activate));
+            }
+
+            const queryString = params.toString();
+            const url = `${API_BASE_URL}/api/admin/users${queryString ? `?${queryString}` : ''}`;
+
             const response = await axios.get<ApiResponse<User[]>>(
-                `${API_BASE_URL}/admin/users`,
+                url,
                 {
                     headers: token ? { Authorization: `Bearer ${token}` } : {},
                     withCredentials: true
@@ -74,11 +107,10 @@ export const UserList = () => {
         }
     };
 
+    // Client-side role filter (since backend doesn't filter by role)
     const filteredUsers = users.filter(user => {
-        const matchesSearch = user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.name?.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesRole = filterRole === 'ALL' || user.role === filterRole;
-        return matchesSearch && matchesRole;
+        return matchesRole;
     });
 
     const getRoleColor = (role: Role) => {
@@ -104,6 +136,18 @@ export const UserList = () => {
                 return 'Sinh viên';
             default:
                 return role;
+        }
+    };
+
+    const handleMailSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchMail(e.target.value);
+    };
+
+    const handleActivateFilterChange = (value: string) => {
+        if (value === 'ALL') {
+            setFilterActivate(null);
+        } else {
+            setFilterActivate(value === 'true');
         }
     };
 
@@ -175,26 +219,42 @@ export const UserList = () => {
             <Card className="mb-6 shadow-sm">
                 <Space direction="vertical" size="middle" className="w-full">
                     <Search
-                        placeholder="Tìm kiếm theo email hoặc tên..."
+                        placeholder="Tìm kiếm theo email..."
                         prefix={<SearchOutlined />}
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                        value={searchMail}
+                        onChange={handleMailSearchChange}
                         className="w-full"
                         size="large"
+                        allowClear
                     />
-                    <div className="flex items-center gap-4">
-                        <Text className="font-medium">Lọc theo vai trò:</Text>
-                        <Select
-                            value={filterRole}
-                            onChange={(value) => setFilterRole(value)}
-                            style={{ width: 200 }}
-                            size="large"
-                        >
-                            <Select.Option value="ALL">Tất cả</Select.Option>
-                            <Select.Option value={Role.ADMIN}>Quản trị viên</Select.Option>
-                            <Select.Option value={Role.TEACHER}>Giảng viên</Select.Option>
-                            <Select.Option value={Role.STUDENT}>Sinh viên</Select.Option>
-                        </Select>
+                    <div className="flex items-center gap-4 flex-wrap">
+                        <div className="flex items-center gap-2">
+                            <Text className="font-medium">Trạng thái:</Text>
+                            <Select
+                                value={filterActivate === null ? 'ALL' : String(filterActivate)}
+                                onChange={handleActivateFilterChange}
+                                style={{ width: 180 }}
+                                size="large"
+                            >
+                                <Select.Option value="ALL">Tất cả</Select.Option>
+                                <Select.Option value="true">Hoạt động</Select.Option>
+                                <Select.Option value="false">Không hoạt động</Select.Option>
+                            </Select>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Text className="font-medium">Vai trò:</Text>
+                            <Select
+                                value={filterRole}
+                                onChange={(value) => setFilterRole(value)}
+                                style={{ width: 180 }}
+                                size="large"
+                            >
+                                <Select.Option value="ALL">Tất cả</Select.Option>
+                                <Select.Option value={Role.ADMIN}>Quản trị viên</Select.Option>
+                                <Select.Option value={Role.TEACHER}>Giảng viên</Select.Option>
+                                <Select.Option value={Role.STUDENT}>Sinh viên</Select.Option>
+                            </Select>
+                        </div>
                     </div>
                 </Space>
             </Card>
