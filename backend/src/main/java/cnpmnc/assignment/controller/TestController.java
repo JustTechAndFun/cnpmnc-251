@@ -2,8 +2,10 @@ package cnpmnc.assignment.controller;
 
 
 import cnpmnc.assignment.dto.ApiResponse;
+import cnpmnc.assignment.dto.QuestionDTO;
 import cnpmnc.assignment.dto.RequestDTO.AddTestRequestDTO;
 import cnpmnc.assignment.dto.TestDTO;
+import cnpmnc.assignment.model.Question;
 import cnpmnc.assignment.model.Test;
 import cnpmnc.assignment.model.User;
 import cnpmnc.assignment.service.TestService;
@@ -115,6 +117,36 @@ public class TestController {
         try {
             TestDTO dto = testService.getTestDetail(id, currentUser);
             return ResponseEntity.ok(ApiResponse.success(dto, "Test Detail retrieved successfully"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error(e.getMessage()));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error(e.getMessage()));
+        }
+    }
+    @GetMapping("/api/classes/{classId}/test/{id}/questions")
+    @PreAuthorize("hasAnyAuthority('TEACHER')")
+    @Operation(summary = "Get question of test", description = "Retrieve list of all question of test")
+    @SecurityRequirement(name = "cookieAuth")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Student list retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Not authorized to access this class"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Class not found")
+    })
+    public ResponseEntity<ApiResponse<List<QuestionDTO>>> getTestClass(
+            @Parameter(description = "Class ID") @PathVariable String classId,
+            @Parameter(description = "Test ID") @PathVariable String id,
+            HttpSession session) {
+
+        User currentUser = (User) session.getAttribute("user");
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("User not authenticated"));
+        }
+        try {
+            List<QuestionDTO> dto = testService.getQuestionOfTest(classId,id, currentUser);
+            return ResponseEntity.ok(ApiResponse.success(dto, "Test retrieved successfully"));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.error(e.getMessage()));
