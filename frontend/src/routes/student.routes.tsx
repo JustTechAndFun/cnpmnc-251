@@ -4,6 +4,7 @@ import { ProtectedRoute } from '../components/ProtectedRoute';
 import { StudentLayout } from '../components/StudentLayout';
 import { StudentDashboard } from '../pages/student/StudentDashboard';
 import { MyCourses } from '../pages/student/MyCourses';
+import { CourseDetail } from '../pages/student/CourseDetail';
 import { MyAssignments } from '../pages/student/MyAssignments';
 import { MyExams } from '../pages/student/MyExams';
 import { MyGrades } from '../pages/student/MyGrades';
@@ -26,6 +27,10 @@ export const studentRoutes: RouteObject[] = [
             {
                 path: 'courses',
                 element: <MyCourses />
+            },
+            {
+                path: 'courses/:classId',
+                element: <CourseDetail />
             },
             {
                 path: 'assignments',
