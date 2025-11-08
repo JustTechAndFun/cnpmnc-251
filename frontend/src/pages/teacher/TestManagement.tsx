@@ -139,9 +139,17 @@ export const TestManagement = () => {
         if (!selectedTest || !selectedTest.classId) return;
 
         try {
+            // Map 'name' to 'title' for backend
+            const requestData = {
+                title: values.name,
+                description: values.description,
+                duration: values.duration,
+                passcode: values.passcode
+            };
+
             const response = await apiClient.put<ApiResponse<Test>>(
-                `/api/teacher/tests/${selectedTest.id}`,
-                values
+                `/api/classes/${selectedTest.classId}/tests/${selectedTest.id}`,
+                requestData
             );
 
             if (!response.data.error && response.data.data) {
@@ -172,7 +180,7 @@ export const TestManagement = () => {
 
         try {
             await apiClient.delete<ApiResponse<void>>(
-                `/api/teacher/tests/${testId}`
+                `/api/classes/${testToDelete.classId}/tests/${testId}`
             );
             setSuccessMessage('Xóa test thành công');
             setSuccessModalVisible(true);
