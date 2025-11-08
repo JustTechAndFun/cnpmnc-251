@@ -26,6 +26,19 @@ apiClient.interceptors.request.use(
 // Response interceptor
 apiClient.interceptors.response.use(
     (response) => {
+        // Log cookies for debugging (only in development)
+        if (import.meta.env.DEV) {
+            const setCookieHeader = response.headers['set-cookie'];
+            if (setCookieHeader) {
+                console.log('[API] Received Set-Cookie header:', setCookieHeader);
+            }
+            
+            // Log all cookies currently in browser
+            if (typeof document !== 'undefined') {
+                console.log('[API] Current browser cookies:', document.cookie);
+            }
+        }
+        
         return response;
     },
     (error) => {
@@ -37,7 +50,10 @@ apiClient.interceptors.response.use(
             if (status === 401) {
                 // Unauthorized - redirect to login if needed
                 console.error('Unauthorized access - please login again');
-                // You can dispatch a logout action here if needed
+                // Clear any stale data
+                if (typeof localStorage !== 'undefined') {
+                    localStorage.removeItem('user_data');
+                }
             } else if (status === 403) {
                 // Forbidden
                 console.error('Access forbidden');
