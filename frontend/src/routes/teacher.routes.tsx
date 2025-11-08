@@ -9,6 +9,7 @@ import { TestDetail } from '../pages/teacher/TestDetail';
 import { TestManagement } from '../pages/teacher/TestManagement';
 import { CreateTest } from '../pages/teacher/CreateTest';
 import { ProfilePage } from '../pages/ProfilePage';
+import { TestResults } from '../pages/teacher/TestResults';
 
 export const teacherRoutes: RouteObject[] = [
     {
@@ -54,6 +55,10 @@ export const teacherRoutes: RouteObject[] = [
             {
                 path: 'tests/:testId',
                 element: <TestDetail />
+            },
+            {
+                path: 'tests/:testId/results',
+                element: <TestResults />
             },
             {
                 path: 'profile',

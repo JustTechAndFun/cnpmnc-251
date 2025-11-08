@@ -6,8 +6,6 @@ import { useAuth } from '../contexts/AuthContext';
 
 const { Title, Text } = Typography;
 
-const isDevMode = import.meta.env.DEV;
-
 export const LoginPage = () => {
     const auth = useAuth();
     const [isLoading, setIsLoading] = useState(false);
@@ -16,9 +14,7 @@ export const LoginPage = () => {
     const login = auth?.login;
     const isAuthenticated = auth?.isAuthenticated ?? false;
 
-    // Only redirect if authenticated in production mode
-    // In dev mode, allow showing login page even if authenticated (for testing different roles)
-    if (isAuthenticated && !isDevMode) {
+    if (isAuthenticated) {
         return <Navigate to="/dashboard" replace />;
     }
 
@@ -41,7 +37,6 @@ export const LoginPage = () => {
             {/* Login Card */}
             <Card
                 className="w-full max-w-md mx-4 shadow-2xl border-0 backdrop-blur-lg bg-white/90"
-                bordered={false}
             >
                 <div className="text-center mb-8">
                     <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
@@ -59,7 +54,7 @@ export const LoginPage = () => {
                     disabled={isLoading || !login}
                     loading={isLoading}
                     block
-                    className="h-12 text-base font-medium mb-6 bg-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 border-0"
+                    className="h-12 text-base font-medium mb-6 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 border-0"
                 >
                     {isLoading ? 'Đang chuyển hướng...' : 'Đăng nhập với Google'}
                 </Button>
