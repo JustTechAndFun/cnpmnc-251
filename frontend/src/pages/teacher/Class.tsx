@@ -26,11 +26,9 @@ import {
     TeamOutlined,
     FileTextOutlined
 } from '@ant-design/icons';
-import axios from 'axios';
-import type { ApiResponse } from '../../types';
+import { teacherApi } from '../../apis';
 
 const { Title, Text } = Typography;
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 interface Student {
     id: string;
@@ -95,18 +93,19 @@ export const ClassPage = () => {
 
     const fetchClassesList = async () => {
         try {
-            const token = localStorage.getItem('auth_token');
             try {
-                const classesResponse = await axios.get<ApiResponse<ClassInfo[]>>(
-                    `${API_BASE_URL}/api/teacher/classes`,
-                    {
-                        headers: token ? { Authorization: `Bearer ${token}` } : {},
-                        withCredentials: true
-                    }
-                );
+                const classesResponse = await teacherApi.getMyClasses();
 
-                if (!classesResponse.data.error && classesResponse.data.data && classesResponse.data.data.length > 0) {
-                    setClasses(classesResponse.data.data);
+                if (!classesResponse.error && classesResponse.data && classesResponse.data.length > 0) {
+                    // Map the ClassDto to ClassInfo
+                    const mappedClasses: ClassInfo[] = classesResponse.data.map(cls => ({
+                        id: cls.id,
+                        name: cls.className,
+                        description: `${cls.classCode} - Học kỳ ${cls.semester} năm ${cls.year}`,
+                        totalStudents: cls.studentCount || 0,
+                        totalTests: 0 // Will be fetched separately
+                    }));
+                    setClasses(mappedClasses);
                     return;
                 }
             } catch (error) {
@@ -171,20 +170,20 @@ export const ClassPage = () => {
     const fetchFirstClass = async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem('auth_token');
             // Try to get list of classes and use the first one
             try {
-                const classesResponse = await axios.get<ApiResponse<ClassInfo[]>>(
-                    `${API_BASE_URL}/api/teacher/classes`,
-                    {
-                        headers: token ? { Authorization: `Bearer ${token}` } : {},
-                        withCredentials: true
-                    }
-                );
+                const classesResponse = await teacherApi.getMyClasses();
 
-                if (!classesResponse.data.error && classesResponse.data.data && classesResponse.data.data.length > 0) {
-                    setClasses(classesResponse.data.data);
-                    const firstClass = classesResponse.data.data[0];
+                if (!classesResponse.error && classesResponse.data && classesResponse.data.length > 0) {
+                    const mappedClasses: ClassInfo[] = classesResponse.data.map(cls => ({
+                        id: cls.id,
+                        name: cls.className,
+                        description: `${cls.classCode} - Học kỳ ${cls.semester} năm ${cls.year}`,
+                        totalStudents: cls.studentCount || 0,
+                        totalTests: 0
+                    }));
+                    setClasses(mappedClasses);
+                    const firstClass = mappedClasses[0];
                     setClassInfo(firstClass);
                     // Fetch data for first class
                     await fetchClassDataForClass(firstClass.id);
@@ -257,20 +256,19 @@ export const ClassPage = () => {
 
     const fetchClassDataForClass = async (targetClassId: string) => {
         try {
-            const token = localStorage.getItem('auth_token');
-
             // Fetch class information first
             try {
-                const classInfoResponse = await axios.get<ApiResponse<ClassInfo>>(
-                    `${API_BASE_URL}/api/classes/${targetClassId}`,
-                    {
-                        headers: token ? { Authorization: `Bearer ${token}` } : {},
-                        withCredentials: true
-                    }
-                );
+                const classInfoResponse = await teacherApi.getClassInfo(targetClassId);
 
-                if (!classInfoResponse.data.error && classInfoResponse.data.data) {
-                    setClassInfo(classInfoResponse.data.data);
+                if (!classInfoResponse.error && classInfoResponse.data) {
+                    const cls = classInfoResponse.data;
+                    setClassInfo({
+                        id: cls.id,
+                        name: cls.className,
+                        description: `${cls.classCode} - Học kỳ ${cls.semester} năm ${cls.year}`,
+                        totalStudents: cls.studentCount || 0,
+                        totalTests: 0
+                    });
                 }
             } catch (error) {
                 console.error('Failed to fetch class info', error);
@@ -278,17 +276,19 @@ export const ClassPage = () => {
 
             // Fetch students
             try {
-                const studentsResponse = await axios.get<ApiResponse<Student[]>>(
-                    `${API_BASE_URL}/api/classes/${targetClassId}/students`,
-                    {
-                        headers: token ? { Authorization: `Bearer ${token}` } : {},
-                        withCredentials: true
-                    }
-                );
+                const studentsResponse = await teacherApi.getClassStudents(targetClassId);
 
-                if (!studentsResponse.data.error && studentsResponse.data.data) {
-                    setStudents(studentsResponse.data.data);
-                    setClassInfo(prev => ({ ...prev, totalStudents: studentsResponse.data.data.length }));
+                if (!studentsResponse.error && studentsResponse.data) {
+                    // Map StudentDto to Student
+                    const mappedStudents: Student[] = studentsResponse.data.map(s => ({
+                        id: s.id,
+                        name: s.name,
+                        email: s.email,
+                        studentId: s.studentId || s.id,
+                        status: 'Active' as const
+                    }));
+                    setStudents(mappedStudents);
+                    setClassInfo(prev => ({ ...prev, totalStudents: mappedStudents.length }));
                 }
             } catch (error) {
                 console.error('Failed to fetch students, using mock data', error);
@@ -326,17 +326,19 @@ export const ClassPage = () => {
 
             // Fetch tests
             try {
-                const testsResponse = await axios.get<ApiResponse<Test[]>>(
-                    `${API_BASE_URL}/api/teacher/classes/${targetClassId}/tests`,
-                    {
-                        headers: token ? { Authorization: `Bearer ${token}` } : {},
-                        withCredentials: true
-                    }
-                );
+                const testsResponse = await teacherApi.getTestsInClass(targetClassId);
 
-                if (!testsResponse.data.error && testsResponse.data.data) {
-                    setTests(testsResponse.data.data);
-                    setClassInfo(prev => ({ ...prev, totalTests: testsResponse.data.data.length }));
+                if (!testsResponse.error && testsResponse.data) {
+                    // Map TestDTO to Test
+                    const mappedTests: Test[] = testsResponse.data.map(t => ({
+                        id: t.id,
+                        title: t.name,
+                        createdAt: t.createdAt,
+                        duration: t.duration,
+                        status: 'Completed' as const // Default status, can be improved
+                    }));
+                    setTests(mappedTests);
+                    setClassInfo(prev => ({ ...prev, totalTests: mappedTests.length }));
                 }
             } catch (error) {
                 console.error('Failed to fetch tests, using mock data', error);
@@ -378,8 +380,6 @@ export const ClassPage = () => {
     const fetchClassData = async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem('auth_token');
-            
             // Ensure classes list is loaded
             if (classes.length === 0) {
                 await fetchClassesList();
@@ -387,16 +387,17 @@ export const ClassPage = () => {
 
             // Fetch class information
             try {
-                const classResponse = await axios.get<ApiResponse<ClassInfo>>(
-                    `${API_BASE_URL}/api/classes/${classId}`,
-                    {
-                        headers: token ? { Authorization: `Bearer ${token}` } : {},
-                        withCredentials: true
-                    }
-                );
+                const classResponse = await teacherApi.getClassInfo(classId!);
 
-                if (!classResponse.data.error && classResponse.data.data) {
-                    setClassInfo(classResponse.data.data);
+                if (!classResponse.error && classResponse.data) {
+                    const cls = classResponse.data;
+                    setClassInfo({
+                        id: cls.id,
+                        name: cls.className,
+                        description: `${cls.classCode} - Học kỳ ${cls.semester} năm ${cls.year}`,
+                        totalStudents: cls.studentCount || 0,
+                        totalTests: 0
+                    });
                 }
             } catch (error) {
                 console.error('Failed to fetch class info, using mock data', error);
@@ -417,18 +418,19 @@ export const ClassPage = () => {
 
             // Fetch students
             try {
-                const studentsResponse = await axios.get<ApiResponse<Student[]>>(
-                    `${API_BASE_URL}/api/classes/${classId}/students`,
-                    {
-                        headers: token ? { Authorization: `Bearer ${token}` } : {},
-                        withCredentials: true
-                    }
-                );
+                const studentsResponse = await teacherApi.getClassStudents(classId!);
 
-                if (!studentsResponse.data.error && studentsResponse.data.data) {
-                    setStudents(studentsResponse.data.data);
+                if (!studentsResponse.error && studentsResponse.data) {
+                    const mappedStudents: Student[] = studentsResponse.data.map(s => ({
+                        id: s.id,
+                        name: s.name,
+                        email: s.email,
+                        studentId: s.studentId || s.id,
+                        status: 'Active' as const
+                    }));
+                    setStudents(mappedStudents);
                     // Update total students count
-                    setClassInfo(prev => ({ ...prev, totalStudents: studentsResponse.data.data.length }));
+                    setClassInfo(prev => ({ ...prev, totalStudents: mappedStudents.length }));
                 }
             } catch (error) {
                 console.error('Failed to fetch students, using mock data', error);
@@ -468,18 +470,19 @@ export const ClassPage = () => {
 
             // Fetch tests
             try {
-                const testsResponse = await axios.get<ApiResponse<Test[]>>(
-                    `${API_BASE_URL}/api/teacher/classes/${classId}/tests`,
-                    {
-                        headers: token ? { Authorization: `Bearer ${token}` } : {},
-                        withCredentials: true
-                    }
-                );
+                const testsResponse = await teacherApi.getTestsInClass(classId!);
 
-                if (!testsResponse.data.error && testsResponse.data.data) {
-                    setTests(testsResponse.data.data);
+                if (!testsResponse.error && testsResponse.data) {
+                    const mappedTests: Test[] = testsResponse.data.map(t => ({
+                        id: t.id,
+                        title: t.name,
+                        createdAt: t.createdAt,
+                        duration: t.duration,
+                        status: 'Completed' as const
+                    }));
+                    setTests(mappedTests);
                     // Update total tests count
-                    setClassInfo(prev => ({ ...prev, totalTests: testsResponse.data.data.length }));
+                    setClassInfo(prev => ({ ...prev, totalTests: mappedTests.length }));
                 }
             } catch (error) {
                 console.error('Failed to fetch tests, using mock data', error);
@@ -524,15 +527,10 @@ export const ClassPage = () => {
     const handleAddStudent = async (values: { email: string; studentId: string; name: string }) => {
         const targetClassId = classId || classInfo.id;
         try {
-            const token = localStorage.getItem('auth_token');
-            await axios.post<ApiResponse<Student>>(
-                `${API_BASE_URL}/api/classes/${targetClassId}/students`,
-                { email: values.email, studentId: values.studentId },
-                {
-                    headers: token ? { Authorization: `Bearer ${token}` } : {},
-                    withCredentials: true
-                }
-            );
+            await teacherApi.addStudentToClass(targetClassId, { 
+                email: values.email, 
+                studentId: values.studentId 
+            });
 
             message.success('Thêm sinh viên thành công');
             setAddStudentModalVisible(false);

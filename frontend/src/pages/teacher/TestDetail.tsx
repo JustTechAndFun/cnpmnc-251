@@ -4,11 +4,9 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Role } from '../../types';
 import { Card, Typography, Button, Spin, Descriptions, Tag } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
-import axios from 'axios';
-import type { ApiResponse } from '../../types';
+import { teacherApi } from '../../apis';
 
 const { Title, Text } = Typography;
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 interface TestDetail {
     id: string;
@@ -42,17 +40,23 @@ export const TestDetail = () => {
     const fetchTestDetail = async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem('auth_token');
-            const response = await axios.get<ApiResponse<TestDetail>>(
-                `${API_BASE_URL}/api/teacher/tests/${testId}`,
-                {
-                    headers: token ? { Authorization: `Bearer ${token}` } : {},
-                    withCredentials: true
-                }
-            );
+            // Note: The API requires both classId and testId
+            // For now, we'll need to get classId from somewhere (route params, state, etc.)
+            // This is a temporary workaround
+            const classId = '1'; // TODO: Get this from route or context
+            const response = await teacherApi.getTestDetail(classId, testId!);
 
-            if (!response.data.error && response.data.data) {
-                setTest(response.data.data);
+            if (!response.error && response.data) {
+                const testData = response.data;
+                setTest({
+                    id: testData.id,
+                    title: testData.name,
+                    description: testData.description,
+                    createdAt: testData.createdAt,
+                    duration: testData.duration,
+                    status: 'Completed', // Default status
+                    classId: testData.classId
+                });
             }
         } catch (error) {
             console.error('Failed to fetch test detail, using mock data', error);
