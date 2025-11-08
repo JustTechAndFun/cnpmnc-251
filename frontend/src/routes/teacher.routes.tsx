@@ -8,6 +8,7 @@ import { GradeStudents } from '../pages/teacher/GradeStudents';
 import { ClassPage } from '../pages/teacher/Class';
 import { TestDetail } from '../pages/teacher/TestDetail';
 import { TestManagement } from '../pages/teacher/TestManagement';
+import { CreateTest } from '../pages/teacher/CreateTest';
 import { ProfilePage } from '../pages/ProfilePage';
 
 export const teacherRoutes: RouteObject[] = [
@@ -30,6 +31,10 @@ export const teacherRoutes: RouteObject[] = [
             {
                 path: 'classes/:classId',
                 element: <ClassPage />
+            },
+            {
+                path: 'classes/:classId/tests/create',
+                element: <CreateTest />
             },
             {
                 path: 'assignments',
