@@ -19,8 +19,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }, []);
 
     const checkAuth = async () => {
-        const isDevMode = import.meta.env.DEV;
-
         try {
             // Check if user exists in localStorage
             const storedUser = localStorage.getItem(USER_KEY);
@@ -29,28 +27,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (storedUser) {
                 try {
                     const parsedUser = JSON.parse(storedUser);
-
-                    // In dev mode, skip API call ONLY for fake users
-                    if (isDevMode && parsedUser.id?.startsWith('fake-')) {
-                        setUser(parsedUser);
-                        setLoading(false);
-                        return; // Don't make API call for fake users
-                    }
-
-                    // For real users, optimistically set user but still verify with backend
                     setUser(parsedUser);
                 } catch (e) {
                     console.error('Error parsing stored user data', e);
                 }
             }
 
-            // Log current cookies before API call (dev only)
-            if (isDevMode) {
-                console.log('[Auth] Checking authentication. Current cookies:', document.cookie);
-            }
-
-            // Always verify session with backend (except for fake users)
-            // Backend will check JSESSIONID cookie automatically
+            // Always verify session with backend
+            // Backend will check JSESSIONID cookie (with 30-day max-age) automatically
             const response = await authApi.getCurrentUser();
 
             console.log('[Auth] getCurrentUser response:', {
@@ -74,10 +58,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
                 // Save user data to localStorage for offline access
                 localStorage.setItem(USER_KEY, JSON.stringify(userObject));
-
-                if (isDevMode) {
-                    console.log('[Auth] User authenticated successfully');
-                }
             } else {
                 // Session invalid or expired - clear data
                 console.log('[Auth] No valid session found, clearing data');
@@ -104,7 +84,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const loginCallback = useCallback(() => {
         // Build Google OAuth2 authorization URL
         const params = new URLSearchParams({
-            client_id: GOOGLE_CLIENT_ID || '',
+            client_id: GOOGLE_CLIENT_ID,
             redirect_uri: GOOGLE_REDIRECT_URI,
             response_type: 'code',
             scope: 'email openid profile',
@@ -112,7 +92,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             prompt: 'consent'
         });
         console.log(params.toString())
-        window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+        globalThis.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
     }, []);
 
     const handleCallbackMemo = useCallback(async (code: string) => {
@@ -145,7 +125,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
                 // Log cookies after successful login (dev only)
                 if (import.meta.env.DEV) {
-                    console.log('[Auth] Login successful. Current cookies:', document.cookie);
+                    console.log('[Auth] Login successful. JSESSIONID cookie maintained with 30-day max-age');
+                    console.log('[Auth] Current cookies:', document.cookie);
                     console.log('[Auth] User data saved to localStorage');
                 }
 
@@ -165,7 +146,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const logoutCallback = useCallback(async () => {
         setIsLoggingOut(true);
         try {
-            // Call logout API
+            // Call logout API to invalidate backend session and clear JSESSIONID cookie
             await authApi.logout();
 
             // Clear all stored data
@@ -186,59 +167,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } finally {
             setIsLoggingOut(false);
 
-            // Use window.location for full page reload to ensure clean state
-            window.location.href = '/login';
+            // Use globalThis.location for full page reload to ensure clean state
+            globalThis.location.href = '/login';
         }
-    }, []);
-
-    const fakeLoginCallback = useCallback((role: Role = Role.ADMIN) => {
-        const fakeUsers: Record<string, User> = {
-            [Role.ADMIN]: {
-                id: 'fake-admin-1',
-                email: 'admin@test.com',
-                name: 'Admin Test',
-                role: Role.ADMIN,
-                activate: true,
-                picture: 'https://ui-avatars.com/api/?name=Admin+Test&background=667eea&color=fff'
-            },
-            [Role.TEACHER]: {
-                id: 'fake-teacher-1',
-                email: 'teacher@test.com',
-                name: 'Teacher Test',
-                role: Role.TEACHER,
-                activate: true,
-                picture: 'https://ui-avatars.com/api/?name=Teacher+Test&background=a855f7&color=fff'
-            },
-            [Role.STUDENT]: {
-                id: 'fake-student-1',
-                email: 'student@test.com',
-                name: 'Student Test',
-                role: Role.STUDENT,
-                activate: true,
-                picture: 'https://ui-avatars.com/api/?name=Student+Test&background=10b981&color=fff'
-            }
-        };
-
-        const fakeUser = fakeUsers[role];
-
-        setUser(fakeUser);
-        localStorage.setItem(USER_KEY, JSON.stringify(fakeUser));
-
-        // Redirect to appropriate dashboard based on role
-        let redirectPath = '/dashboard';
-        switch (role) {
-            case Role.ADMIN:
-                redirectPath = '/admin';
-                break;
-            case Role.TEACHER:
-                redirectPath = '/teacher';
-                break;
-            case Role.STUDENT:
-                redirectPath = '/student';
-                break;
-        }
-
-        window.location.href = redirectPath;
     }, []);
 
     const contextValue = useMemo(() => ({
@@ -249,9 +180,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         logout: logoutCallback,
         isAuthenticated: !!user,
         hasRole,
-        handleCallback: handleCallbackMemo,
-        fakeLogin: fakeLoginCallback // Expose fakeLogin in dev mode
-    }), [user, loading, isLoggingOut, loginCallback, logoutCallback, hasRole, handleCallbackMemo, fakeLoginCallback]);
+        handleCallback: handleCallbackMemo
+    }), [user, loading, isLoggingOut, loginCallback, logoutCallback, hasRole, handleCallbackMemo]);
 
     return (
         <AuthContext.Provider value={contextValue}>

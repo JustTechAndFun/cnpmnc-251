@@ -24,7 +24,6 @@ export interface AuthContextType {
     isAuthenticated: boolean;
     hasRole: (roles: Role | Role[]) => boolean;
     handleCallback: (code: string) => Promise<boolean>;
-    fakeLogin?: (role: Role) => void;
 }
 
 // Make AuthContextType fields optional for safe access
@@ -40,8 +39,8 @@ export interface ApiResponse<T> {
 
 export interface Profile {
     email: string;
-    school: string;
-    information: {
+    school?: string;
+    information?: {
         name?: string;
         gender?: string;
         phone?: string;
@@ -69,7 +68,59 @@ export interface Test {
     duration: number; // in minutes
     passcode: string;
     teacherId: string;
+    classId?: string; // Optional - added by frontend when fetching tests
     createdAt: string;
     updatedAt: string;
     questions: Question[];
+}
+
+export interface SubmissionAnswer {
+    questionId: string;
+    selectedAnswer: string | string[];
+    isCorrect: boolean;
+    pointsEarned: number;
+}
+
+export interface TestResult {
+    submissionId: string;
+    testId: string;
+    testName: string;
+    studentId: string;
+    studentName?: string;
+    submittedAt: string;
+    totalScore: number;
+    maxScore: number;
+    correctCount: number;
+    wrongCount: number;
+    totalQuestions: number;
+    answers: SubmissionAnswer[];
+    questions: Question[];
+}
+
+export interface StudentSubmission {
+    submissionId: string;
+    studentId: string;
+    studentName: string;
+    studentEmail: string;
+    score: number;
+    maxScore: number;
+    submittedAt: string;
+    completionTime?: number; // in minutes
+    status: 'COMPLETED' | 'IN_PROGRESS' | 'NOT_STARTED';
+}
+
+export interface TestResultsSummary {
+    totalSubmissions: number;
+    highestScore: number;
+    lowestScore: number;
+    averageScore: number;
+    maxScore: number;
+    completionRate: number; // percentage
+}
+
+export interface TestResultsResponse {
+    testId: string;
+    testName: string;
+    submissions: StudentSubmission[];
+    summary: TestResultsSummary;
 }

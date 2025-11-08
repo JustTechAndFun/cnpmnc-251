@@ -3,8 +3,6 @@ package cnpmnc.assignment.controller;
 
 import cnpmnc.assignment.dto.*;
 import cnpmnc.assignment.dto.RequestDTO.AddQuestions;
-import cnpmnc.assignment.dto.RequestDTO.AddTestRequestDTO;
-import cnpmnc.assignment.model.Question;
 import cnpmnc.assignment.model.User;
 import cnpmnc.assignment.service.TestService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -58,6 +56,71 @@ public class QuestionController {
         try {
             QuestionDTO dto = testService.addQuestionToTest(classId,id, request,currentUser);
             return ResponseEntity.ok(ApiResponse.success(dto, "Question added to test successfully"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error(e.getMessage()));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @PutMapping("classes/{classId}/tests/{testId}/questions/{questionId}")
+    @PreAuthorize("hasAnyAuthority('TEACHER')")
+    @Operation(summary = "Update a question", description = "Update an existing question in a test")
+    @SecurityRequirement(name = "cookieAuth")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Question updated successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Not authorized to access this class"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Question, test or class not found")
+    })
+    public ResponseEntity<ApiResponse<QuestionDTO>> updateQuestion(
+            @Parameter(description = "Class ID") @PathVariable String classId,
+            @Parameter(description = "Test ID") @PathVariable String testId,
+            @Parameter(description = "Question ID") @PathVariable String questionId,
+            @Valid @RequestBody AddQuestions request,
+            HttpSession session) {
+
+        User currentUser = (User) session.getAttribute("user");
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("User not authenticated"));
+        }
+        try {
+            QuestionDTO dto = testService.updateQuestion(classId, testId, questionId, request, currentUser);
+            return ResponseEntity.ok(ApiResponse.success(dto, "Question updated successfully"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error(e.getMessage()));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("classes/{classId}/tests/{testId}/questions/{questionId}")
+    @PreAuthorize("hasAnyAuthority('TEACHER')")
+    @Operation(summary = "Delete a question", description = "Delete a question from a test")
+    @SecurityRequirement(name = "cookieAuth")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Question deleted successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Not authorized to access this class"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Question, test or class not found")
+    })
+    public ResponseEntity<ApiResponse<Void>> deleteQuestion(
+            @Parameter(description = "Class ID") @PathVariable String classId,
+            @Parameter(description = "Test ID") @PathVariable String testId,
+            @Parameter(description = "Question ID") @PathVariable String questionId,
+            HttpSession session) {
+
+        User currentUser = (User) session.getAttribute("user");
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("User not authenticated"));
+        }
+        try {
+            testService.deleteQuestion(classId, testId, questionId, currentUser);
+            return ResponseEntity.ok(ApiResponse.success(null, "Question deleted successfully"));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.error(e.getMessage()));

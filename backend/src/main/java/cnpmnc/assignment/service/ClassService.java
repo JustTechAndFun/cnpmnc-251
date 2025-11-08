@@ -104,6 +104,24 @@ public class ClassService {
             .collect(Collectors.toList());
     }
     
+    @Transactional(readOnly = true)
+    public List<ClassDto> getStudentClasses(User student) {
+        return classRepository.findAll().stream()
+            .filter(classEntity -> classEntity.getStudents().contains(student))
+            .map(this::convertToClassDto)
+            .collect(Collectors.toList());
+    }
+    
+    @Transactional(readOnly = true)
+    public List<ClassDto> getMyClasses(User user) {
+        if (user.getRole() == Role.TEACHER) {
+            return getTeacherClasses(user);
+        } else if (user.getRole() == Role.STUDENT) {
+            return getStudentClasses(user);
+        }
+        return List.of();
+    }
+    
     @Transactional
     public ClassDto createClass(CreateClassRequest request) {
         // Check if class code already exists

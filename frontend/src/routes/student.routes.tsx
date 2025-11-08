@@ -5,7 +5,9 @@ import { StudentLayout } from '../components/StudentLayout';
 import { StudentDashboard } from '../pages/student/StudentDashboard';
 import { MyCourses } from '../pages/student/MyCourses';
 import { MyAssignments } from '../pages/student/MyAssignments';
+import { MyExams } from '../pages/student/MyExams';
 import { MyGrades } from '../pages/student/MyGrades';
+import { TestResult } from '../pages/student/TestResult';
 import { ProfilePage } from '../pages/ProfilePage';
 
 export const studentRoutes: RouteObject[] = [
@@ -30,8 +32,16 @@ export const studentRoutes: RouteObject[] = [
                 element: <MyAssignments />
             },
             {
+                path: 'exams/:examId',
+                element: <MyExams />
+            },
+            {
                 path: 'grades',
                 element: <MyGrades />
+            },
+            {
+                path: 'test-result/:submissionId',
+                element: <TestResult />
             },
             {
                 path: 'profile',

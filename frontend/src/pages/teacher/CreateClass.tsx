@@ -52,7 +52,7 @@ export const CreateClass = () => {
     return (
         <div className="p-8 max-w-4xl mx-auto">
             <div className="mb-8">
-                <Title level={2} className="mb-2 bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+                <Title level={2} className="mb-2 bg-linear-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
                     <BookOutlined className="mr-2" />
                     Tạo lớp học mới
                 </Title>
@@ -153,3 +153,5 @@ export const CreateClass = () => {
         </div>
     );
 };
+
+export default CreateClass;

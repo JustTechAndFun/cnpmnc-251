@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import { useNavigate } from 'react-router';
+import apiClient from '../../apis/axiosConfig';
 import {
     Card,
     Table,
@@ -12,7 +13,6 @@ import {
     Space,
     Tag,
     Popconfirm,
-    message,
     Spin,
     Empty
 } from 'antd';
@@ -24,19 +24,22 @@ import {
     KeyOutlined,
     EyeOutlined
 } from '@ant-design/icons';
-import { useNavigate } from 'react-router';
 import type { ApiResponse, Test, Question } from '../../types';
+import { ErrorModal } from '../../components/ErrorModal';
+import { SuccessModal } from '../../components/SuccessModal';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-
 export const TestManagement = () => {
+    const navigate = useNavigate();
     const [tests, setTests] = useState<Test[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedTest, setSelectedTest] = useState<Test | null>(null);
-    const navigate = useNavigate();
+    const [errorModalVisible, setErrorModalVisible] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
+    const [successModalVisible, setSuccessModalVisible] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
 
     // Modals state
     const [testInfoModalVisible, setTestInfoModalVisible] = useState(false);
@@ -54,54 +57,62 @@ export const TestManagement = () => {
     const fetchTests = async () => {
         try {
             setLoading(true);
-            const token = localStorage.getItem('auth_token');
-            const response = await axios.get<ApiResponse<Test[]>>(
-                `${API_BASE_URL}/teacher/tests`,
-                {
-                    headers: token ? { Authorization: `Bearer ${token}` } : {},
-                    withCredentials: true
-                }
-            );
 
-            if (!response.data.error && response.data.data) {
-                setTests(response.data.data);
+            // First, get all classes of the teacher
+            const classesResponse = await apiClient.get<ApiResponse<any[]>>('/api/classes/my-classes');
+
+            if (!classesResponse.data.error && classesResponse.data.data) {
+                const classes = classesResponse.data.data;
+
+                // Fetch tests from all classes
+                const allTestsPromises = classes.map((cls: any) =>
+                    apiClient.get<ApiResponse<Test[]>>(`/api/classes/${cls.id}/tests`)
+                        .then((response: any) => ({
+                            classId: cls.id,
+                            response
+                        }))
+                        .catch((error: any) => {
+                            console.error(`Failed to fetch tests for class ${cls.id}`, error);
+                            return { classId: cls.id, response: { data: { error: true, data: [] } } };
+                        })
+                );
+
+                const testsResponses = await Promise.all(allTestsPromises);
+
+                // Combine all tests from all classes and add classId to each test
+                const allTests: Test[] = [];
+                testsResponses.forEach(({ classId, response }: any) => {
+                    if (!response.data.error && response.data.data) {
+                        const testsWithClassId = response.data.data.map((test: any) => ({
+                            ...test,
+                            classId
+                        }));
+                        allTests.push(...testsWithClassId);
+                    }
+                });
+
+                setTests(allTests);
+            } else {
+                setErrorMessage('Không thể tải danh sách lớp học');
+                setErrorModalVisible(true);
+                setTests([]);
             }
-        } catch (error) {
+        } catch (error: unknown) {
             console.error('Failed to fetch tests', error);
-            // Mock data for demo
-            setTests([
-                {
-                    id: '1',
-                    name: 'Kiểm tra giữa kỳ - Lập trình Web',
-                    description: 'Kiểm tra kiến thức về HTML, CSS, JavaScript',
-                    duration: 90,
-                    passcode: 'WEB2024',
-                    teacherId: 'teacher-1',
-                    createdAt: '2024-01-15T10:00:00Z',
-                    updatedAt: '2024-01-20T14:30:00Z',
-                    questions: [
-                        {
-                            id: 'q1',
-                            testId: '1',
-                            content: 'HTML là viết tắt của?',
-                            questionType: 'MULTIPLE_CHOICE',
-                            options: ['HyperText Markup Language', 'HighText Markup Language', 'HyperText Markdown Language', 'None of above'],
-                            correctAnswer: 'HyperText Markup Language',
-                            points: 10,
-                            order: 1
-                        },
-                        {
-                            id: 'q2',
-                            testId: '1',
-                            content: 'CSS được sử dụng để style HTML elements?',
-                            questionType: 'TRUE_FALSE',
-                            correctAnswer: 'true',
-                            points: 5,
-                            order: 2
-                        }
-                    ]
+            let errorMsg = 'Không thể tải danh sách test. Vui lòng thử lại sau.';
+            if (error && typeof error === 'object' && 'response' in error) {
+                const axiosError = error as { response?: { data?: { message?: string }; status?: number } };
+                if (axiosError.response?.data?.message) {
+                    errorMsg = axiosError.response.data.message;
+                } else if (axiosError.response?.status === 404) {
+                    errorMsg = 'API endpoint không tồn tại. Vui lòng kiểm tra lại.';
+                } else if (axiosError.response?.status === 401) {
+                    errorMsg = 'Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.';
                 }
-            ]);
+            }
+            setErrorMessage(errorMsg);
+            setErrorModalVisible(true);
+            setTests([]);
         } finally {
             setLoading(false);
         }
@@ -124,54 +135,51 @@ export const TestManagement = () => {
         duration: number;
         passcode: string;
     }) => {
-        if (!selectedTest) return;
+        if (!selectedTest || !selectedTest.classId) return;
 
         try {
-            const token = localStorage.getItem('auth_token');
-            const response = await axios.put<ApiResponse<Test>>(
-                `${API_BASE_URL}/teacher/tests/${selectedTest.id}`,
-                values,
-                {
-                    headers: token ? { Authorization: `Bearer ${token}` } : {},
-                    withCredentials: true
-                }
+            const response = await apiClient.put<ApiResponse<Test>>(
+                `/api/teacher/tests/${selectedTest.id}`,
+                values
             );
 
             if (!response.data.error && response.data.data) {
-                message.success('Cập nhật thông tin test thành công');
                 setTestInfoModalVisible(false);
+                setSuccessMessage('Cập nhật thông tin test thành công');
+                setSuccessModalVisible(true);
                 fetchTests();
+            } else {
+                setTestInfoModalVisible(false);
+                setErrorMessage(response.data.message || 'Không thể cập nhật test');
+                setErrorModalVisible(true);
             }
         } catch (error) {
             console.error('Failed to update test', error);
-            message.error('Không thể cập nhật test');
-            // Update UI optimistically
-            setTests(tests.map(t =>
-                t.id === selectedTest.id
-                    ? { ...t, ...values }
-                    : t
-            ));
             setTestInfoModalVisible(false);
+            setErrorMessage('Không thể cập nhật test. Vui lòng thử lại.');
+            setErrorModalVisible(true);
         }
     };
 
     const handleDeleteTest = async (testId: string) => {
+        const testToDelete = tests.find(t => t.id === testId);
+        if (!testToDelete || !testToDelete.classId) {
+            setErrorMessage('Không tìm thấy thông tin lớp học của test');
+            setErrorModalVisible(true);
+            return;
+        }
+
         try {
-            const token = localStorage.getItem('auth_token');
-            await axios.delete<ApiResponse<void>>(
-                `${API_BASE_URL}/teacher/tests/${testId}`,
-                {
-                    headers: token ? { Authorization: `Bearer ${token}` } : {},
-                    withCredentials: true
-                }
+            await apiClient.delete<ApiResponse<void>>(
+                `/api/teacher/tests/${testId}`
             );
-            message.success('Xóa test thành công');
+            setSuccessMessage('Xóa test thành công');
+            setSuccessModalVisible(true);
             fetchTests();
         } catch (error) {
             console.error('Failed to delete test', error);
-            message.error('Không thể xóa test');
-            // Update UI optimistically
-            setTests(tests.filter(t => t.id !== testId));
+            setErrorMessage('Không thể xóa test. Vui lòng thử lại.');
+            setErrorModalVisible(true);
         }
     };
 
@@ -190,26 +198,24 @@ export const TestManagement = () => {
     };
 
     const handleDeleteQuestion = async (testId: string, questionId: string) => {
+        const test = tests.find(t => t.id === testId);
+        if (!test || !test.classId) {
+            setErrorMessage('Không tìm thấy thông tin lớp học của test');
+            setErrorModalVisible(true);
+            return;
+        }
+
         try {
-            const token = localStorage.getItem('auth_token');
-            await axios.delete<ApiResponse<void>>(
-                `${API_BASE_URL}/teacher/tests/${testId}/questions/${questionId}`,
-                {
-                    headers: token ? { Authorization: `Bearer ${token}` } : {},
-                    withCredentials: true
-                }
+            await apiClient.delete<ApiResponse<void>>(
+                `/api/teacher/tests/${testId}/questions/${questionId}`
             );
-            message.success('Xóa câu hỏi thành công');
+            setSuccessMessage('Xóa câu hỏi thành công');
+            setSuccessModalVisible(true);
             fetchTests();
         } catch (error) {
             console.error('Failed to delete question', error);
-            message.error('Không thể xóa câu hỏi');
-            // Update UI optimistically
-            setTests(tests.map(test =>
-                test.id === testId
-                    ? { ...test, questions: test.questions.filter(q => q.id !== questionId) }
-                    : test
-            ));
+            setErrorMessage('Không thể xóa câu hỏi. Vui lòng thử lại.');
+            setErrorModalVisible(true);
         }
     };
 
@@ -231,9 +237,14 @@ export const TestManagement = () => {
         correctAnswer: string;
         points: number;
     }) => {
-        if (!selectedTest) return;
+        if (!selectedTest || !selectedTest.classId) return;
 
         const questionType = values.questionType;
+
+        // Parse options into individual choices
+        const optionsArray = questionType === 'MULTIPLE_CHOICE' && values.options
+            ? values.options.split('\n').filter(o => o.trim())
+            : [];
 
         let correctAnswer: string | string[];
         if (questionType === 'TRUE_FALSE') {
@@ -244,52 +255,57 @@ export const TestManagement = () => {
             correctAnswer = values.correctAnswer.split('\n').filter(a => a.trim());
         }
 
+        // Backend expects choiceA, choiceB, choiceC, choiceD format and answer enum
         const questionData = {
             content: values.content,
-            questionType: questionType,
-            options: questionType === 'MULTIPLE_CHOICE' && values.options
-                ? values.options.split('\n').filter(o => o.trim())
-                : undefined,
-            correctAnswer,
-            points: values.points
+            choiceA: optionsArray[0] || '',
+            choiceB: optionsArray[1] || '',
+            choiceC: optionsArray[2] || '',
+            choiceD: optionsArray[3] || '',
+            answer: Array.isArray(correctAnswer) ? correctAnswer[0] : correctAnswer
         };
 
         try {
-            const token = localStorage.getItem('auth_token');
             if (editingQuestion) {
                 // Update question
-                const response = await axios.put<ApiResponse<Question>>(
-                    `${API_BASE_URL}/teacher/tests/${selectedTest.id}/questions/${editingQuestion.id}`,
-                    questionData,
-                    {
-                        headers: token ? { Authorization: `Bearer ${token}` } : {},
-                        withCredentials: true
-                    }
+                const response = await apiClient.put<ApiResponse<Question>>(
+                    `/api/teacher/tests/${selectedTest.id}/questions/${editingQuestion.id}`,
+                    questionData
                 );
                 if (!response.data.error) {
-                    message.success('Cập nhật câu hỏi thành công');
                     setQuestionModalVisible(false);
+                    setEditingQuestion(null);
+                    setSuccessMessage('Cập nhật câu hỏi thành công');
+                    setSuccessModalVisible(true);
                     fetchTests();
+                } else {
+                    setQuestionModalVisible(false);
+                    setErrorMessage(response.data.message || 'Không thể cập nhật câu hỏi');
+                    setErrorModalVisible(true);
                 }
             } else {
                 // Create question
-                const response = await axios.post<ApiResponse<Question>>(
-                    `${API_BASE_URL}/teacher/tests/${selectedTest.id}/questions`,
-                    questionData,
-                    {
-                        headers: token ? { Authorization: `Bearer ${token}` } : {},
-                        withCredentials: true
-                    }
+                const response = await apiClient.post<ApiResponse<Question>>(
+                    `/api/teacher/tests/${selectedTest.id}/questions`,
+                    questionData
                 );
                 if (!response.data.error) {
-                    message.success('Thêm câu hỏi thành công');
                     setQuestionModalVisible(false);
+                    setEditingQuestion(null);
+                    setSuccessMessage('Thêm câu hỏi thành công');
+                    setSuccessModalVisible(true);
                     fetchTests();
+                } else {
+                    setQuestionModalVisible(false);
+                    setErrorMessage(response.data.message || 'Không thể thêm câu hỏi');
+                    setErrorModalVisible(true);
                 }
             }
         } catch (error) {
             console.error('Failed to save question', error);
-            message.error('Không thể lưu câu hỏi');
+            setQuestionModalVisible(false);
+            setErrorMessage('Không thể lưu câu hỏi. Vui lòng thử lại.');
+            setErrorModalVisible(true);
         }
     };
 
@@ -474,7 +490,7 @@ export const TestManagement = () => {
         <div className="p-8 max-w-7xl mx-auto">
             <div className="mb-8 flex justify-between items-center">
                 <div>
-                    <Title level={2} className="mb-2 bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+                    <Title level={2} className="mb-2 bg-linear-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
                         Quản lý Tests
                     </Title>
                     <Text type="secondary">Xem và quản lý tất cả các test bạn đã tạo</Text>
@@ -657,6 +673,20 @@ export const TestManagement = () => {
                     </Form.Item>
                 </Form>
             </Modal>
+
+            {/* Error Modal */}
+            <ErrorModal
+                open={errorModalVisible}
+                message={errorMessage}
+                onClose={() => setErrorModalVisible(false)}
+            />
+
+            {/* Success Modal */}
+            <SuccessModal
+                open={successModalVisible}
+                message={successMessage}
+                onClose={() => setSuccessModalVisible(false)}
+            />
         </div>
     );
 };

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Card, Typography, Table, Tag, Spin, Empty, Select, Space, Statistic, Row, Col, Alert, Button } from 'antd';
 import { LineChartOutlined, TrophyOutlined, BookOutlined, ReloadOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
+import { ErrorModal } from '../../components/ErrorModal';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -36,6 +37,8 @@ export const MyGrades = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedClass, setSelectedClass] = useState<string>('all');
+    const [errorModalVisible, setErrorModalVisible] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
 
     useEffect(() => {
         fetchGrades();
@@ -112,10 +115,13 @@ export const MyGrades = () => {
                 highestScore: maxScore,
                 completedTests: gradedTests.length
             });
-
         } catch (error) {
             console.error('Failed to fetch grades', error);
-            setError('Không thể tải dữ liệu điểm số');
+            const errorMsg = 'Không thể tải dữ liệu điểm số. Vui lòng thử lại sau.';
+            setError(errorMsg);
+            setErrorMessage(errorMsg);
+            setErrorModalVisible(true);
+            setGrades([]);
         } finally {
             setLoading(false);
         }
@@ -212,7 +218,7 @@ export const MyGrades = () => {
     return (
         <div className="p-8 max-w-7xl mx-auto">
             <div className="mb-8">
-                <Title level={2} className="mb-2 bg-gradient-to-r from-green-600 to-green-800 bg-clip-text text-transparent">
+                <Title level={2} className="mb-2 bg-linear-to-r from-green-600 to-green-800 bg-clip-text text-transparent">
                     Điểm số của tôi
                 </Title>
                 <Text type="secondary">Theo dõi kết quả học tập của bạn</Text>
@@ -320,6 +326,13 @@ export const MyGrades = () => {
                     </Card>
                 </>
             )}
+
+            {/* Error Modal */}
+            <ErrorModal
+                open={errorModalVisible}
+                message={errorMessage}
+                onClose={() => setErrorModalVisible(false)}
+            />
         </div>
     );
 };

@@ -38,7 +38,7 @@ export interface TestDTO {
 }
 
 export interface AddTestRequestDTO {
-    name: string;
+    title: string;
     description?: string;
     duration: number;
     passcode?: string;
@@ -118,5 +118,16 @@ export const getTestsInClass = async (classId: string): Promise<ApiResponse<Test
  */
 export const getTestDetail = async (classId: string, testId: string): Promise<ApiResponse<TestDetail>> => {
     const response = await apiClient.get<ApiResponse<TestDetail>>(`/api/classes/${classId}/tests/${testId}`);
+    return response.data;
+};
+
+/**
+ * Get test results (submissions and statistics)
+ * @param classId - Class ID
+ * @param testId - Test ID
+ * @returns Test results with submissions and summary statistics
+ */
+export const getTestResults = async (classId: string, testId: string): Promise<ApiResponse<any>> => {
+    const response = await apiClient.get<ApiResponse<any>>(`/api/classes/${classId}/tests/${testId}/results`);
     return response.data;
 };

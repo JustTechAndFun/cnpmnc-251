@@ -127,8 +127,8 @@ public class ClassController {
     }
     
     @GetMapping("/my-classes")
-    @PreAuthorize("hasAnyAuthority('TEACHER')")
-    @Operation(summary = "Get teacher's classes", description = "Retrieve all classes assigned to the current teacher")
+    @PreAuthorize("hasAnyAuthority('TEACHER', 'STUDENT')")
+    @Operation(summary = "Get my classes", description = "Retrieve all classes - for teachers: classes they teach, for students: classes they enrolled in")
     @SecurityRequirement(name = "cookieAuth")
     @ApiResponses(value = {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Classes retrieved successfully")
@@ -140,7 +140,7 @@ public class ClassController {
                 .body(ApiResponse.error("User not authenticated"));
         }
         
-        List<ClassDto> classes = classService.getTeacherClasses(currentUser);
+        List<ClassDto> classes = classService.getMyClasses(currentUser);
         return ResponseEntity.ok(ApiResponse.success(classes, "Classes retrieved successfully"));
     }
     
