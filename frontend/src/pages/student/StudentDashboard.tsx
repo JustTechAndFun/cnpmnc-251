@@ -1,9 +1,6 @@
 import { useEffect, useState } from 'react';
-import apiClient from '../../apis/axiosConfig';
-import { Card, Statistic, Spin, Typography } from 'antd';
-import { BookOutlined, FileTextOutlined, CheckCircleOutlined, StarOutlined } from '@ant-design/icons';
-import type { ApiResponse } from '../../types';
-import { ErrorModal } from '../../components/ErrorModal';
+import { Card, Statistic, Spin, Typography, Alert, Button, Empty } from 'antd';
+import { BookOutlined, FileTextOutlined, CheckCircleOutlined, StarOutlined, ReloadOutlined } from '@ant-design/icons';
 import { studentApi } from '../../apis';
 
 const { Title, Text } = Typography;
@@ -70,8 +67,7 @@ export const StudentDashboard = () => {
             });
         } catch (error) {
             console.error('Failed to fetch dashboard stats', error);
-            setErrorMessage('Không thể tải thống kê dashboard. Vui lòng thử lại sau.');
-            setErrorModalVisible(true);
+            setError('Không thể tải thống kê dashboard. Vui lòng thử lại sau.');
         } finally {
             setLoading(false);
         }

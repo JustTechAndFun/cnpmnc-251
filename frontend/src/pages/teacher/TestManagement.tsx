@@ -393,11 +393,7 @@ export const TestManagement = () => {
         return (
             <div className="p-4 bg-gray-50">
                 <div className="flex justify-between items-center mb-4">
-<<<<<<< HEAD
-                    <Title level={4} className="mb-0">Danh sách câu hỏi ({test.questions?.length ?? 0})</Title>
-=======
                     <Title level={4} className="mb-0">Danh sách câu hỏi ({test.questions?.length || 0})</Title>
->>>>>>> adef7617b296d6d686e35131f380bcada87f45c3
                     <Button
                         type="primary"
                         icon={<PlusOutlined />}
@@ -457,11 +453,7 @@ export const TestManagement = () => {
             title: 'Số câu hỏi',
             key: 'questionsCount',
             render: (_: unknown, record: Test) => {
-<<<<<<< HEAD
-                const count = record.questions?.length ?? 0;
-=======
                 const count = record.questions?.length || 0;
->>>>>>> adef7617b296d6d686e35131f380bcada87f45c3
                 return <Tag color="blue">{count} câu</Tag>;
             },
         },
