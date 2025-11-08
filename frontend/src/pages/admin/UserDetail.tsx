@@ -5,10 +5,11 @@ import { Card, Descriptions, Avatar, Tag, Typography, Spin, Button, Space, Resul
 import { ArrowLeftOutlined, UserOutlined } from '@ant-design/icons';
 import { Role } from '../../types';
 import type { User, ApiResponse } from '../../types';
+import { ErrorModal } from '../../components/ErrorModal';
 
 const { Title, Text } = Typography;
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 export const UserDetail = () => {
     const { id } = useParams<{ id: string }>();
@@ -16,6 +17,8 @@ export const UserDetail = () => {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const [notFound, setNotFound] = useState(false);
+    const [errorModalVisible, setErrorModalVisible] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
 
     useEffect(() => {
         if (id) {
@@ -27,7 +30,7 @@ export const UserDetail = () => {
         try {
             const token = localStorage.getItem('auth_token');
             const response = await axios.get<ApiResponse<User>>(
-                `${API_BASE_URL}/admin/users/${userId}`,
+            `${API_BASE_URL}/api/admin/users/${userId}`,
                 {
                     headers: token ? { Authorization: `Bearer ${token}` } : {},
                     withCredentials: true
@@ -41,46 +44,9 @@ export const UserDetail = () => {
             }
         } catch (error) {
             console.error('Failed to fetch user detail', error);
-            // Mock data for demo
-            if (userId === '1' || userId === '2' || userId === '3' || userId === '4') {
-                const mockUsers: Record<string, User> = {
-                    '1': {
-                        id: '1',
-                        email: 'admin@example.com',
-                        name: 'Nguyễn Văn Admin',
-                        role: Role.ADMIN,
-                        activate: true,
-                        picture: 'https://ui-avatars.com/api/?name=Nguyen+Van+Admin&background=667eea&color=fff'
-                    },
-                    '2': {
-                        id: '2',
-                        email: 'teacher1@example.com',
-                        name: 'Trần Thị Giáo',
-                        role: Role.TEACHER,
-                        activate: true,
-                        picture: 'https://ui-avatars.com/api/?name=Tran+Thi+Giao&background=a855f7&color=fff'
-                    },
-                    '3': {
-                        id: '3',
-                        email: 'student1@example.com',
-                        name: 'Lê Văn Sinh',
-                        role: Role.STUDENT,
-                        activate: true,
-                        picture: 'https://ui-avatars.com/api/?name=Le+Van+Sinh&background=10b981&color=fff'
-                    },
-                    '4': {
-                        id: '4',
-                        email: 'student2@example.com',
-                        name: 'Phạm Thị Học',
-                        role: Role.STUDENT,
-                        activate: false,
-                        picture: 'https://ui-avatars.com/api/?name=Pham+Thi+Hoc&background=f59e0b&color=fff'
-                    }
-                };
-                setUser(mockUsers[userId] || null);
-            } else {
-                setNotFound(true);
-            }
+            setErrorMessage('Không thể tải thông tin người dùng. Vui lòng thử lại sau.');
+            setErrorModalVisible(true);
+            setNotFound(true);
         } finally {
             setLoading(false);
         }
@@ -204,6 +170,13 @@ export const UserDetail = () => {
                     </Card>
                 )
             )}
+
+            {/* Error Modal */}
+            <ErrorModal
+                open={errorModalVisible}
+                message={errorMessage}
+                onClose={() => setErrorModalVisible(false)}
+            />
         </div>
     );
 };

@@ -19,8 +19,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }, []);
 
     const checkAuth = async () => {
-        const isDevMode = import.meta.env.DEV;
-
         try {
             // Check if user exists in localStorage
             const storedUser = localStorage.getItem(USER_KEY);
@@ -30,22 +28,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 try {
                     const parsedUser = JSON.parse(storedUser);
                     setUser(parsedUser);
-                    // In dev mode, skip API call if we have stored user (especially fake users)
-                    if (isDevMode) {
-                        // Check if it's a fake user (has 'fake-' prefix in id)
-                        if (parsedUser.id?.startsWith('fake-')) {
-                            setLoading(false);
-                            return; // Don't make API call for fake users
-                        }
-                        setLoading(false);
-                        return;
-                    }
                 } catch (e) {
                     console.error('Error parsing stored user data', e);
                 }
             }
 
+            // Always verify session with backend (except for fake users)
+            // Backend will check JSESSIONID cookie automatically
             const response = await authApi.getCurrentUser();
+
+            console.log('[Auth] getCurrentUser response:', {
+                error: response.error,
+                hasData: !!response.data,
+                message: response.message
+            });
 
             if (!response.error && response.data) {
                 const userData = response.data;
@@ -60,21 +56,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
                 setUser(userObject);
 
-                // Save user data to localStorage
+                // Save user data to localStorage for offline access
                 localStorage.setItem(USER_KEY, JSON.stringify(userObject));
             } else {
-                // Clear invalid data
+                // Session invalid or expired - clear data
+                console.log('[Auth] No valid session found, clearing data');
                 localStorage.removeItem(USER_KEY);
                 setUser(null);
             }
         } catch (error) {
-            console.error('Not authenticated', error);
-            // In dev mode, don't clear user data to allow bypassing login
-            if (!isDevMode) {
-                // Clear invalid data on error
-                localStorage.removeItem(USER_KEY);
-                setUser(null);
-            }
+            console.error('[Auth] Authentication check failed:', error);
+            // Session expired or network error - clear data
+            localStorage.removeItem(USER_KEY);
+            setUser(null);
         } finally {
             setLoading(false);
         }
@@ -90,7 +84,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const loginCallback = useCallback(() => {
         // Build Google OAuth2 authorization URL
         const params = new URLSearchParams({
-            client_id: GOOGLE_CLIENT_ID || '',
+            client_id: GOOGLE_CLIENT_ID,
             redirect_uri: GOOGLE_REDIRECT_URI,
             response_type: 'code',
             scope: 'email openid profile',
@@ -103,7 +97,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const handleCallbackMemo = useCallback(async (code: string) => {
         try {
+            console.log('[Auth] Processing callback with code:', code.substring(0, 10) + '...');
+
             const response = await authApi.handleGoogleCallback(code, GOOGLE_REDIRECT_URI);
+
+            console.log('[Auth] Callback response:', {
+                error: response.error,
+                hasData: !!response.data,
+                message: response.message
+            });
 
             if (!response.error && response.data) {
                 const userData = response.data;
@@ -121,11 +123,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 // Save user data to localStorage
                 localStorage.setItem(USER_KEY, JSON.stringify(userObject));
 
+                // Log cookies after successful login (dev only)
+                if (import.meta.env.DEV) {
+                    console.log('[Auth] Login successful. Current cookies:', document.cookie);
+                    console.log('[Auth] User data saved to localStorage');
+                }
+
                 return true;
             }
+
+            console.error('[Auth] Callback failed:', response.message);
             return false;
         } catch (error) {
-            console.error('Callback error', error);
+            console.error('[Auth] Callback error:', error);
             // Clear any partial data on error
             localStorage.removeItem(USER_KEY);
             return false;
@@ -137,78 +147,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         try {
             // Call logout API
             await authApi.logout();
-            
+
             // Clear all stored data
             localStorage.removeItem(USER_KEY);
             setUser(null);
-            
+
             // Small delay to show loading animation
             await new Promise(resolve => setTimeout(resolve, 800));
         } catch (error) {
             console.error('Logout error', error);
-            
+
             // Even if API fails, still clear local data
             localStorage.removeItem(USER_KEY);
             setUser(null);
-            
+
             // Small delay
             await new Promise(resolve => setTimeout(resolve, 800));
         } finally {
             setIsLoggingOut(false);
-            
+
             // Use window.location for full page reload to ensure clean state
             window.location.href = '/login';
         }
-    }, []);
-
-    const fakeLoginCallback = useCallback((role: Role = Role.ADMIN) => {
-        const fakeUsers: Record<string, User> = {
-            [Role.ADMIN]: {
-                id: 'fake-admin-1',
-                email: 'admin@test.com',
-                name: 'Admin Test',
-                role: Role.ADMIN,
-                activate: true,
-                picture: 'https://ui-avatars.com/api/?name=Admin+Test&background=667eea&color=fff'
-            },
-            [Role.TEACHER]: {
-                id: 'fake-teacher-1',
-                email: 'teacher@test.com',
-                name: 'Teacher Test',
-                role: Role.TEACHER,
-                activate: true,
-                picture: 'https://ui-avatars.com/api/?name=Teacher+Test&background=a855f7&color=fff'
-            },
-            [Role.STUDENT]: {
-                id: 'fake-student-1',
-                email: 'student@test.com',
-                name: 'Student Test',
-                role: Role.STUDENT,
-                activate: true,
-                picture: 'https://ui-avatars.com/api/?name=Student+Test&background=10b981&color=fff'
-            }
-        };
-
-        const fakeUser = fakeUsers[role];
-
-        setUser(fakeUser);
-        localStorage.setItem(USER_KEY, JSON.stringify(fakeUser));
-
-        // Redirect to appropriate dashboard based on role
-        let redirectPath = '/dashboard';
-        switch (role) {
-            case Role.ADMIN:
-                redirectPath = '/admin';
-                break;
-            case Role.TEACHER:
-                redirectPath = '/teacher';
-                break;
-            case Role.STUDENT:
-                redirectPath = '/student';
-                break;
-        }
-
-        window.location.href = redirectPath;
     }, []);
 
     const contextValue = useMemo(() => ({
@@ -219,9 +179,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         logout: logoutCallback,
         isAuthenticated: !!user,
         hasRole,
-        handleCallback: handleCallbackMemo,
-        fakeLogin: fakeLoginCallback // Expose fakeLogin in dev mode
-    }), [user, loading, isLoggingOut, loginCallback, logoutCallback, hasRole, handleCallbackMemo, fakeLoginCallback]);
+        handleCallback: handleCallbackMemo
+    }), [user, loading, isLoggingOut, loginCallback, logoutCallback, hasRole, handleCallbackMemo]);
 
     return (
         <AuthContext.Provider value={contextValue}>

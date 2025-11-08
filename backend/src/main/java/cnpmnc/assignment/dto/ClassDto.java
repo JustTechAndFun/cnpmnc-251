@@ -16,6 +16,8 @@ public class ClassDto {
     private String name;
     private String description;
     private String classCode;
+    private String semester;
+    private Integer year;
     private TeacherDto teacher;
     private Integer studentCount;
     private LocalDateTime createdAt;

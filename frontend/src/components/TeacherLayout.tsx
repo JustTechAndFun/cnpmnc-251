@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { useNavigate, useLocation, Outlet } from 'react-router';
-import { Layout, Menu, Avatar, Button, Spin, Typography } from 'antd';
-import { DashboardOutlined, BookOutlined, FileTextOutlined, LineChartOutlined, ProfileOutlined, LogoutOutlined } from '@ant-design/icons';
+import { Layout, Menu, Avatar, Button, Spin, Typography, Drawer } from 'antd';
+import { DashboardOutlined, BookOutlined, FileTextOutlined, LineChartOutlined, ProfileOutlined, LogoutOutlined, MenuOutlined, PlusOutlined } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
 
 const { Sider, Content } = Layout;
@@ -14,6 +15,8 @@ export const TeacherLayout = () => {
     const logout = auth?.logout;
     const isLoggingOut = auth?.isLoggingOut ?? false;
 
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
     const menuItems = [
         {
             key: '/teacher',
@@ -26,14 +29,19 @@ export const TeacherLayout = () => {
             label: 'Lớp học',
         },
         {
-            key: '/teacher/assignments',
-            icon: <FileTextOutlined />,
-            label: 'Bài tập',
+            key: '/teacher/classes/create',
+            icon: <PlusOutlined />,
+            label: 'Tạo lớp học',
         },
         {
-            key: '/teacher/grades',
+            key: '/teacher/tests',
+            icon: <FileTextOutlined />,
+            label: 'Bài kiểm tra',
+        },
+        {
+            key: '/teacher/tests/create',
             icon: <LineChartOutlined />,
-            label: 'Chấm điểm',
+            label: 'Tạo bài kiểm tra',
         },
         {
             key: '/teacher/profile',
@@ -47,6 +55,9 @@ export const TeacherLayout = () => {
     };
 
     const selectedKeys = [location.pathname];
+    if (location.pathname.startsWith('/teacher/tests/')) {
+        selectedKeys[0] = '/teacher/tests';
+    }
 
     return (
         <Layout className="min-h-screen bg-gray-50 flex">
@@ -60,24 +71,26 @@ export const TeacherLayout = () => {
                 </div>
             )}
 
+            {/* Desktop Sidebar */}
             <Sider
                 width={280}
-                className="bg-white shadow-lg min-h-screen flex-shrink-0"
+                className="bg-white shadow-lg hidden lg:flex fixed left-0 top-0 h-screen z-30"
                 theme="light"
+                style={{ display: 'flex', flexDirection: 'column', position: 'sticky' }}
             >
                 <div className="flex flex-col h-full">
                     {/* Header */}
                     <div className="flex items-center gap-3 p-6 border-b border-gray-200 flex-shrink-0">
-                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white">
+                        <div className="w-10 h-10 rounded-lg bg-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white">
                             <BookOutlined className="text-xl" />
                         </div>
-                        <Text strong className="text-lg bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+                        <Text strong className="text-lg bg-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
                             Giáo viên
                         </Text>
                     </div>
 
-                    {/* Menu - Scrollable */}
-                    <div className="flex-1 overflow-y-auto min-h-0">
+                    {/* Menu */}
+                    <div className="flex-1 overflow-y-auto">
                         <Menu
                             mode="inline"
                             selectedKeys={selectedKeys}
@@ -93,7 +106,7 @@ export const TeacherLayout = () => {
                             <Avatar
                                 src={user?.picture}
                                 size={48}
-                                className="bg-gradient-to-br from-purple-500 to-purple-700"
+                                className="bg-to-br from-purple-500 to-purple-700"
                             >
                                 {user?.name?.[0] || user?.email[0]?.toUpperCase()}
                             </Avatar>
@@ -124,9 +137,81 @@ export const TeacherLayout = () => {
             {/* Main Content */}
             <Layout className="flex-1">
                 <Content className="min-h-screen">
+                    {/* Mobile Top Bar */}
+                    <div className="lg:hidden sticky top-0 z-40 bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3">
+                        <Button type="text" icon={<MenuOutlined />} onClick={() => setMobileMenuOpen(true)} />
+                        <Text strong className="bg-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+                            Giáo viên
+                        </Text>
+                    </div>
                     <Outlet />
                 </Content>
             </Layout>
+            {/* Mobile Drawer */}
+            <Drawer
+                placement="left"
+                closable
+                onClose={() => setMobileMenuOpen(false)}
+                open={mobileMenuOpen}
+                width={280}
+                styles={{ body: { padding: 0 } }}
+            >
+                <div className="h-full flex flex-col bg-white">
+                    {/* Header */}
+                    <div className="flex items-center gap-3 p-6 border-b border-gray-200">
+                        <div className="w-10 h-10 rounded-lg bg-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white">
+                            <BookOutlined className="text-xl" />
+                        </div>
+                        <Text strong className="text-lg bg-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+                            Giáo viên
+                        </Text>
+                    </div>
+
+                    {/* Menu */}
+                    <Menu
+                        mode="inline"
+                        selectedKeys={selectedKeys}
+                        items={menuItems}
+                        onClick={({ key }) => {
+                            setMobileMenuOpen(false);
+                            handleMenuClick({ key });
+                        }}
+                        className="border-r-0 pt-4 flex-1"
+                    />
+
+                    {/* Footer */}
+                    <div className="p-4 border-t border-gray-200 bg-gray-50">
+                        <div className="flex items-center gap-3 mb-4">
+                            <Avatar
+                                src={user?.picture}
+                                size={48}
+                                className="bg-to-br from-purple-500 to-purple-700"
+                            >
+                                {user?.name?.[0] || user?.email[0]?.toUpperCase()}
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                                <Text strong className="block text-sm truncate">
+                                    {user?.name || 'Giáo viên'}
+                                </Text>
+                                <Text className="text-xs text-gray-500 truncate block">
+                                    {user?.email}
+                                </Text>
+                            </div>
+                        </div>
+                        <Button
+                            type="default"
+                            danger
+                            icon={<LogoutOutlined />}
+                            onClick={() => { setMobileMenuOpen(false); logout?.(); }}
+                            disabled={!logout || isLoggingOut}
+                            block
+                            className="border-red-200 text-red-600 hover:bg-red-50"
+                        >
+                            Đăng xuất
+                        </Button>
+                    </div>
+                </div>
+            </Drawer>
         </Layout>
     );
 };

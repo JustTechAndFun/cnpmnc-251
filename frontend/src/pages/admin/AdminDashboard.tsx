@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Card, Statistic, List, Avatar, Spin, Typography, Tag } from 'antd';
 import { UserOutlined, TeamOutlined, BookOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { adminApi } from '../../apis';
+import { ErrorModal } from '../../components/ErrorModal';
 
 const { Title, Text } = Typography;
 
@@ -20,6 +21,8 @@ export const AdminDashboard = () => {
         activeUsers: 0
     });
     const [loading, setLoading] = useState(true);
+    const [errorModalVisible, setErrorModalVisible] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
 
     useEffect(() => {
         fetchDashboardStats();
@@ -29,14 +32,14 @@ export const AdminDashboard = () => {
         try {
             // Calculate stats from users list
             const usersResponse = await adminApi.getAllUsers();
-            
+
             if (!usersResponse.error && usersResponse.data) {
                 const users = usersResponse.data;
                 const totalUsers = users.length;
                 const totalTeachers = users.filter(u => u.role === 'TEACHER').length;
                 const totalStudents = users.filter(u => u.role === 'STUDENT').length;
                 const activeUsers = users.filter(u => u.activate).length;
-                
+
                 setStats({
                     totalUsers,
                     totalTeachers,
@@ -46,13 +49,14 @@ export const AdminDashboard = () => {
             }
         } catch (error) {
             console.error('Failed to fetch dashboard stats', error);
-            // Mock data for demo
             setStats({
                 totalUsers: 156,
                 totalTeachers: 24,
                 totalStudents: 128,
                 activeUsers: 142
             });
+            setErrorMessage('Không thể tải thống kê dashboard. Vui lòng thử lại sau.');
+            setErrorModalVisible(true);
         } finally {
             setLoading(false);
         }
@@ -148,6 +152,13 @@ export const AdminDashboard = () => {
                     </Card>
                 </>
             )}
+
+            {/* Error Modal */}
+            <ErrorModal
+                open={errorModalVisible}
+                message={errorMessage}
+                onClose={() => setErrorModalVisible(false)}
+            />
         </div>
     );
 };

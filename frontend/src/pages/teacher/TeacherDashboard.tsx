@@ -3,10 +3,11 @@ import axios from 'axios';
 import { Card, Statistic, List, Avatar, Spin, Typography, Tag } from 'antd';
 import { BookOutlined, FileTextOutlined, ClockCircleOutlined, TeamOutlined } from '@ant-design/icons';
 import type { ApiResponse } from '../../types';
+import { ErrorModal } from '../../components/ErrorModal';
 
 const { Title, Text } = Typography;
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 interface TeacherStats {
     totalClasses: number;
@@ -23,6 +24,8 @@ export const TeacherDashboard = () => {
         totalStudents: 0
     });
     const [loading, setLoading] = useState(true);
+    const [errorModalVisible, setErrorModalVisible] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
 
     useEffect(() => {
         fetchDashboardStats();
@@ -32,7 +35,7 @@ export const TeacherDashboard = () => {
         try {
             const token = localStorage.getItem('auth_token');
             const response = await axios.get<ApiResponse<TeacherStats>>(
-                `${API_BASE_URL}/teacher/stats`,
+                `${API_BASE_URL}/api/teacher/stats`,
                 {
                     headers: token ? { Authorization: `Bearer ${token}` } : {},
                     withCredentials: true
@@ -44,13 +47,14 @@ export const TeacherDashboard = () => {
             }
         } catch (error) {
             console.error('Failed to fetch dashboard stats', error);
-            // Mock data for demo
             setStats({
                 totalClasses: 8,
                 totalAssignments: 24,
                 pendingGrading: 12,
                 totalStudents: 156
             });
+            setErrorMessage('Không thể tải thống kê dashboard. Vui lòng thử lại sau.');
+            setErrorModalVisible(true);
         } finally {
             setLoading(false);
         }
@@ -146,6 +150,13 @@ export const TeacherDashboard = () => {
                     </Card>
                 </>
             )}
+
+            {/* Error Modal */}
+            <ErrorModal
+                open={errorModalVisible}
+                message={errorMessage}
+                onClose={() => setErrorModalVisible(false)}
+            />
         </div>
     );
 };

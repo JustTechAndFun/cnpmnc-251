@@ -63,5 +63,14 @@ export const getTestDetail = async (classId: string, testId: string): Promise<Ap
     return response.data;
 };
 
-// Note: Additional student-specific endpoints (grades, assignments, etc.) 
+/**
+ * Get test result by submission ID
+ * @param submissionId - Submission ID
+ */
+export const getTestResult = async (submissionId: string): Promise<ApiResponse<import('../types').TestResult>> => {
+    const response = await apiClient.get<ApiResponse<import('../types').TestResult>>(`/api/student/test-submissions/${submissionId}/result`);
+    return response.data;
+};
+
+// Note: Additional student-specific endpoints (grades, assignments, etc.)
 // will need to be added as they are implemented on the backend

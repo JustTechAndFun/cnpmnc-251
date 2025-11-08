@@ -1,6 +1,5 @@
 package cnpmnc.assignment.dto.RequestDTO;
 
-import cnpmnc.assignment.util.constant.TestStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -10,7 +9,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.security.SecureRandom;
 import java.time.LocalDateTime;
 
 @Getter
@@ -22,10 +20,15 @@ public class AddTestRequestDTO {
     @NotBlank
     @NotNull
     private String title;
+    
     private String description;
+    
+    private String passcode;
+    
     private LocalDateTime openTime;
+    
     private LocalDateTime closeTime;
+    
     @Min(1)
     private long duration;
-
 }
