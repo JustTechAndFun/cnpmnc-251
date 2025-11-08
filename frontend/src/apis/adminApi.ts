@@ -39,11 +39,10 @@ export interface TeacherDto {
 }
 
 export interface CreateTeacherRequest {
-    email: string;
     name: string;
-    role: string;
-    activate: boolean;
-    picture?: string;
+    email: string;
+    department?: string;
+    activate?: boolean;
 }
 
 /**
@@ -106,5 +105,14 @@ export const getAllTeachers = async (mail?: string, activate?: boolean): Promise
  */
 export const createTeacherAccount = async (request: CreateTeacherRequest): Promise<ApiResponse<TeacherDto>> => {
     const response = await apiClient.post<ApiResponse<TeacherDto>>('/api/admin/users/teachers', request);
+    return response.data;
+};
+
+/**
+ * Delete a teacher
+ * @param id - Teacher ID
+ */
+export const deleteTeacher = async (id: string): Promise<ApiResponse<void>> => {
+    const response = await apiClient.delete<ApiResponse<void>>(`/api/admin/users/teachers/${id}`);
     return response.data;
 };

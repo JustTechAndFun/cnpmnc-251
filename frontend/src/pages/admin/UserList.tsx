@@ -5,6 +5,7 @@ import { SearchOutlined, UserOutlined } from '@ant-design/icons';
 import { Role } from '../../types';
 import type { User } from '../../types';
 import { adminApi } from '../../apis';
+import { ErrorModal } from '../../components/ErrorModal';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -16,6 +17,8 @@ export const UserList = () => {
     const [searchMail, setSearchMail] = useState('');
     const [filterActivate, setFilterActivate] = useState<boolean | null>(null);
     const [filterRole, setFilterRole] = useState<Role | 'ALL'>('ALL');
+    const [errorModalVisible, setErrorModalVisible] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
     const debounceTimer = useRef<number | null>(null);
 
     useEffect(() => {
@@ -58,40 +61,16 @@ export const UserList = () => {
                     activate: user.activate
                 }));
                 setUsers(mappedUsers);
+            } else {
+                setErrorMessage(response.message || 'Không thể tải danh sách người dùng');
+                setErrorModalVisible(true);
+                setUsers([]);
             }
         } catch (error) {
             console.error('Failed to fetch users', error);
-            // Mock data for demo
-            setUsers([
-                {
-                    id: '1',
-                    email: 'admin@example.com',
-                    name: 'Nguyễn Văn Admin',
-                    role: Role.ADMIN,
-                    activate: true
-                },
-                {
-                    id: '2',
-                    email: 'teacher1@example.com',
-                    name: 'Trần Thị Giáo',
-                    role: Role.TEACHER,
-                    activate: true
-                },
-                {
-                    id: '3',
-                    email: 'student1@example.com',
-                    name: 'Lê Văn Sinh',
-                    role: Role.STUDENT,
-                    activate: true
-                },
-                {
-                    id: '4',
-                    email: 'student2@example.com',
-                    name: 'Phạm Thị Học',
-                    role: Role.STUDENT,
-                    activate: false
-                }
-            ]);
+            setErrorMessage('Không thể tải danh sách người dùng. Vui lòng thử lại sau.');
+            setErrorModalVisible(true);
+            setUsers([]);
         } finally {
             setLoading(false);
         }
@@ -270,6 +249,13 @@ export const UserList = () => {
                     }}
                 />
             </Card>
+
+            {/* Error Modal */}
+            <ErrorModal
+                open={errorModalVisible}
+                message={errorMessage}
+                onClose={() => setErrorModalVisible(false)}
+            />
         </div>
     );
 };

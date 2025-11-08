@@ -3,6 +3,7 @@ import { Card, Descriptions, Spin, Typography, Alert, Button, Space } from 'antd
 import { MailOutlined, BankOutlined, UserOutlined, ReloadOutlined } from '@ant-design/icons';
 import type { Profile } from '../types';
 import { profileApi } from '../apis';
+import { ErrorModal } from '../components/ErrorModal';
 
 const { Title, Text } = Typography;
 
@@ -10,6 +11,8 @@ export const ProfilePage = () => {
     const [profile, setProfile] = useState<Profile | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [errorModalVisible, setErrorModalVisible] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
 
     useEffect(() => {
         fetchProfile();
@@ -21,23 +24,19 @@ export const ProfilePage = () => {
 
             if (!response.error && response.data) {
                 setProfile(response.data);
+                setError(null);
             } else {
-                setError(response.message || 'Không thể tải thông tin profile');
+                const errorMsg = response.message || 'Không thể tải thông tin profile';
+                setError(errorMsg);
+                setErrorMessage(errorMsg);
+                setErrorModalVisible(true);
             }
         } catch (error) {
             console.error('Failed to fetch profile', error);
-            // Mock data for demo
-            setProfile({
-                email: 'admin@test.com',
-                school: 'Trường Đại học BK',
-                information: {
-                    name: 'Nguyễn Văn Admin',
-                    gender: 'Nam',
-                    phone: '0123456789',
-                    dob: '1990-01-15',
-                    address: '123 Đường ABC, Quận 1, TP.HCM'
-                }
-            });
+            const errorMsg = 'Không thể tải thông tin profile. Vui lòng thử lại sau.';
+            setError(errorMsg);
+            setErrorMessage(errorMsg);
+            setErrorModalVisible(true);
         } finally {
             setLoading(false);
         }
@@ -146,6 +145,13 @@ export const ProfilePage = () => {
                     </Card>
                 </Space>
             )}
+
+            {/* Error Modal */}
+            <ErrorModal
+                open={errorModalVisible}
+                message={errorMessage}
+                onClose={() => setErrorModalVisible(false)}
+            />
         </div>
     );
 };

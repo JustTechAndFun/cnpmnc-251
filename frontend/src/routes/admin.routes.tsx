@@ -5,7 +5,7 @@ import { AdminLayout } from '../components/AdminLayout';
 import { AdminDashboard } from '../pages/admin/AdminDashboard';
 import { UserList } from '../pages/admin/UserList';
 import { UserDetail } from '../pages/admin/UserDetail';
-import { ProfilePage } from '../pages/ProfilePage';
+import { TeacherManagement } from '../pages/admin/TeacherManagement';
 
 export const adminRoutes: RouteObject[] = [
     {
@@ -29,8 +29,8 @@ export const adminRoutes: RouteObject[] = [
                 element: <UserDetail />
             },
             {
-                path: 'profile',
-                element: <ProfilePage />
+                path: 'teachers',
+                element: <TeacherManagement />
             }
         ]
     }

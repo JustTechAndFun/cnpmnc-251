@@ -7,10 +7,9 @@ import { ManageAssignments } from '../pages/teacher/ManageAssignments';
 import { ClassPage } from '../pages/teacher/Class';
 import { TestDetail } from '../pages/teacher/TestDetail';
 import { TestManagement } from '../pages/teacher/TestManagement';
-import { CreateClass } from '../pages/teacher/CreateClass';
 import { CreateTest } from '../pages/teacher/CreateTest';
-import { ManageClasses } from '../pages/teacher/ManageClasses';
 import { ProfilePage } from '../pages/ProfilePage';
+import { TestResults } from '../pages/teacher/TestResults';
 
 export const teacherRoutes: RouteObject[] = [
     {
@@ -38,6 +37,10 @@ export const teacherRoutes: RouteObject[] = [
                 element: <ClassPage />
             },
             {
+                path: 'classes/:classId/tests/create',
+                element: <CreateTest />
+            },
+            {
                 path: 'assignments',
                 element: <ManageAssignments />
             },
@@ -52,6 +55,10 @@ export const teacherRoutes: RouteObject[] = [
             {
                 path: 'tests/:testId',
                 element: <TestDetail />
+            },
+            {
+                path: 'tests/:testId/results',
+                element: <TestResults />
             },
             {
                 path: 'profile',
