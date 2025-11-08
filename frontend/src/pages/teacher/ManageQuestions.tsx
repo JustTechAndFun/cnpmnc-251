@@ -25,6 +25,8 @@ import {
 } from '@ant-design/icons';
 import { teacherApi } from '../../apis';
 import type { QuestionDTO, AddQuestionRequest } from '../../apis/teacherApi';
+import { SuccessModal } from '../../components/SuccessModal';
+import { ErrorModal } from '../../components/ErrorModal';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -40,6 +42,10 @@ export const ManageQuestions = () => {
     const [testInfo, setTestInfo] = useState<{ title: string; description?: string } | null>(null);
     const [editingQuestion, setEditingQuestion] = useState<QuestionDTO | null>(null);
     const [modalVisible, setModalVisible] = useState(false);
+    const [successModalVisible, setSuccessModalVisible] = useState(false);
+    const [errorModalVisible, setErrorModalVisible] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
 
     useEffect(() => {
         if (classId && testId) {
@@ -119,26 +125,31 @@ export const ManageQuestions = () => {
                     values
                 );
                 if (!response.error) {
-                    message.success('Cập nhật câu hỏi thành công!');
+                    setSuccessMessage('Cập nhật câu hỏi thành công!');
+                    setSuccessModalVisible(true);
                     fetchTestDetail();
                     handleCloseModal();
                 } else {
-                    message.error(response.message || 'Không thể cập nhật câu hỏi');
+                    setErrorMessage(response.message || 'Không thể cập nhật câu hỏi');
+                    setErrorModalVisible(true);
                 }
             } else {
                 // Add new question
                 const response = await teacherApi.addQuestionToTest(classId, testId, values);
                 if (!response.error) {
-                    message.success('Thêm câu hỏi thành công!');
+                    setSuccessMessage('Thêm câu hỏi thành công!');
+                    setSuccessModalVisible(true);
                     fetchTestDetail();
                     handleCloseModal();
                 } else {
-                    message.error(response.message || 'Không thể thêm câu hỏi');
+                    setErrorMessage(response.message || 'Không thể thêm câu hỏi');
+                    setErrorModalVisible(true);
                 }
             }
         } catch (error) {
             console.error('Failed to submit question', error);
-            message.error('Không thể kết nối đến server');
+            setErrorMessage('Không thể kết nối đến server');
+            setErrorModalVisible(true);
         } finally {
             setSubmitting(false);
         }
@@ -150,14 +161,17 @@ export const ManageQuestions = () => {
         try {
             const response = await teacherApi.deleteQuestion(classId, testId, questionId);
             if (!response.error) {
-                message.success('Xóa câu hỏi thành công!');
+                setSuccessMessage('Xóa câu hỏi thành công!');
+                setSuccessModalVisible(true);
                 fetchTestDetail();
             } else {
-                message.error(response.message || 'Không thể xóa câu hỏi');
+                setErrorMessage(response.message || 'Không thể xóa câu hỏi');
+                setErrorModalVisible(true);
             }
         } catch (error) {
             console.error('Failed to delete question', error);
-            message.error('Không thể kết nối đến server');
+            setErrorMessage('Không thể kết nối đến server');
+            setErrorModalVisible(true);
         }
     };
 
@@ -396,6 +410,17 @@ export const ManageQuestions = () => {
                     </Form.Item>
                 </Form>
             </Modal>
+
+            <SuccessModal
+                open={successModalVisible}
+                message={successMessage}
+                onClose={() => setSuccessModalVisible(false)}
+            />
+            <ErrorModal
+                open={errorModalVisible}
+                message={errorMessage}
+                onClose={() => setErrorModalVisible(false)}
+            />
         </div>
     );
 };

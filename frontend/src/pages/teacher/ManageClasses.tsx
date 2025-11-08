@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Card, Typography, Table, Button, Space, Tag, Spin, Empty, Alert, Modal, Form, Input, Select, message, Popconfirm } from 'antd';
+import { Card, Typography, Table, Button, Space, Tag, Spin, Empty, Alert, Modal, Form, Input, Select, Popconfirm } from 'antd';
 import { UserAddOutlined, ReloadOutlined, TeamOutlined, PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router';
 import { teacherApi } from '../../apis';
 import type { ClassDto } from '../../apis/teacherApi';
 import type { ColumnsType } from 'antd/es/table';
+import { SuccessModal } from '../../components/SuccessModal';
+import { ErrorModal } from '../../components/ErrorModal';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -19,6 +21,10 @@ export const ManageClasses = () => {
     const [addStudentForm] = Form.useForm();
     const [editForm] = Form.useForm();
     const [submitting, setSubmitting] = useState(false);
+    const [successModalVisible, setSuccessModalVisible] = useState(false);
+    const [errorModalVisible, setErrorModalVisible] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -65,17 +71,20 @@ export const ManageClasses = () => {
             const response = await teacherApi.addStudentToClass(selectedClassId, request);
 
             if (!response.error) {
-                message.success('Thêm học sinh thành công');
+                setSuccessMessage('Thêm học sinh thành công');
+                setSuccessModalVisible(true);
                 setAddStudentModalVisible(false);
                 addStudentForm.resetFields();
                 // Refresh class list to update student count
                 fetchClasses();
             } else {
-                message.error(response.message || 'Không thể thêm học sinh');
+                setErrorMessage(response.message || 'Không thể thêm học sinh');
+                setErrorModalVisible(true);
             }
         } catch (error) {
             console.error('Failed to add student', error);
-            message.error('Không thể thêm học sinh vào lớp');
+            setErrorMessage('Không thể thêm học sinh vào lớp');
+            setErrorModalVisible(true);
         } finally {
             setSubmitting(false);
         }
@@ -100,16 +109,19 @@ export const ManageClasses = () => {
             const response = await teacherApi.updateClass(selectedClassId, values);
 
             if (!response.error) {
-                message.success('Cập nhật lớp học thành công');
+                setSuccessMessage('Cập nhật lớp học thành công');
+                setSuccessModalVisible(true);
                 setEditModalVisible(false);
                 editForm.resetFields();
                 fetchClasses();
             } else {
-                message.error(response.message || 'Không thể cập nhật lớp học');
+                setErrorMessage(response.message || 'Không thể cập nhật lớp học');
+                setErrorModalVisible(true);
             }
         } catch (error) {
             console.error('Failed to update class', error);
-            message.error('Không thể cập nhật lớp học');
+            setErrorMessage('Không thể cập nhật lớp học');
+            setErrorModalVisible(true);
         } finally {
             setSubmitting(false);
         }
@@ -120,14 +132,17 @@ export const ManageClasses = () => {
             const response = await teacherApi.deleteClass(classId);
 
             if (!response.error) {
-                message.success('Xóa lớp học thành công');
+                setSuccessMessage('Xóa lớp học thành công');
+                setSuccessModalVisible(true);
                 fetchClasses();
             } else {
-                message.error(response.message || 'Không thể xóa lớp học');
+                setErrorMessage(response.message || 'Không thể xóa lớp học');
+                setErrorModalVisible(true);
             }
         } catch (error) {
             console.error('Failed to delete class', error);
-            message.error('Không thể xóa lớp học');
+            setErrorMessage('Không thể xóa lớp học');
+            setErrorModalVisible(true);
         }
     };
 
@@ -446,6 +461,17 @@ export const ManageClasses = () => {
                     </Form.Item>
                 </Form>
             </Modal>
+
+            <SuccessModal
+                open={successModalVisible}
+                message={successMessage}
+                onClose={() => setSuccessModalVisible(false)}
+            />
+            <ErrorModal
+                open={errorModalVisible}
+                message={errorMessage}
+                onClose={() => setErrorModalVisible(false)}
+            />
         </div>
     );
 };

@@ -177,6 +177,36 @@ export const getTestDetail = async (classId: string, testId: string): Promise<Ap
 };
 
 /**
+ * Update test information
+ * @param classId - Class ID
+ * @param testId - Test ID
+ * @param test - Updated test data
+ */
+export const updateTest = async (
+    classId: string,
+    testId: string,
+    test: AddTestRequestDTO
+): Promise<ApiResponse<TestDTO>> => {
+    const response = await apiClient.put<ApiResponse<TestDTO>>(
+        `/api/classes/${classId}/tests/${testId}`,
+        test
+    );
+    return response.data;
+};
+
+/**
+ * Delete test
+ * @param classId - Class ID
+ * @param testId - Test ID
+ */
+export const deleteTest = async (classId: string, testId: string): Promise<ApiResponse<void>> => {
+    const response = await apiClient.delete<ApiResponse<void>>(
+        `/api/classes/${classId}/tests/${testId}`
+    );
+    return response.data;
+};
+
+/**
  * Get test results (submissions and statistics)
  * @param classId - Class ID
  * @param testId - Test ID

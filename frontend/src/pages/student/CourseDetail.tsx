@@ -236,7 +236,7 @@ export const CourseDetail = () => {
                                             <Space>
                                                 <CalendarOutlined className="text-gray-500" />
                                                 <Text type="secondary">
-                                                    Tạo ngày: {new Date(test.createdAt).toLocaleDateString('vi-VN')}
+                                                    Tạo ngày: {test.createdAt ? new Date(test.createdAt).toLocaleDateString('vi-VN') : 'Chưa có thông tin'}
                                                 </Text>
                                             </Space>
                                         </Space>

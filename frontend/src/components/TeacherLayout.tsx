@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation, Outlet } from 'react-router';
 import { Layout, Menu, Avatar, Button, Spin, Typography, Drawer } from 'antd';
-import { DashboardOutlined, BookOutlined, FileTextOutlined, LineChartOutlined, ProfileOutlined, LogoutOutlined, MenuOutlined, PlusOutlined } from '@ant-design/icons';
+import { DashboardOutlined, BookOutlined, FileTextOutlined, ProfileOutlined, LogoutOutlined, MenuOutlined, PlusOutlined } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
 
 const { Sider, Content } = Layout;
@@ -39,11 +39,6 @@ export const TeacherLayout = () => {
             label: 'Bài kiểm tra',
         },
         {
-            key: '/teacher/tests/create',
-            icon: <LineChartOutlined />,
-            label: 'Tạo bài kiểm tra',
-        },
-        {
             key: '/teacher/profile',
             icon: <ProfileOutlined />,
             label: 'Thông tin cá nhân',
@@ -55,10 +50,9 @@ export const TeacherLayout = () => {
     };
 
     const selectedKeys = [location.pathname];
-    // Only override selectedKeys for test detail/results pages, not for create page
+    // Override selectedKeys for test detail/results pages
     if (location.pathname.startsWith('/teacher/tests/') &&
-        !location.pathname.endsWith('/create') &&
-        location.pathname !== '/teacher/tests/create') {
+        location.pathname !== '/teacher/tests') {
         selectedKeys[0] = '/teacher/tests';
     }
 
