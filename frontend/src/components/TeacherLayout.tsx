@@ -55,7 +55,10 @@ export const TeacherLayout = () => {
     };
 
     const selectedKeys = [location.pathname];
-    if (location.pathname.startsWith('/teacher/tests/')) {
+    // Only override selectedKeys for test detail/results pages, not for create page
+    if (location.pathname.startsWith('/teacher/tests/') && 
+        !location.pathname.endsWith('/create') &&
+        location.pathname !== '/teacher/tests/create') {
         selectedKeys[0] = '/teacher/tests';
     }
 

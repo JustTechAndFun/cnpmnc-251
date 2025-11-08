@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Card, Statistic, List, Avatar, Spin, Typography, Tag } from 'antd';
+import { Card, Statistic, List, Avatar, Spin, Typography } from 'antd';
 import { BookOutlined, FileTextOutlined, ClockCircleOutlined, TeamOutlined } from '@ant-design/icons';
 import type { ApiResponse } from '../../types';
 import { ErrorModal } from '../../components/ErrorModal';
+import { teacherApi } from '../../apis';
 
 const { Title, Text } = Typography;
 
@@ -32,27 +33,45 @@ export const TeacherDashboard = () => {
     }, []);
 
     const fetchDashboardStats = async () => {
+        setLoading(true);
         try {
             const token = localStorage.getItem('auth_token');
-            const response = await axios.get<ApiResponse<TeacherStats>>(
-                `${API_BASE_URL}/api/teacher/stats`,
-                {
-                    headers: token ? { Authorization: `Bearer ${token}` } : {},
-                    withCredentials: true
-                }
-            );
 
-            if (!response.data.error && response.data.data) {
-                setStats(response.data.data);
+            // Calculate stats from other APIs
+            const [classesResponse, testsResponse] = await Promise.allSettled([
+                teacherApi.getMyClasses(),
+                axios.get<ApiResponse<import('../../types').Test[]>>(
+                    `${API_BASE_URL}/api/teacher/tests`,
+                    {
+                        headers: token ? { Authorization: `Bearer ${token}` } : {},
+                        withCredentials: true
+                    }
+                )
+            ]);
+
+            let totalClasses = 0;
+            let totalStudents = 0;
+            let totalAssignments = 0;
+
+            // Calculate from classes
+            if (classesResponse.status === 'fulfilled' && !classesResponse.value.error && classesResponse.value.data) {
+                totalClasses = classesResponse.value.data.length;
+                totalStudents = classesResponse.value.data.reduce((sum, cls) => sum + (cls.studentCount || 0), 0);
             }
+
+            // Calculate from tests
+            if (testsResponse.status === 'fulfilled' && !testsResponse.value.data.error && testsResponse.value.data.data) {
+                totalAssignments = testsResponse.value.data.data.length;
+            }
+
+            setStats({
+                totalClasses,
+                totalAssignments,
+                pendingGrading: 0, // Can be calculated from test results in the future
+                totalStudents
+            });
         } catch (error) {
             console.error('Failed to fetch dashboard stats', error);
-            setStats({
-                totalClasses: 8,
-                totalAssignments: 24,
-                pendingGrading: 12,
-                totalStudents: 156
-            });
             setErrorMessage('Không thể tải thống kê dashboard. Vui lòng thử lại sau.');
             setErrorModalVisible(true);
         } finally {
@@ -65,25 +84,21 @@ export const TeacherDashboard = () => {
             title: 'Lớp học',
             value: stats.totalClasses,
             prefix: <BookOutlined className="text-purple-500" />,
-            suffix: <Tag color="purple">+2</Tag>,
         },
         {
             title: 'Bài tập',
             value: stats.totalAssignments,
             prefix: <FileTextOutlined className="text-blue-500" />,
-            suffix: <Tag color="blue">+5</Tag>,
         },
         {
             title: 'Chờ chấm điểm',
             value: stats.pendingGrading,
             prefix: <ClockCircleOutlined className="text-orange-500" />,
-            suffix: <Tag color="orange">-3</Tag>,
         },
         {
             title: 'Tổng học sinh',
             value: stats.totalStudents,
             prefix: <TeamOutlined className="text-green-500" />,
-            suffix: <Tag color="green">+12</Tag>,
         }
     ];
 
@@ -128,7 +143,6 @@ export const TeacherDashboard = () => {
                                     title={card.title}
                                     value={card.value}
                                     prefix={card.prefix}
-                                    suffix={card.suffix}
                                 />
                             </Card>
                         ))}

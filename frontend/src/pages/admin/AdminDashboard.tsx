@@ -29,32 +29,29 @@ export const AdminDashboard = () => {
     }, []);
 
     const fetchDashboardStats = async () => {
+        setLoading(true);
         try {
-            // Calculate stats from users list
-            const usersResponse = await adminApi.getAllUsers();
-
-            if (!usersResponse.error && usersResponse.data) {
-                const users = usersResponse.data;
+            const response = await adminApi.getAllUsers();
+            
+            if (!response.error && response.data) {
+                const users = response.data;
                 const totalUsers = users.length;
                 const totalTeachers = users.filter(u => u.role === 'TEACHER').length;
                 const totalStudents = users.filter(u => u.role === 'STUDENT').length;
                 const activeUsers = users.filter(u => u.activate).length;
-
+                
                 setStats({
                     totalUsers,
                     totalTeachers,
-                    totalStudents,
+                    totalStudents: totalStudents,
                     activeUsers
                 });
+            } else {
+                setErrorMessage(response.message || 'Không thể tải thống kê dashboard');
+                setErrorModalVisible(true);
             }
         } catch (error) {
             console.error('Failed to fetch dashboard stats', error);
-            setStats({
-                totalUsers: 156,
-                totalTeachers: 24,
-                totalStudents: 128,
-                activeUsers: 142
-            });
             setErrorMessage('Không thể tải thống kê dashboard. Vui lòng thử lại sau.');
             setErrorModalVisible(true);
         } finally {

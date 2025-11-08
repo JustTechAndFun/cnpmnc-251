@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
-import axios from 'axios';
+import apiClient from '../../apis/axiosConfig';
 import {
     Card,
     Table,
@@ -31,8 +31,6 @@ import { SuccessModal } from '../../components/SuccessModal';
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '';
-
 export const TestManagement = () => {
     const navigate = useNavigate();
     const [tests, setTests] = useState<Test[]>([]);
@@ -59,25 +57,30 @@ export const TestManagement = () => {
     const fetchTests = async () => {
         try {
             setLoading(true);
-            const token = localStorage.getItem('auth_token');
-            const response = await axios.get<ApiResponse<Test[]>>(
-                `${API_BASE_URL}/api/teacher/tests`,
-                {
-                    headers: token ? { Authorization: `Bearer ${token}` } : {},
-                    withCredentials: true
-                }
-            );
+            const response = await apiClient.get<ApiResponse<Test[]>>('/api/teacher/tests');
 
             if (!response.data.error && response.data.data) {
                 setTests(response.data.data);
             } else {
-                setErrorMessage(response.data.message || 'Không thể tải danh sách test');
+                const errorMsg = response.data.message || 'Không thể tải danh sách test';
+                setErrorMessage(errorMsg);
                 setErrorModalVisible(true);
                 setTests([]);
             }
-        } catch (error) {
+        } catch (error: unknown) {
             console.error('Failed to fetch tests', error);
-            setErrorMessage('Không thể tải danh sách test. Vui lòng thử lại sau.');
+            let errorMsg = 'Không thể tải danh sách test. Vui lòng thử lại sau.';
+            if (error && typeof error === 'object' && 'response' in error) {
+                const axiosError = error as { response?: { data?: { message?: string }; status?: number } };
+                if (axiosError.response?.data?.message) {
+                    errorMsg = axiosError.response.data.message;
+                } else if (axiosError.response?.status === 404) {
+                    errorMsg = 'API endpoint không tồn tại. Vui lòng kiểm tra lại.';
+                } else if (axiosError.response?.status === 401) {
+                    errorMsg = 'Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.';
+                }
+            }
+            setErrorMessage(errorMsg);
             setErrorModalVisible(true);
             setTests([]);
         } finally {
@@ -105,14 +108,9 @@ export const TestManagement = () => {
         if (!selectedTest) return;
 
         try {
-            const token = localStorage.getItem('auth_token');
-            const response = await axios.put<ApiResponse<Test>>(
-                `${API_BASE_URL}/api/teacher/tests/${selectedTest.id}`,
-                values,
-                {
-                    headers: token ? { Authorization: `Bearer ${token}` } : {},
-                    withCredentials: true
-                }
+            const response = await apiClient.put<ApiResponse<Test>>(
+                `/api/teacher/tests/${selectedTest.id}`,
+                values
             );
 
             if (!response.data.error && response.data.data) {
@@ -135,13 +133,8 @@ export const TestManagement = () => {
 
     const handleDeleteTest = async (testId: string) => {
         try {
-            const token = localStorage.getItem('auth_token');
-            await axios.delete<ApiResponse<void>>(
-                `${API_BASE_URL}/api/teacher/tests/${testId}`,
-                {
-                    headers: token ? { Authorization: `Bearer ${token}` } : {},
-                    withCredentials: true
-                }
+            await apiClient.delete<ApiResponse<void>>(
+                `/api/teacher/tests/${testId}`
             );
             setSuccessMessage('Xóa test thành công');
             setSuccessModalVisible(true);
@@ -169,13 +162,8 @@ export const TestManagement = () => {
 
     const handleDeleteQuestion = async (testId: string, questionId: string) => {
         try {
-            const token = localStorage.getItem('auth_token');
-            await axios.delete<ApiResponse<void>>(
-                `${API_BASE_URL}/api/teacher/tests/${testId}/questions/${questionId}`,
-                {
-                    headers: token ? { Authorization: `Bearer ${token}` } : {},
-                    withCredentials: true
-                }
+            await apiClient.delete<ApiResponse<void>>(
+                `/api/teacher/tests/${testId}/questions/${questionId}`
             );
             setSuccessMessage('Xóa câu hỏi thành công');
             setSuccessModalVisible(true);
@@ -229,16 +217,11 @@ export const TestManagement = () => {
         };
 
         try {
-            const token = localStorage.getItem('auth_token');
             if (editingQuestion) {
                 // Update question
-                const response = await axios.put<ApiResponse<Question>>(
-                    `${API_BASE_URL}/api/teacher/tests/${selectedTest.id}/questions/${editingQuestion.id}`,
-                    questionData,
-                    {
-                        headers: token ? { Authorization: `Bearer ${token}` } : {},
-                        withCredentials: true
-                    }
+                const response = await apiClient.put<ApiResponse<Question>>(
+                    `/api/teacher/tests/${selectedTest.id}/questions/${editingQuestion.id}`,
+                    questionData
                 );
                 if (!response.data.error) {
                     setQuestionModalVisible(false);
@@ -253,13 +236,9 @@ export const TestManagement = () => {
                 }
             } else {
                 // Create question
-                const response = await axios.post<ApiResponse<Question>>(
-                    `${API_BASE_URL}/api/teacher/tests/${selectedTest.id}/questions`,
-                    questionData,
-                    {
-                        headers: token ? { Authorization: `Bearer ${token}` } : {},
-                        withCredentials: true
-                    }
+                const response = await apiClient.post<ApiResponse<Question>>(
+                    `/api/teacher/tests/${selectedTest.id}/questions`,
+                    questionData
                 );
                 if (!response.data.error) {
                     setQuestionModalVisible(false);

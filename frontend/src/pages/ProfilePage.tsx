@@ -110,7 +110,7 @@ export const ProfilePage = () => {
                         }
                         className="shadow-sm"
                     >
-                        <Text className="text-base">{profile.school}</Text>
+                        <Text className="text-base">{profile.school || 'Chưa cập nhật'}</Text>
                     </Card>
 
                     {/* Personal Information Card */}
@@ -125,18 +125,18 @@ export const ProfilePage = () => {
                     >
                         <Descriptions column={{ xxl: 2, xl: 2, lg: 2, md: 1, sm: 1, xs: 1 }} bordered>
                             <Descriptions.Item label="Họ và tên" span={2}>
-                                {profile.information.name || 'Chưa cập nhật'}
+                                {profile.information?.name || 'Chưa cập nhật'}
                             </Descriptions.Item>
                             <Descriptions.Item label="Giới tính">
-                                {profile.information.gender || 'Chưa cập nhật'}
+                                {profile.information?.gender || 'Chưa cập nhật'}
                             </Descriptions.Item>
                             <Descriptions.Item label="Số điện thoại">
-                                {profile.information.phone || 'Chưa cập nhật'}
+                                {profile.information?.phone || 'Chưa cập nhật'}
                             </Descriptions.Item>
                             <Descriptions.Item label="Ngày sinh">
-                                {formatDate(profile.information.dob)}
+                                {formatDate(profile.information?.dob)}
                             </Descriptions.Item>
-                            {profile.information.address && (
+                            {profile.information?.address && (
                                 <Descriptions.Item label="Địa chỉ" span={2}>
                                     {profile.information.address}
                                 </Descriptions.Item>

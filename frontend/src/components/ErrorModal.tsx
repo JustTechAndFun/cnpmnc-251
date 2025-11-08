@@ -26,7 +26,7 @@ export const ErrorModal = ({ open, title = 'Lỗi', message, onClose }: ErrorMod
             cancelButtonProps={{ style: { display: 'none' } }}
             width={500}
             zIndex={10000}
-            maskStyle={{ zIndex: 9999 }}
+            styles={{ mask: { zIndex: 9999 } }}
         >
             <Text>{message}</Text>
         </Modal>

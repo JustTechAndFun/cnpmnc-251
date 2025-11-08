@@ -39,8 +39,8 @@ export interface ApiResponse<T> {
 
 export interface Profile {
     email: string;
-    school: string;
-    information: {
+    school?: string;
+    information?: {
         name?: string;
         gender?: string;
         phone?: string;
