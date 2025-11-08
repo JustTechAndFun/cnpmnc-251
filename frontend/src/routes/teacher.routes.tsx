@@ -4,7 +4,6 @@ import { ProtectedRoute } from '../components/ProtectedRoute';
 import { TeacherLayout } from '../components/TeacherLayout';
 import { TeacherDashboard } from '../pages/teacher/TeacherDashboard';
 import { ManageAssignments } from '../pages/teacher/ManageAssignments';
-import { GradeStudents } from '../pages/teacher/GradeStudents';
 import { ClassPage } from '../pages/teacher/Class';
 import { TestDetail } from '../pages/teacher/TestDetail';
 import { TestManagement } from '../pages/teacher/TestManagement';
@@ -26,7 +25,11 @@ export const teacherRoutes: RouteObject[] = [
             },
             {
                 path: 'classes',
-                element: <ClassPage />
+                element: <ManageClasses />
+            },
+            {
+                path: 'classes/create',
+                element: <CreateClass />
             },
             {
                 path: 'classes/:classId',
@@ -41,12 +44,12 @@ export const teacherRoutes: RouteObject[] = [
                 element: <ManageAssignments />
             },
             {
-                path: 'grades',
-                element: <GradeStudents />
-            },
-            {
                 path: 'tests',
                 element: <TestManagement />
+            },
+            {
+                path: 'tests/create',
+                element: <CreateTest />
             },
             {
                 path: 'tests/:testId',

@@ -44,9 +44,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 }
             }
 
+            // Log current cookies before API call (dev only)
+            if (isDevMode) {
+                console.log('[Auth] Checking authentication. Current cookies:', document.cookie);
+            }
+
             // Always verify session with backend (except for fake users)
             // Backend will check JSESSIONID cookie automatically
             const response = await authApi.getCurrentUser();
+
+            console.log('[Auth] getCurrentUser response:', {
+                error: response.error,
+                hasData: !!response.data,
+                message: response.message
+            });
 
             if (!response.error && response.data) {
                 const userData = response.data;
@@ -63,13 +74,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
                 // Save user data to localStorage for offline access
                 localStorage.setItem(USER_KEY, JSON.stringify(userObject));
+
+                if (isDevMode) {
+                    console.log('[Auth] User authenticated successfully');
+                }
             } else {
                 // Session invalid or expired - clear data
+                console.log('[Auth] No valid session found, clearing data');
                 localStorage.removeItem(USER_KEY);
                 setUser(null);
             }
         } catch (error) {
-            console.error('Not authenticated', error);
+            console.error('[Auth] Authentication check failed:', error);
             // Session expired or network error - clear data
             localStorage.removeItem(USER_KEY);
             setUser(null);
@@ -101,7 +117,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const handleCallbackMemo = useCallback(async (code: string) => {
         try {
+            console.log('[Auth] Processing callback with code:', code.substring(0, 10) + '...');
+
             const response = await authApi.handleGoogleCallback(code, GOOGLE_REDIRECT_URI);
+
+            console.log('[Auth] Callback response:', {
+                error: response.error,
+                hasData: !!response.data,
+                message: response.message
+            });
 
             if (!response.error && response.data) {
                 const userData = response.data;
@@ -119,11 +143,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 // Save user data to localStorage
                 localStorage.setItem(USER_KEY, JSON.stringify(userObject));
 
+                // Log cookies after successful login (dev only)
+                if (import.meta.env.DEV) {
+                    console.log('[Auth] Login successful. Current cookies:', document.cookie);
+                    console.log('[Auth] User data saved to localStorage');
+                }
+
                 return true;
             }
+
+            console.error('[Auth] Callback failed:', response.message);
             return false;
         } catch (error) {
-            console.error('Callback error', error);
+            console.error('[Auth] Callback error:', error);
             // Clear any partial data on error
             localStorage.removeItem(USER_KEY);
             return false;
