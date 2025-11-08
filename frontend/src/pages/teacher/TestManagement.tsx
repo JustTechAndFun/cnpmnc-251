@@ -60,18 +60,46 @@ export const TestManagement = () => {
         try {
             setLoading(true);
             const token = localStorage.getItem('auth_token');
-            const response = await axios.get<ApiResponse<Test[]>>(
-                `${API_BASE_URL}/api/teacher/tests`,
+
+            // First, get all classes of the teacher
+            const classesResponse = await axios.get<ApiResponse<any[]>>(
+                `${API_BASE_URL}/api/classes/my-classes`,
                 {
                     headers: token ? { Authorization: `Bearer ${token}` } : {},
                     withCredentials: true
                 }
             );
 
-            if (!response.data.error && response.data.data) {
-                setTests(response.data.data);
+            if (!classesResponse.data.error && classesResponse.data.data) {
+                const classes = classesResponse.data.data;
+
+                // Fetch tests from all classes
+                const allTestsPromises = classes.map(cls =>
+                    axios.get<ApiResponse<Test[]>>(
+                        `${API_BASE_URL}/api/classes/${cls.id}/tests`,
+                        {
+                            headers: token ? { Authorization: `Bearer ${token}` } : {},
+                            withCredentials: true
+                        }
+                    ).catch(error => {
+                        console.error(`Failed to fetch tests for class ${cls.id}`, error);
+                        return { data: { error: true, data: [] } };
+                    })
+                );
+
+                const testsResponses = await Promise.all(allTestsPromises);
+
+                // Combine all tests from all classes
+                const allTests: Test[] = [];
+                testsResponses.forEach(response => {
+                    if (!response.data.error && response.data.data) {
+                        allTests.push(...response.data.data);
+                    }
+                });
+
+                setTests(allTests);
             } else {
-                setErrorMessage(response.data.message || 'Không thể tải danh sách test');
+                setErrorMessage('Không thể tải danh sách lớp học');
                 setErrorModalVisible(true);
                 setTests([]);
             }
