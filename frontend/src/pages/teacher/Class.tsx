@@ -82,6 +82,9 @@ export const ClassPage = () => {
     const [tests, setTests] = useState<Test[]>([]);
 
     useEffect(() => {
+        // Always fetch classes list first
+        fetchClassesList();
+        
         // If no classId, try to get first class or use default
         if (!classId) {
             fetchFirstClass();
@@ -89,6 +92,81 @@ export const ClassPage = () => {
             fetchClassData();
         }
     }, [classId]);
+
+    const fetchClassesList = async () => {
+        try {
+            const token = localStorage.getItem('auth_token');
+            try {
+                const classesResponse = await axios.get<ApiResponse<ClassInfo[]>>(
+                    `${API_BASE_URL}/api/teacher/classes`,
+                    {
+                        headers: token ? { Authorization: `Bearer ${token}` } : {},
+                        withCredentials: true
+                    }
+                );
+
+                if (!classesResponse.data.error && classesResponse.data.data && classesResponse.data.data.length > 0) {
+                    setClasses(classesResponse.data.data);
+                    return;
+                }
+            } catch (error) {
+                console.error('Failed to fetch classes list', error);
+            }
+            
+            // If no classes found, use default/mock data
+            const mockClasses: ClassInfo[] = [
+                {
+                    id: '1',
+                    name: 'Công nghệ phần mềm nâng cao',
+                    description: 'Lớp học về các kỹ thuật phát triển phần mềm hiện đại',
+                    totalStudents: 35,
+                    totalTests: 5
+                },
+                {
+                    id: '2',
+                    name: 'Thiết kế giao diện người dùng',
+                    description: 'Lớp học về UI/UX design và phát triển giao diện web hiện đại',
+                    totalStudents: 28,
+                    totalTests: 3
+                },
+                {
+                    id: '3',
+                    name: 'Cơ sở dữ liệu nâng cao',
+                    description: 'Lớp học về quản lý và tối ưu hóa cơ sở dữ liệu, SQL và NoSQL',
+                    totalStudents: 42,
+                    totalTests: 6
+                }
+            ];
+            setClasses(mockClasses);
+        } catch (error) {
+            console.error('Error fetching classes list', error);
+            // Use default data
+            const mockClasses: ClassInfo[] = [
+                {
+                    id: '1',
+                    name: 'Công nghệ phần mềm nâng cao',
+                    description: 'Lớp học về các kỹ thuật phát triển phần mềm hiện đại',
+                    totalStudents: 35,
+                    totalTests: 5
+                },
+                {
+                    id: '2',
+                    name: 'Thiết kế giao diện người dùng',
+                    description: 'Lớp học về UI/UX design và phát triển giao diện web hiện đại',
+                    totalStudents: 28,
+                    totalTests: 3
+                },
+                {
+                    id: '3',
+                    name: 'Cơ sở dữ liệu nâng cao',
+                    description: 'Lớp học về quản lý và tối ưu hóa cơ sở dữ liệu, SQL và NoSQL',
+                    totalStudents: 42,
+                    totalTests: 6
+                }
+            ];
+            setClasses(mockClasses);
+        }
+    };
 
     const fetchFirstClass = async () => {
         setLoading(true);
@@ -301,6 +379,11 @@ export const ClassPage = () => {
         setLoading(true);
         try {
             const token = localStorage.getItem('auth_token');
+            
+            // Ensure classes list is loaded
+            if (classes.length === 0) {
+                await fetchClassesList();
+            }
 
             // Fetch class information
             try {
@@ -317,14 +400,19 @@ export const ClassPage = () => {
                 }
             } catch (error) {
                 console.error('Failed to fetch class info, using mock data', error);
-                // Mock data fallback
-                setClassInfo({
-                    id: classId || '1',
-                    name: 'Công nghệ phần mềm nâng cao',
-                    description: 'Lớp học về các kỹ thuật phát triển phần mềm hiện đại',
-                    totalStudents: 35,
-                    totalTests: 5
-                });
+                // Mock data fallback - find class from classes list or use default
+                const foundClass = classes.find(c => c.id === classId);
+                if (foundClass) {
+                    setClassInfo(foundClass);
+                } else {
+                    setClassInfo({
+                        id: classId || '1',
+                        name: 'Công nghệ phần mềm nâng cao',
+                        description: 'Lớp học về các kỹ thuật phát triển phần mềm hiện đại',
+                        totalStudents: 35,
+                        totalTests: 5
+                    });
+                }
             }
 
             // Fetch students
@@ -582,12 +670,19 @@ export const ClassPage = () => {
                                     <Title level={2} className="mb-0 bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
                                         {classInfo.name}
                                     </Title>
-                                    {classes.length > 1 && (
+                                    {classes.length > 0 && (
                                         <Select
                                             value={classInfo.id}
                                             onChange={handleClassChange}
-                                            style={{ width: 250 }}
+                                            style={{ width: 300 }}
                                             placeholder="Chọn lớp học"
+                                            showSearch
+                                            optionFilterProp="children"
+                                            filterOption={(input, option) => {
+                                                const children = option?.children;
+                                                const label = typeof children === 'string' ? children : String(children);
+                                                return label.toLowerCase().includes(input.toLowerCase());
+                                            }}
                                         >
                                             {classes.map(cls => (
                                                 <Select.Option key={cls.id} value={cls.id}>
