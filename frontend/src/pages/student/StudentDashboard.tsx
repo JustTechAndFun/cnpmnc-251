@@ -29,8 +29,11 @@ export const StudentDashboard = () => {
     const fetchDashboardStats = async () => {
         setLoading(true);
         try {
-            // Calculate stats from other APIs
-            const classesResponse = await studentApi.getMyClasses();
+            // Fetch data from APIs
+            const [classesResponse, gradesResponse] = await Promise.all([
+                studentApi.getMyClasses(),
+                studentApi.getMyGrades()
+            ]);
 
             let enrolledCourses = 0;
             let activeAssignments = 0;
@@ -54,9 +57,18 @@ export const StudentDashboard = () => {
                     }
                 }
 
-                activeAssignments = totalTests; // Simplified: all tests are active assignments
-                completedAssignments = 0; // TODO: Calculate from submissions if API available
-                averageGrade = 0; // TODO: Calculate from grades if API available
+                activeAssignments = totalTests;
+            }
+
+            // Calculate from grades
+            if (!gradesResponse.error && gradesResponse.data) {
+                const grades = gradesResponse.data;
+                completedAssignments = grades.length;
+                
+                if (grades.length > 0) {
+                    const totalScore = grades.reduce((sum, g) => sum + g.score, 0);
+                    averageGrade = totalScore / grades.length;
+                }
             }
 
             setStats({

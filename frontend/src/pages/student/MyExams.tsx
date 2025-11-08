@@ -2,8 +2,7 @@ import React, { useState } from "react";
 import { Card, Typography, Modal, message, Alert, Spin, Input, Button, Space } from "antd";
 import { useParams, useNavigate } from "react-router";
 import { useAuth } from "../../contexts/AuthContext";
-import apiClient from "../../apis/axiosConfig";
-import type { ApiResponse } from "../../types";
+import { studentApi } from "../../apis";
 
 const { Title, Text } = Typography;
 
@@ -19,12 +18,6 @@ interface QuestionForStudent {
 interface AnswerSubmission {
   questionId: string;
   submitAnswer: string;
-}
-
-interface SubmissionRequest {
-  testId: string;
-  userId: string;
-  answers: AnswerSubmission[];
 }
 
 export const MyExams: React.FC = () => {
@@ -47,17 +40,14 @@ export const MyExams: React.FC = () => {
 
     setLoadingPasscode(true);
     try {
-      const response = await apiClient.get<ApiResponse<QuestionForStudent[]>>(
-        `/api/exams/${examId}/questions`,
-        { params: { passcode: passcodeValue } }
-      );
+      const response = await studentApi.getExamQuestions(examId, passcodeValue);
 
-      if (!response.data.error && response.data.data) {
-        setQuestions(response.data.data);
+      if (!response.error && response.data) {
+        setQuestions(response.data);
         setPasscodeEntered(true);
         message.success("Đã tải câu hỏi thành công!");
       } else {
-        message.error(response.data.message || "Mã truy cập không đúng hoặc không thể tải câu hỏi");
+        message.error(response.message || "Mã truy cập không đúng hoặc không thể tải câu hỏi");
       }
     } catch (error) {
       console.error("Failed to fetch questions", error);
@@ -99,19 +89,13 @@ export const MyExams: React.FC = () => {
         submitAnswer: choice
       }));
 
-      const payload: SubmissionRequest = {
-        testId: examId,
-        userId: auth.user.id,
-        answers
-      };
+      const response = await studentApi.submitExam(examId, auth.user.id, answers);
 
-      const response = await apiClient.post<ApiResponse<any>>("/api/submissions", payload);
-
-      if (!response.data.error) {
+      if (!response.error) {
         message.success("Nộp bài thành công!");
         navigate("/student/grades");
       } else {
-        throw new Error(response.data.message || "Không thể nộp bài");
+        throw new Error(response.message || "Không thể nộp bài");
       }
     } catch (err: any) {
       setErrorLog(err.message || "Unknown error");

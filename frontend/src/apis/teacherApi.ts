@@ -240,3 +240,18 @@ export const deleteQuestion = async (
     );
     return response.data;
 };
+
+/**
+ * Get questions of a test
+ * @param classId - Class ID
+ * @param testId - Test ID
+ */
+export const getTestQuestions = async (
+    classId: string,
+    testId: string
+): Promise<ApiResponse<QuestionDTO[]>> => {
+    const response = await apiClient.get<ApiResponse<QuestionDTO[]>>(
+        `/api/classes/${classId}/test/${testId}/questions`
+    );
+    return response.data;
+};
