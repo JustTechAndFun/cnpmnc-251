@@ -3,13 +3,18 @@ package cnpmnc.assignment.service;
 import cnpmnc.assignment.dto.QuestionDTO;
 import cnpmnc.assignment.dto.RequestDTO.AddQuestions;
 import cnpmnc.assignment.dto.RequestDTO.AddTestRequestDTO;
+import cnpmnc.assignment.dto.StudentSubmissionDTO;
 import cnpmnc.assignment.dto.TestDTO;
+import cnpmnc.assignment.dto.TestResultsResponseDTO;
+import cnpmnc.assignment.dto.TestResultsSummaryDTO;
 import cnpmnc.assignment.model.Class;
 import cnpmnc.assignment.model.Question;
+import cnpmnc.assignment.model.Submission;
 import cnpmnc.assignment.model.Test;
 import cnpmnc.assignment.model.User;
 import cnpmnc.assignment.repository.ClassRepository;
 import cnpmnc.assignment.repository.QuestionRepository;
+import cnpmnc.assignment.repository.SubmissionRepository;
 import cnpmnc.assignment.repository.TestRepository;
 import cnpmnc.assignment.util.constant.TestStatus;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +32,7 @@ public class TestService {
     private final ClassRepository classRepository;
     private final TestRepository testRepository;
     private final QuestionRepository questionRepository;
+    private final SubmissionRepository submissionRepository;
     private static final String ALPHANUM = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     private static final SecureRandom RAND = new SecureRandom();
 
@@ -298,5 +304,74 @@ public class TestService {
         return testEntity.getQuestions().stream()
                 .map(QuestionDTO::fromQuestion)
                 .collect(Collectors.toList());
+    }
+
+    public TestResultsResponseDTO getTestResults(String classId, String testId, User currentUser) {
+        Test testEntity = testRepository.findById(testId)
+                .orElseThrow(() -> new IllegalArgumentException("Test not found"));
+        
+        Class classEntity = classRepository.findById(classId)
+                .orElseThrow(() -> new IllegalArgumentException("Class not found"));
+
+        // Check authorization - only teacher can view results
+        if (!classEntity.getTeacher().getId().equals(currentUser.getId())) {
+            throw new SecurityException("You are not authorized to view results of this test");
+        }
+
+        // Verify test belongs to this class
+        if (!testEntity.getClazz().getId().equals(classId)) {
+            throw new IllegalArgumentException("Test does not belong to this class");
+        }
+
+        // Fetch all submissions for this test
+        List<Submission> submissions = submissionRepository.findByTestId(testId);
+
+        // Convert to DTOs
+        List<StudentSubmissionDTO> submissionDTOs = submissions.stream()
+                .map(StudentSubmissionDTO::fromSubmission)
+                .collect(Collectors.toList());
+
+        // Calculate summary statistics
+        long totalSubmissions = submissions.size();
+        double maxScore = testEntity.getQuestions().stream()
+                .mapToDouble(q -> 10.0) // Assuming each question is 10 points
+                .sum();
+        
+        double highestScore = submissions.stream()
+                .mapToDouble(Submission::getScore)
+                .max()
+                .orElse(0.0);
+        
+        double lowestScore = submissions.stream()
+                .mapToDouble(Submission::getScore)
+                .min()
+                .orElse(0.0);
+        
+        double averageScore = submissions.stream()
+                .mapToDouble(Submission::getScore)
+                .average()
+                .orElse(0.0);
+
+        // Calculate completion rate (students in class vs submissions)
+        long totalStudents = classEntity.getStudents().size();
+        double completionRate = totalStudents > 0 
+                ? (double) totalSubmissions / totalStudents * 100.0 
+                : 0.0;
+
+        TestResultsSummaryDTO summary = new TestResultsSummaryDTO(
+                totalSubmissions,
+                highestScore,
+                lowestScore,
+                averageScore,
+                maxScore,
+                completionRate
+        );
+
+        return new TestResultsResponseDTO(
+                testId,
+                testEntity.getTitle(),
+                submissionDTOs,
+                summary
+        );
     }
 }
