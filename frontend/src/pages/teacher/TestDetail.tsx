@@ -81,6 +81,7 @@ export const TestDetail = () => {
                 }
 
                 if (foundClassId && testId) {
+                    // Fetch test detail
                     const response = await teacherApi.getTestDetail(foundClassId, testId);
 
                     if (!response.error && response.data) {
@@ -90,7 +91,7 @@ export const TestDetail = () => {
                             title: testData.title || '',
                             description: testData.description ?? null,
                             duration: testData.duration,
-                            classId: testData.classId,
+                            classId: foundClassId,
                             className: foundClassName || undefined,
                             passcode: testData.passcode,
                             status: testData.status,
@@ -98,18 +99,25 @@ export const TestDetail = () => {
                             closeTime: testData.closeTime ?? null,
                             createdAt: testData.createdAt
                         });
-                        // Set questions if available
-                        if (testData.questions) {
-                            setQuestions(testData.questions.map((q: any) => ({
-                                id: q.id,
-                                testId: testData.id,
-                                content: q.content,
-                                questionType: q.questionType as 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER',
-                                options: q.options,
-                                correctAnswer: q.correctAnswer,
-                                points: q.points,
-                                order: q.order
-                            })));
+                        
+                        // Fetch questions separately
+                        try {
+                            const questionsResponse = await teacherApi.getTestQuestions(foundClassId, testId);
+                            if (!questionsResponse.error && questionsResponse.data) {
+                                setQuestions(questionsResponse.data.map((q: any) => ({
+                                    id: q.id,
+                                    testId: testId,
+                                    content: q.content,
+                                    questionType: q.questionType as 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER',
+                                    options: q.options,
+                                    correctAnswer: q.correctAnswer,
+                                    points: q.points,
+                                    order: q.order
+                                })));
+                            }
+                        } catch (error) {
+                            console.error('Failed to fetch questions', error);
+                            // Don't set error message - questions are optional
                         }
                     } else {
                         setErrorMessage(response.message || 'Không thể tải thông tin bài kiểm tra');
