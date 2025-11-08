@@ -61,7 +61,7 @@ export const AuthCallbackPage = () => {
                     <h2 className="text-2xl font-bold text-gray-800 mb-2">Đang xác thực...</h2>
                     <p className="text-gray-600">Vui lòng đợi trong giây lát</p>
                     <div className="mt-6 w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-                        <div className="h-full bg-to-r from-blue-500 to-indigo-600 rounded-full animate-progress"></div>
+                        <div className="h-full bg-linear-to-r from-blue-500 to-indigo-600 rounded-full animate-progress"></div>
                     </div>
                     <style>{`
                         @keyframes progress {
@@ -91,7 +91,7 @@ export const AuthCallbackPage = () => {
                     <p className="text-gray-600 mb-8">{error}</p>
                     <a
                         href="/login"
-                        className="inline-block bg-to-r from-blue-600 to-indigo-600 text-white font-semibold py-3 px-8 rounded-xl hover:shadow-lg transition-all duration-300 transform hover:scale-105"
+                        className="inline-block bg-linear-to-r from-blue-600 to-indigo-600 text-white font-semibold py-3 px-8 rounded-xl hover:shadow-lg transition-all duration-300 transform hover:scale-105"
                     >
                         Thử lại
                     </a>

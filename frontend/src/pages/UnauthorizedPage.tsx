@@ -10,7 +10,7 @@ export const UnauthorizedPage = () => (
             <p className="text-gray-600 mb-8">Bạn không có quyền truy cập trang này.</p>
             <a
                 href="/"
-                className="inline-block bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold py-3 px-8 rounded-xl hover:shadow-lg transition-all duration-300 transform hover:scale-105"
+                className="inline-block bg-linear-to-r from-blue-600 to-indigo-600 text-white font-semibold py-3 px-8 rounded-xl hover:shadow-lg transition-all duration-300 transform hover:scale-105"
             >
                 Về trang chủ
             </a>

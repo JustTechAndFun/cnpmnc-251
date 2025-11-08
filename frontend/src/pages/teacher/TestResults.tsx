@@ -225,7 +225,7 @@ export const TestResults = () => {
                     Quay lại
                 </Button>
                 <div>
-                    <Title level={2} className="mb-2 bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+                    <Title level={2} className="mb-2 bg-linear-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
                         Kết quả bài thi
                     </Title>
                     <Text type="secondary" className="text-lg">

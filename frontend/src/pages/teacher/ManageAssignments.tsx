@@ -197,7 +197,7 @@ export const ManageAssignments = () => {
         <div className="p-8 max-w-7xl mx-auto">
             <div className="mb-8 flex justify-between items-center">
                 <div>
-                    <Title level={2} className="mb-2 bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+                    <Title level={2} className="mb-2 bg-linear-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
                         Quản lý bài kiểm tra
                     </Title>
                     <Text type="secondary">Tạo và quản lý các bài kiểm tra cho lớp học</Text>

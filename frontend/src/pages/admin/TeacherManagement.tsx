@@ -196,8 +196,8 @@ export const TeacherManagement = () => {
             title: 'Thao tác',
             key: 'action',
             render: (_: unknown, record: User) => (
-                <Button 
-                    danger 
+                <Button
+                    danger
                     icon={<DeleteOutlined />}
                     onClick={() => handleDeleteClick(record)}
                 >
@@ -211,7 +211,7 @@ export const TeacherManagement = () => {
         <div className="p-8 max-w-7xl mx-auto">
             <div className="mb-8 flex items-center justify-between">
                 <div>
-                    <Title level={2} className="mb-2 bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+                    <Title level={2} className="mb-2 bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
                         Quản lý Giáo viên
                     </Title>
                     <Text type="secondary">Quản lý tài khoản giáo viên trong hệ thống</Text>

@@ -149,7 +149,7 @@ export const ManageClasses = () => {
         <div className="p-8 max-w-7xl mx-auto">
             <div className="mb-8 flex justify-between items-center">
                 <div>
-                    <Title level={2} className="mb-2 bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+                    <Title level={2} className="mb-2 bg-linear-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
                         Quản lý lớp học
                     </Title>
                     <Text type="secondary">Danh sách các lớp học bạn đang giảng dạy</Text>

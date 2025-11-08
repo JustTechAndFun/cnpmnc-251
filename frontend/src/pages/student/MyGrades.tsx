@@ -218,7 +218,7 @@ export const MyGrades = () => {
     return (
         <div className="p-8 max-w-7xl mx-auto">
             <div className="mb-8">
-                <Title level={2} className="mb-2 bg-gradient-to-r from-green-600 to-green-800 bg-clip-text text-transparent">
+                <Title level={2} className="mb-2 bg-linear-to-r from-green-600 to-green-800 bg-clip-text text-transparent">
                     Điểm số của tôi
                 </Title>
                 <Text type="secondary">Theo dõi kết quả học tập của bạn</Text>
