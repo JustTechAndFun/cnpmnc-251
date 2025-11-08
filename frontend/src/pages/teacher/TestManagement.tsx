@@ -22,7 +22,8 @@ import {
     PlusOutlined,
     ClockCircleOutlined,
     KeyOutlined,
-    EyeOutlined
+    EyeOutlined,
+    FileTextOutlined
 } from '@ant-design/icons';
 import type { ApiResponse, Test, Question } from '../../types';
 import { ErrorModal } from '../../components/ErrorModal';
@@ -383,7 +384,7 @@ export const TestManagement = () => {
     };
 
     const expandableRowRender = (test: Test) => {
-        const sortedQuestions = [...test.questions].sort((a, b) => a.order - b.order);
+        const sortedQuestions = test.questions ? [...test.questions].sort((a, b) => a.order - b.order) : [];
         const handleAddQuestionClick = () => {
             setSelectedTest(test);
             handleAddQuestion();
@@ -392,7 +393,7 @@ export const TestManagement = () => {
         return (
             <div className="p-4 bg-gray-50">
                 <div className="flex justify-between items-center mb-4">
-                    <Title level={4} className="mb-0">Danh sách câu hỏi ({test.questions.length})</Title>
+                    <Title level={4} className="mb-0">Danh sách câu hỏi ({test.questions?.length ?? 0})</Title>
                     <Button
                         type="primary"
                         icon={<PlusOutlined />}
@@ -402,7 +403,7 @@ export const TestManagement = () => {
                     </Button>
                 </div>
 
-                {test.questions.length === 0 ? (
+                {!test.questions || test.questions.length === 0 ? (
                     <Empty description="Chưa có câu hỏi nào" />
                 ) : (
                     <div className="space-y-4">
@@ -449,7 +450,7 @@ export const TestManagement = () => {
             title: 'Số câu hỏi',
             key: 'questionsCount',
             render: (_: unknown, record: Test) => {
-                const count = record.questions.length;
+                const count = record.questions?.length ?? 0;
                 return <Tag color="blue">{count} câu</Tag>;
             },
         },
@@ -458,6 +459,13 @@ export const TestManagement = () => {
             key: 'action',
             render: (_: unknown, record: Test) => (
                 <Space>
+                    <Button
+                        icon={<FileTextOutlined />}
+                        onClick={() => navigate(`/teacher/classes/${record.classId}/tests/${record.id}/questions`)}
+                        type="primary"
+                    >
+                        Câu hỏi
+                    </Button>
                     <Button
                         icon={<EyeOutlined />}
                         onClick={() => navigate(`/teacher/tests/${record.id}`)}

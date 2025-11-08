@@ -1,13 +1,9 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
-import { Card, Statistic, List, Avatar, Spin, Typography, Tag } from 'antd';
-import { BookOutlined, FileTextOutlined, CheckCircleOutlined, StarOutlined } from '@ant-design/icons';
-import type { ApiResponse } from '../../types';
-import { ErrorModal } from '../../components/ErrorModal';
+import { Card, Statistic, List, Avatar, Spin, Typography, Tag, Alert, Button, Space, Empty } from 'antd';
+import { BookOutlined, FileTextOutlined, CheckCircleOutlined, StarOutlined, ReloadOutlined } from '@ant-design/icons';
+import { studentApi } from '../../apis';
 
 const { Title, Text } = Typography;
-
-const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 interface StudentStats {
     enrolledCourses: number;
@@ -24,37 +20,43 @@ export const StudentDashboard = () => {
         averageGrade: 0
     });
     const [loading, setLoading] = useState(true);
-    const [errorModalVisible, setErrorModalVisible] = useState(false);
-    const [errorMessage, setErrorMessage] = useState('');
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         fetchDashboardStats();
     }, []);
 
     const fetchDashboardStats = async () => {
-        try {
-            const token = localStorage.getItem('auth_token');
-            const response = await axios.get<ApiResponse<StudentStats>>(
-                `${API_BASE_URL}/api/student/stats`,
-                {
-                    headers: token ? { Authorization: `Bearer ${token}` } : {},
-                    withCredentials: true
-                }
-            );
+        setLoading(true);
+        setError(null);
 
-            if (!response.data.error && response.data.data) {
-                setStats(response.data.data);
+        try {
+            // Fetch enrolled classes to get course count
+            const classesResponse = await studentApi.getMyClasses();
+
+            if (!classesResponse.error && classesResponse.data) {
+                setStats(prev => ({
+                    ...prev,
+                    enrolledCourses: classesResponse.data.length
+                }));
+            } else {
+                throw new Error(classesResponse.message || 'Không thể tải dữ liệu');
             }
-        } catch (error) {
-            console.error('Failed to fetch dashboard stats', error);
+
+            // TODO: Implement other stats when backend APIs are available
+            // - activeAssignments from /api/student/assignments?status=active
+            // - completedAssignments from /api/student/assignments?status=completed
+            // - averageGrade from /api/student/grades
+
+        } catch (err: any) {
+            console.error('Failed to fetch dashboard stats:', err);
+            setError(err.message || 'Không thể tải thống kê dashboard');
             setStats({
-                enrolledCourses: 5,
-                activeAssignments: 8,
-                completedAssignments: 12,
-                averageGrade: 8.5
+                enrolledCourses: 0,
+                activeAssignments: 0,
+                completedAssignments: 0,
+                averageGrade: 0
             });
-            setErrorMessage('Không thể tải thống kê dashboard. Vui lòng thử lại sau.');
-            setErrorModalVisible(true);
         } finally {
             setLoading(false);
         }
@@ -119,6 +121,27 @@ export const StudentDashboard = () => {
                     <Spin size="large" />
                     <Text className="mt-4 text-gray-600">Đang tải dữ liệu...</Text>
                 </div>
+            ) : error ? (
+                <Alert
+                    message="Lỗi tải dữ liệu"
+                    description={error}
+                    type="error"
+                    showIcon
+                    action={
+                        <Button size="small" type="primary" onClick={fetchDashboardStats} icon={<ReloadOutlined />}>
+                            Thử lại
+                        </Button>
+                    }
+                />
+            ) : stats.enrolledCourses === 0 ? (
+                <Empty
+                    description="Bạn chưa đăng ký lớp học nào"
+                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                >
+                    <Button type="primary" onClick={() => window.location.href = '/student/courses'}>
+                        Xem các lớp học
+                    </Button>
+                </Empty>
             ) : (
                 <>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -150,13 +173,6 @@ export const StudentDashboard = () => {
                     </Card>
                 </>
             )}
-
-            {/* Error Modal */}
-            <ErrorModal
-                open={errorModalVisible}
-                message={errorMessage}
-                onClose={() => setErrorModalVisible(false)}
-            />
         </div>
     );
 };

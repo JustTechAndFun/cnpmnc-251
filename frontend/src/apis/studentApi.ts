@@ -64,11 +64,20 @@ export const getTestDetail = async (classId: string, testId: string): Promise<Ap
 };
 
 /**
- * Get test result by submission ID
- * @param submissionId - Submission ID
+ * Get test result by submission ID or test ID
+ * @param id - Submission ID or Test ID
  */
-export const getTestResult = async (submissionId: string): Promise<ApiResponse<import('../types').TestResult>> => {
-    const response = await apiClient.get<ApiResponse<import('../types').TestResult>>(`/api/student/test-submissions/${submissionId}/result`);
+export const getTestResult = async (id: string): Promise<ApiResponse<import('../types').TestResult>> => {
+    const response = await apiClient.get<ApiResponse<import('../types').TestResult>>(`/api/getresult/${id}`);
+    return response.data;
+};
+
+/**
+ * Join a class by class code
+ * @param classCode - Class code to join
+ */
+export const joinClass = async (classCode: string): Promise<ApiResponse<ClassDto>> => {
+    const response = await apiClient.post<ApiResponse<ClassDto>>('/api/classes/join', { classCode });
     return response.data;
 };
 

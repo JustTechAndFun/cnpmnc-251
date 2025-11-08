@@ -1,6 +1,7 @@
 package cnpmnc.assignment.service;
 
 import cnpmnc.assignment.dto.TeacherDTO;
+import cnpmnc.assignment.dto.UserDto;
 import cnpmnc.assignment.model.Role;
 import cnpmnc.assignment.model.User;
 import cnpmnc.assignment.repository.UserRepository;
@@ -8,6 +9,7 @@ import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -70,6 +72,24 @@ public class UserService {
                 .replace("%", "\\%")
                 .replace("_", "\\_");
     }
+    
+    @Transactional
+    public UserDto toggleUserActivation(String userId, Boolean activate) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
+        
+        user.setActivate(activate);
+        User updatedUser = userRepository.save(user);
+        
+        // Send notification email
+        String subject = activate ? "Account Activated" : "Account Deactivated";
+        String message = activate 
+            ? "Your account has been activated. You can now access the system."
+            : "Your account has been deactivated. Please contact the administrator for more information.";
+        
+        emailService.sendSimpleMail(user.getEmail(), subject, message);
+        
+        return UserDto.fromUser(updatedUser);
+    }
 
 }
-

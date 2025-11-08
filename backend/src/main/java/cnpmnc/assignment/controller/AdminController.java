@@ -130,4 +130,26 @@ public class AdminController {
         }
     }
 
+    @PutMapping("/users/{id}/activate")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @Operation(summary = "Activate or deactivate a user",
+            description = "Change user activation status")
+    @SecurityRequirement(name = "cookieAuth")
+    public ResponseEntity<ApiResponse<UserDto>> toggleUserActivation(
+            @Parameter(description = "User ID") @PathVariable String id,
+            @Parameter(description = "Activation status") @RequestParam Boolean activate
+    ){
+        try {
+            UserDto updatedUser = userService.toggleUserActivation(id, activate);
+            String message = activate ? "User activated successfully" : "User deactivated successfully";
+            return ResponseEntity.ok(ApiResponse.success(updatedUser, message));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error(e.getMessage()));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
 }
