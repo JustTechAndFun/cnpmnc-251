@@ -13,7 +13,7 @@ export interface ClassDto {
 
 export interface TestDTO {
     id: string;
-    name: string;
+    title: string;
     description?: string;
     duration: number;
     passcode?: string;

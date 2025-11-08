@@ -18,6 +18,7 @@ import {
     Col,
     Select
 } from 'antd';
+import type { Breakpoint } from 'antd';
 import {
     PlusOutlined,
     FileAddOutlined,
@@ -591,21 +592,27 @@ export const ClassPage = () => {
             title: 'Họ và tên',
             dataIndex: 'name',
             key: 'name',
+            width: 200,
+            fixed: 'left' as const,
         },
         {
             title: 'Email',
             dataIndex: 'email',
             key: 'email',
+            width: 250,
+            responsive: ['md' as Breakpoint],
         },
         {
             title: 'MSSV',
             dataIndex: 'studentId',
             key: 'studentId',
+            width: 120,
         },
         {
             title: 'Trạng thái',
             dataIndex: 'status',
             key: 'status',
+            width: 120,
             render: (status: string) => (
                 <Tag color={status === 'Active' ? 'green' : 'red'}>
                     {status}
@@ -619,21 +626,28 @@ export const ClassPage = () => {
             title: 'Tên bài kiểm tra',
             dataIndex: 'title',
             key: 'title',
+            width: 250,
+            fixed: 'left' as const,
         },
         {
             title: 'Ngày tạo',
             dataIndex: 'createdAt',
             key: 'createdAt',
+            width: 150,
+            responsive: ['md' as Breakpoint],
         },
         {
             title: 'Thời gian (phút)',
             dataIndex: 'duration',
             key: 'duration',
+            width: 140,
+            responsive: ['sm' as Breakpoint],
         },
         {
             title: 'Trạng thái',
             dataIndex: 'status',
             key: 'status',
+            width: 120,
             render: (status: string) => {
                 const colorMap: Record<string, string> = {
                     'Completed': 'blue',
@@ -650,7 +664,7 @@ export const ClassPage = () => {
     ];
 
     return (
-        <div className="p-8 max-w-7xl mx-auto">
+        <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
             {loading ? (
                 <div className="flex flex-col items-center justify-center py-32">
                     <Spin size="large" />
@@ -659,18 +673,18 @@ export const ClassPage = () => {
             ) : (
                 <>
                     {/* Class Information Header */}
-                    <div className="mb-8">
-                        <div className="flex justify-between items-start mb-6">
-                            <div className="flex-1">
-                                <div className="flex items-center gap-4 mb-4">
-                                    <Title level={2} className="mb-0 bg-linear-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+                    <div className="mb-6 md:mb-8">
+                        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4 mb-6">
+                            <div className="flex-1 w-full">
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4">
+                                    <Title level={2} className="mb-0 bg-linear-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent text-xl sm:text-2xl">
                                         {classInfo.name}
                                     </Title>
                                     {classes.length > 0 && (
                                         <Select
                                             value={classInfo.id}
                                             onChange={handleClassChange}
-                                            style={{ width: 300 }}
+                                            className="w-full sm:w-auto sm:min-w-[200px] lg:min-w-[300px]"
                                             placeholder="Chọn lớp học"
                                             showSearch
                                             optionFilterProp="children"
@@ -688,11 +702,11 @@ export const ClassPage = () => {
                                         </Select>
                                     )}
                                 </div>
-                                <Text className="text-gray-600 text-base block mb-4">
+                                <Text className="text-gray-600 text-sm sm:text-base block mb-4">
                                     {classInfo.description}
                                 </Text>
-                                <Row gutter={16} className="mt-4">
-                                    <Col span={12}>
+                                <Row gutter={[16, 16]} className="mt-4">
+                                    <Col xs={24} sm={12}>
                                         <Card>
                                             <Statistic
                                                 title="Tổng số sinh viên"
@@ -702,7 +716,7 @@ export const ClassPage = () => {
                                             />
                                         </Card>
                                     </Col>
-                                    <Col span={12}>
+                                    <Col xs={24} sm={12}>
                                         <Card>
                                             <Statistic
                                                 title="Tổng số bài kiểm tra"
@@ -714,15 +728,16 @@ export const ClassPage = () => {
                                     </Col>
                                 </Row>
                             </div>
-                            <div className="ml-4">
+                            <div className="w-full lg:w-auto lg:ml-4">
                                 <Button
                                     type="primary"
                                     icon={<FileAddOutlined />}
                                     size="large"
                                     onClick={handleCreateTest}
-                                    className="bg-linear-to-r from-purple-600 to-purple-800 border-none"
+                                    className="bg-linear-to-r from-purple-600 to-purple-800 border-none w-full lg:w-auto"
                                 >
-                                    Tạo bài kiểm tra mới
+                                    <span className="hidden sm:inline">Tạo bài kiểm tra mới</span>
+                                    <span className="sm:hidden">Tạo bài kiểm tra</span>
                                 </Button>
                             </div>
                         </div>
@@ -733,7 +748,7 @@ export const ClassPage = () => {
                         title={
                             <div className="flex items-center gap-2">
                                 <UserOutlined />
-                                <span>Danh sách sinh viên</span>
+                                <span className="text-base sm:text-lg">Danh sách sinh viên</span>
                             </div>
                         }
                         extra={
@@ -741,19 +756,32 @@ export const ClassPage = () => {
                                 type="primary"
                                 icon={<PlusOutlined />}
                                 onClick={() => setAddStudentModalVisible(true)}
+                                size="small"
+                                className="w-full sm:w-auto"
                             >
-                                Thêm sinh viên
+                                <span className="hidden sm:inline">Thêm sinh viên</span>
+                                <span className="sm:hidden">Thêm</span>
                             </Button>
                         }
                         className="mb-6 shadow-sm"
+                        styles={{ body: { padding: '12px' } }}
                     >
-                        <Table
-                            columns={studentColumns}
-                            dataSource={students}
-                            rowKey="id"
-                            pagination={{ pageSize: 10 }}
-                            locale={{ emptyText: 'Chưa có sinh viên nào' }}
-                        />
+                        <div className="overflow-x-auto -mx-2 sm:mx-0">
+                            <Table
+                                columns={studentColumns}
+                                dataSource={students}
+                                rowKey="id"
+                                pagination={{ 
+                                    pageSize: 10,
+                                    showSizeChanger: false,
+                                    responsive: true,
+                                    simple: true,
+                                }}
+                                locale={{ emptyText: 'Chưa có sinh viên nào' }}
+                                scroll={{ x: 600 }}
+                                size="small"
+                            />
+                        </div>
                     </Card>
 
                     {/* Tests Table */}
@@ -761,22 +789,32 @@ export const ClassPage = () => {
                         title={
                             <div className="flex items-center gap-2">
                                 <BookOutlined />
-                                <span>Danh sách bài kiểm tra</span>
+                                <span className="text-base sm:text-lg">Danh sách bài kiểm tra</span>
                             </div>
                         }
                         className="shadow-sm"
+                        styles={{ body: { padding: '12px' } }}
                     >
-                        <Table
-                            columns={testColumns}
-                            dataSource={tests}
-                            rowKey="id"
-                            pagination={{ pageSize: 10 }}
-                            onRow={(record) => ({
-                                onClick: () => handleTestClick(record.id),
-                                style: { cursor: 'pointer' },
-                            })}
-                            locale={{ emptyText: 'Chưa có bài kiểm tra nào' }}
-                        />
+                        <div className="overflow-x-auto -mx-2 sm:mx-0">
+                            <Table
+                                columns={testColumns}
+                                dataSource={tests}
+                                rowKey="id"
+                                pagination={{ 
+                                    pageSize: 10,
+                                    showSizeChanger: false,
+                                    responsive: true,
+                                    simple: true,
+                                }}
+                                onRow={(record) => ({
+                                    onClick: () => handleTestClick(record.id),
+                                    style: { cursor: 'pointer' },
+                                })}
+                                locale={{ emptyText: 'Chưa có bài kiểm tra nào' }}
+                                scroll={{ x: 600 }}
+                                size="small"
+                            />
+                        </div>
                     </Card>
                 </>
             )}
