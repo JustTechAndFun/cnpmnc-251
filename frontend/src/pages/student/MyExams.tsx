@@ -49,7 +49,7 @@ export const MyExams: React.FC = () => {
       let questionsData: QuestionForStudent[] = [];
       let testId = testIdValue || examId || "";
       let title = "";
-      
+
       // If testIdValue is provided and looks like UUID, use old endpoint
       if (testIdValue && isUUID(testIdValue)) {
         const response = await studentApi.getExamQuestions(testIdValue, passcodeValue);
@@ -90,7 +90,7 @@ export const MyExams: React.FC = () => {
       message.warning("Vui lòng nhập mã truy cập");
       return;
     }
-    
+
     // If examId exists and looks like UUID, use it as testId
     if (examId && isUUID(examId)) {
       fetchQuestionsWithPasscode(trimmedPasscode, examId);
@@ -117,7 +117,7 @@ export const MyExams: React.FC = () => {
       message.error("Thông tin người dùng không hợp lệ");
       return;
     }
-    
+
     // Use actualTestId if available, otherwise fall back to examId
     const testIdToSubmit = actualTestId || examId;
     if (!testIdToSubmit) {

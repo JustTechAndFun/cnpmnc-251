@@ -3,21 +3,21 @@ package cnpmnc.assignment.controller;
 import cnpmnc.assignment.dto.ApiResponse;
 import cnpmnc.assignment.dto.AnswerDto;
 import cnpmnc.assignment.dto.SubmissionRequestDto;
-import cnpmnc.assignment.model.PersonalResult;
-import cnpmnc.assignment.model.Question;
-import cnpmnc.assignment.model.Choice;
-import cnpmnc.assignment.repository.PersonalResultRepository;
-import cnpmnc.assignment.repository.QuestionRepository;
-import cnpmnc.assignment.repository.ChoiceRepository;
+import cnpmnc.assignment.model.*;
+import cnpmnc.assignment.repository.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpSession;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,97 +28,138 @@ import java.util.Map;
 public class SubmissionController {
 
     private final QuestionRepository questionRepository;
-    private final ChoiceRepository choiceRepository;
-    private final PersonalResultRepository personalResultRepository;
+    private final SubmissionRepository submissionRepository;
+    private final TestRepository testRepository;
+    private final UserRepository userRepository;
 
     public SubmissionController(QuestionRepository questionRepository,
-                                ChoiceRepository choiceRepository,
-                                PersonalResultRepository personalResultRepository) {
+                                SubmissionRepository submissionRepository,
+                                TestRepository testRepository,
+                                UserRepository userRepository) {
         this.questionRepository = questionRepository;
-        this.choiceRepository = choiceRepository;
-        this.personalResultRepository = personalResultRepository;
+        this.submissionRepository = submissionRepository;
+        this.testRepository = testRepository;
+        this.userRepository = userRepository;
     }
 
     @PostMapping
-    @Operation(summary = "Submit answers for a test and record personal result")
+    @PreAuthorize("hasAnyAuthority('STUDENT')")
+    @Operation(summary = "Submit answers for a test", description = "Student submits exam answers")
     @SecurityRequirement(name = "cookieAuth")
-    public ResponseEntity<ApiResponse<PersonalResult>> submitTest(@RequestBody SubmissionRequestDto body) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> submitTest(
+            @RequestBody SubmissionRequestDto body,
+            HttpSession session) {
+        
+        User currentUser = (User) session.getAttribute("user");
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("User not authenticated"));
+        }
 
         String testId = body.getTestId();
+        String userId = body.getUserId();
         List<AnswerDto> answers = body.getAnswers();
 
-        // Fetch all questions that belong to the test
+        // Validate user ID matches current user
+        if (!currentUser.getId().equals(userId) && !currentUser.getEmail().equals(userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("You can only submit your own answers"));
+        }
+
+        // Find test
+        Test test = testRepository.findById(testId)
+                .orElseThrow(() -> new IllegalArgumentException("Test not found"));
+
+        // Find user by ID or email
+        User student = userRepository.findById(userId)
+                .orElse(userRepository.findByEmail(userId).orElse(null));
+        
+        if (student == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Student not found"));
+        }
+
+        // Check if already submitted
+        if (submissionRepository.findByTestAndStudent(test, student).isPresent()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("You have already submitted this test"));
+        }
+
+        // Fetch all questions for this test
         List<Question> questions = questionRepository.findByTest_Id(testId);
+        
+        if (questions.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("No questions found for this test"));
+        }
 
-        // Map correct answers by question id for quick lookup
-        Map<String, String> correctByQuestion = new HashMap<>();
+        // Map correct answers and submitted answers
+        Map<String, String> correctAnswers = new HashMap<>();
         for (Question q : questions) {
-            correctByQuestion.put(q.getId(), q.getAnswer());
+            correctAnswers.put(q.getId(), q.getAnswer());
         }
 
-        // Fetch existing choices for this test to decide which submitted answers to insert
-        List<Choice> existingChoices = choiceRepository.findByTestId(testId);
-        Map<String, Choice> existingByQuestion = new HashMap<>();
-        for (Choice c : existingChoices) {
-            if (c.getQuestionId() != null) existingByQuestion.put(c.getQuestionId(), c);
-        }
-
-        // Insert new choices only for question_ids that don't exist yet
+        Map<String, String> submittedAnswers = new HashMap<>();
         if (answers != null) {
             for (AnswerDto a : answers) {
-                String qid = a.getQuestionId();
-                if (qid == null) continue;
-                if (existingByQuestion.containsKey(qid)) {
-                    // already saved answer for this question in this test -> skip
-                    continue;
+                if (a.getQuestionId() != null && a.getSubmitAnswer() != null) {
+                    submittedAnswers.put(a.getQuestionId(), a.getSubmitAnswer());
                 }
-                // only insert if question belongs to this test
-                if (!correctByQuestion.containsKey(qid)) {
-                    continue;
-                }
-                Choice toSave = new Choice();
-                toSave.setTestId(testId);
-                toSave.setQuestionId(qid);
-                toSave.setSelectedAnswer(a.getSubmitAnswer());
-                // set user id to satisfy DB constraint
-                toSave.setUserId(body.getUserId());
-                Choice savedChoice = choiceRepository.save(toSave);
-                existingByQuestion.put(qid, savedChoice);
             }
         }
 
-        // Re-fetch questions (already have) and use all choices (existingByQuestion) to compute totals.
+        // Create submission
+        Submission submission = new Submission();
+        submission.setTest(test);
+        submission.setStudent(student);
+        submission.setSubmittedAt(LocalDateTime.now());
+        submission.setStatus(Submission.SubmissionStatus.COMPLETED);
+
+        // Calculate score
         int correctCount = 0;
-        int wrongCount = 0;
+        int totalQuestions = questions.size();
+        double pointsPerQuestion = 10.0; // Default 10 points per question
+        double totalScore = 0.0;
 
-        for (Question q : questions) {
-            String qid = q.getId();
-            String correct = q.getAnswer();
-            Choice c = existingByQuestion.get(qid);
-            if (c == null) {
-                // no answer saved -> treat as wrong (counts as unanswered/wrong)
-                wrongCount++;
-                continue;
-            }
-            String selected = c.getSelectedAnswer();
-            if (selected != null && selected.equals(correct)) {
+        for (Question question : questions) {
+            String questionId = question.getId();
+            String correctAnswer = correctAnswers.get(questionId);
+            String submittedAnswer = submittedAnswers.get(questionId);
+            
+            boolean isCorrect = submittedAnswer != null && submittedAnswer.equals(correctAnswer);
+            if (isCorrect) {
                 correctCount++;
-            } else {
-                wrongCount++;
+                totalScore += pointsPerQuestion;
             }
+
+            // Create submission answer
+            SubmissionAnswer submissionAnswer = new SubmissionAnswer();
+            submissionAnswer.setSubmission(submission);
+            submissionAnswer.setQuestion(question);
+            submissionAnswer.setSelectedAnswer(submittedAnswer);
+            submissionAnswer.setCorrect(isCorrect);
+            submissionAnswer.setPointsEarned(isCorrect ? pointsPerQuestion : 0.0);
+            
+            submission.getAnswers().add(submissionAnswer);
         }
 
-        // Simple scoring: 1 point per correct answer.
-        double totalScore = (double) correctCount;
+        double maxScore = totalQuestions * pointsPerQuestion;
+        submission.setScore(totalScore);
+        submission.setMaxScore(maxScore);
 
-        PersonalResult pr = new PersonalResult();
-        pr.setTestId(testId);
-        pr.setTotalScore(totalScore);
-        pr.setCorrectCount(correctCount);
-        pr.setWrongCount(wrongCount);
+        // Save submission (cascade will save answers)
+        Submission savedSubmission = submissionRepository.save(submission);
 
-        PersonalResult saved = personalResultRepository.save(pr);
+        // Prepare response
+        Map<String, Object> response = new HashMap<>();
+        response.put("submissionId", savedSubmission.getId());
+        response.put("score", totalScore);
+        response.put("maxScore", maxScore);
+        response.put("percentage", (totalScore / maxScore) * 100);
+        response.put("correctCount", correctCount);
+        response.put("totalQuestions", totalQuestions);
+        response.put("status", "COMPLETED");
 
-        return ResponseEntity.ok(ApiResponse.success(saved, "Submission recorded"));
+        return ResponseEntity.ok(ApiResponse.success(response, "Test submitted successfully"));
     }
 }
