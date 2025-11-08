@@ -1,50 +1,39 @@
 package cnpmnc.assignment.model;
 
-
-import cnpmnc.assignment.util.constant.Answer;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.Size;
-import lombok.*;
-
-import java.util.ArrayList;
-import java.util.List;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.Data;
 
 @Entity
 @Table(name = "questions")
-@NoArgsConstructor
-@AllArgsConstructor
-@Getter
-@Setter
+@Data
 public class Question {
-    // Define fields, constructors, getters, and setters here
+
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(length = 255)
     private String id;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
-    @NotEmpty
+    @Column(name = "content", columnDefinition = "text")
     private String content;
 
-    // Multiple choice options (persisted as a separate collection table)
-    // Index of the correct choice in the `choices` list (0-based). Use null if not set.
+    // correct answer
+    @Column(name = "answer", length = 255)
+    private String answer;
 
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "test_id", nullable = false)
-    private Test test;
-
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "choicea", length = 255)
     private String choiceA;
-    @Column(columnDefinition = "TEXT")
+
+    @Column(name = "choiceb", length = 255)
     private String choiceB;
-    @Column(columnDefinition = "TEXT")
+
+    @Column(name = "choicec", length = 255)
     private String choiceC;
-    @Column(columnDefinition = "TEXT")
+
+    @Column(name = "choiced", length = 255)
     private String choiceD;
-    @Enumerated(EnumType.STRING)
-    private Answer answer;
 
-
+    @Column(name = "test_id", length = 255)
+    private String testId;
 }
