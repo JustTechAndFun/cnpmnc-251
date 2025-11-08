@@ -6,7 +6,7 @@ import { teacherApi } from '../../apis';
 import type { StudentDto, TestDTO } from '../../apis/teacherApi';
 import { Spin, Alert, Empty, Button, Space, message, Popconfirm } from 'antd';
 import { ReloadOutlined, ExclamationCircleOutlined, DeleteOutlined } from '@ant-design/icons';
-import '../styles/class.css';
+import '../../styles/class.css';
 
 interface ClassInfo {
     id: string;

@@ -1,7 +1,6 @@
 package cnpmnc.assignment.service;
 
 import cnpmnc.assignment.dto.QuestionDTO;
-import cnpmnc.assignment.dto.QuestionDTOforStudent;
 import cnpmnc.assignment.dto.RequestDTO.AddQuestions;
 import cnpmnc.assignment.dto.RequestDTO.AddTestRequestDTO;
 import cnpmnc.assignment.dto.StudentSubmissionDTO;
