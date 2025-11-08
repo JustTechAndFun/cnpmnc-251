@@ -1,6 +1,7 @@
 package cnpmnc.assignment.service;
 
 import cnpmnc.assignment.dto.QuestionDTO;
+import cnpmnc.assignment.dto.QuestionDTOforStudent;
 import cnpmnc.assignment.dto.RequestDTO.AddQuestions;
 import cnpmnc.assignment.dto.RequestDTO.AddTestRequestDTO;
 import cnpmnc.assignment.dto.TestDTO;
@@ -126,6 +127,12 @@ public class TestService {
         }
         return testEntity.getQuestions().stream()
                 .map(QuestionDTO::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    public List<QuestionDTOforStudent> getQuestionsForStudent(Test testEntity) {
+        return testEntity.getQuestions().stream()
+                .map(QuestionDTOforStudent::fromEntity)
                 .collect(Collectors.toList());
     }
 
