@@ -154,14 +154,24 @@ export const ManageClasses = () => {
                     </Title>
                     <Text type="secondary">Danh sách các lớp học bạn đang giảng dạy</Text>
                 </div>
-                <Button
-                    type="primary"
-                    icon={<ReloadOutlined />}
-                    onClick={fetchClasses}
-                    loading={loading}
-                >
-                    Làm mới
-                </Button>
+                <Space>
+                    <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        onClick={() => navigate('/teacher/classes/create')}
+                        size="large"
+                    >
+                        Tạo lớp học
+                    </Button>
+                    <Button
+                        type="default"
+                        icon={<ReloadOutlined />}
+                        onClick={fetchClasses}
+                        loading={loading}
+                    >
+                        Làm mới
+                    </Button>
+                </Space>
             </div>
 
             {loading && !classes.length ? (
