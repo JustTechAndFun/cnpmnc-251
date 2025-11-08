@@ -1,6 +1,7 @@
 package cnpmnc.assignment.service;
 
 import cnpmnc.assignment.dto.QuestionDTO;
+import cnpmnc.assignment.dto.QuestionDTOforStudent;
 import cnpmnc.assignment.dto.RequestDTO.AddQuestions;
 import cnpmnc.assignment.dto.RequestDTO.AddTestRequestDTO;
 import cnpmnc.assignment.dto.StudentSubmissionDTO;
@@ -373,5 +374,9 @@ public class TestService {
                 submissionDTOs,
                 summary
         );
+    }
+    public List<QuestionDTOforStudent> getQuestionsForStudent(Test testEntity) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getQuestionsForStudent'");
     }
 }
