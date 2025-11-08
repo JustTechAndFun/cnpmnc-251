@@ -10,6 +10,7 @@ import java.util.Optional;
 
 @Repository
 public interface ClassRepository extends JpaRepository<Class, String> {
+
     
     Optional<Class> findByClassCode(String classCode);
     

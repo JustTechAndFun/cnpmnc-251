@@ -200,7 +200,7 @@ public class TestService {
         newQuestion.setChoiceC(questionDTO.getChoiceC());
         newQuestion.setChoiceD(questionDTO.getChoiceD());
         newQuestion.setAnswer(questionDTO.getAnswer().name());
-        newQuestion.setTest(testEntity);  // Set the Test entity instead of testId
+        newQuestion.setTest(testEntity);
 
         Question savedQuestion = questionRepository.save(newQuestion);
         return QuestionDTO.fromQuestion(savedQuestion);
@@ -376,7 +376,6 @@ public class TestService {
         );
     }
     public List<QuestionDTOforStudent> getQuestionsForStudent(Test testEntity) {
-        // Get all questions for this test and convert to DTO without answers
         return testEntity.getQuestions().stream()
                 .map(QuestionDTOforStudent::fromEntity)
                 .collect(Collectors.toList());
