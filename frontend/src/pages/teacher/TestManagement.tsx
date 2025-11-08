@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router';
 import axios from 'axios';
 import {
     Card,
@@ -26,17 +27,23 @@ import {
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router';
 import type { ApiResponse, Test, Question } from '../../types';
+import { ErrorModal } from '../../components/ErrorModal';
+import { SuccessModal } from '../../components/SuccessModal';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 export const TestManagement = () => {
+    const navigate = useNavigate();
     const [tests, setTests] = useState<Test[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedTest, setSelectedTest] = useState<Test | null>(null);
-    const navigate = useNavigate();
+    const [errorModalVisible, setErrorModalVisible] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
+    const [successModalVisible, setSuccessModalVisible] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
 
     // Modals state
     const [testInfoModalVisible, setTestInfoModalVisible] = useState(false);
@@ -56,7 +63,7 @@ export const TestManagement = () => {
             setLoading(true);
             const token = localStorage.getItem('auth_token');
             const response = await axios.get<ApiResponse<Test[]>>(
-                `${API_BASE_URL}/teacher/tests`,
+                `${API_BASE_URL}/api/teacher/tests`,
                 {
                     headers: token ? { Authorization: `Bearer ${token}` } : {},
                     withCredentials: true
@@ -65,43 +72,16 @@ export const TestManagement = () => {
 
             if (!response.data.error && response.data.data) {
                 setTests(response.data.data);
+            } else {
+                setErrorMessage(response.data.message || 'Không thể tải danh sách test');
+                setErrorModalVisible(true);
+                setTests([]);
             }
         } catch (error) {
             console.error('Failed to fetch tests', error);
-            // Mock data for demo
-            setTests([
-                {
-                    id: '1',
-                    name: 'Kiểm tra giữa kỳ - Lập trình Web',
-                    description: 'Kiểm tra kiến thức về HTML, CSS, JavaScript',
-                    duration: 90,
-                    passcode: 'WEB2024',
-                    teacherId: 'teacher-1',
-                    createdAt: '2024-01-15T10:00:00Z',
-                    updatedAt: '2024-01-20T14:30:00Z',
-                    questions: [
-                        {
-                            id: 'q1',
-                            testId: '1',
-                            content: 'HTML là viết tắt của?',
-                            questionType: 'MULTIPLE_CHOICE',
-                            options: ['HyperText Markup Language', 'HighText Markup Language', 'HyperText Markdown Language', 'None of above'],
-                            correctAnswer: 'HyperText Markup Language',
-                            points: 10,
-                            order: 1
-                        },
-                        {
-                            id: 'q2',
-                            testId: '1',
-                            content: 'CSS được sử dụng để style HTML elements?',
-                            questionType: 'TRUE_FALSE',
-                            correctAnswer: 'true',
-                            points: 5,
-                            order: 2
-                        }
-                    ]
-                }
-            ]);
+            setErrorMessage('Không thể tải danh sách test. Vui lòng thử lại sau.');
+            setErrorModalVisible(true);
+            setTests([]);
         } finally {
             setLoading(false);
         }
@@ -129,7 +109,7 @@ export const TestManagement = () => {
         try {
             const token = localStorage.getItem('auth_token');
             const response = await axios.put<ApiResponse<Test>>(
-                `${API_BASE_URL}/teacher/tests/${selectedTest.id}`,
+                `${API_BASE_URL}/api/teacher/tests/${selectedTest.id}`,
                 values,
                 {
                     headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -138,20 +118,20 @@ export const TestManagement = () => {
             );
 
             if (!response.data.error && response.data.data) {
-                message.success('Cập nhật thông tin test thành công');
                 setTestInfoModalVisible(false);
+                setSuccessMessage('Cập nhật thông tin test thành công');
+                setSuccessModalVisible(true);
                 fetchTests();
+            } else {
+                setTestInfoModalVisible(false);
+                setErrorMessage(response.data.message || 'Không thể cập nhật test');
+                setErrorModalVisible(true);
             }
         } catch (error) {
             console.error('Failed to update test', error);
-            message.error('Không thể cập nhật test');
-            // Update UI optimistically
-            setTests(tests.map(t =>
-                t.id === selectedTest.id
-                    ? { ...t, ...values }
-                    : t
-            ));
             setTestInfoModalVisible(false);
+            setErrorMessage('Không thể cập nhật test. Vui lòng thử lại.');
+            setErrorModalVisible(true);
         }
     };
 
@@ -159,19 +139,19 @@ export const TestManagement = () => {
         try {
             const token = localStorage.getItem('auth_token');
             await axios.delete<ApiResponse<void>>(
-                `${API_BASE_URL}/teacher/tests/${testId}`,
+                `${API_BASE_URL}/api/teacher/tests/${testId}`,
                 {
                     headers: token ? { Authorization: `Bearer ${token}` } : {},
                     withCredentials: true
                 }
             );
-            message.success('Xóa test thành công');
+            setSuccessMessage('Xóa test thành công');
+            setSuccessModalVisible(true);
             fetchTests();
         } catch (error) {
             console.error('Failed to delete test', error);
-            message.error('Không thể xóa test');
-            // Update UI optimistically
-            setTests(tests.filter(t => t.id !== testId));
+            setErrorMessage('Không thể xóa test. Vui lòng thử lại.');
+            setErrorModalVisible(true);
         }
     };
 
@@ -193,23 +173,19 @@ export const TestManagement = () => {
         try {
             const token = localStorage.getItem('auth_token');
             await axios.delete<ApiResponse<void>>(
-                `${API_BASE_URL}/teacher/tests/${testId}/questions/${questionId}`,
+                `${API_BASE_URL}/api/teacher/tests/${testId}/questions/${questionId}`,
                 {
                     headers: token ? { Authorization: `Bearer ${token}` } : {},
                     withCredentials: true
                 }
             );
-            message.success('Xóa câu hỏi thành công');
+            setSuccessMessage('Xóa câu hỏi thành công');
+            setSuccessModalVisible(true);
             fetchTests();
         } catch (error) {
             console.error('Failed to delete question', error);
-            message.error('Không thể xóa câu hỏi');
-            // Update UI optimistically
-            setTests(tests.map(test =>
-                test.id === testId
-                    ? { ...test, questions: test.questions.filter(q => q.id !== questionId) }
-                    : test
-            ));
+            setErrorMessage('Không thể xóa câu hỏi. Vui lòng thử lại.');
+            setErrorModalVisible(true);
         }
     };
 
@@ -259,7 +235,7 @@ export const TestManagement = () => {
             if (editingQuestion) {
                 // Update question
                 const response = await axios.put<ApiResponse<Question>>(
-                    `${API_BASE_URL}/teacher/tests/${selectedTest.id}/questions/${editingQuestion.id}`,
+                    `${API_BASE_URL}/api/teacher/tests/${selectedTest.id}/questions/${editingQuestion.id}`,
                     questionData,
                     {
                         headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -267,14 +243,20 @@ export const TestManagement = () => {
                     }
                 );
                 if (!response.data.error) {
-                    message.success('Cập nhật câu hỏi thành công');
                     setQuestionModalVisible(false);
+                    setEditingQuestion(null);
+                    setSuccessMessage('Cập nhật câu hỏi thành công');
+                    setSuccessModalVisible(true);
                     fetchTests();
+                } else {
+                    setQuestionModalVisible(false);
+                    setErrorMessage(response.data.message || 'Không thể cập nhật câu hỏi');
+                    setErrorModalVisible(true);
                 }
             } else {
                 // Create question
                 const response = await axios.post<ApiResponse<Question>>(
-                    `${API_BASE_URL}/teacher/tests/${selectedTest.id}/questions`,
+                    `${API_BASE_URL}/api/teacher/tests/${selectedTest.id}/questions`,
                     questionData,
                     {
                         headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -282,14 +264,22 @@ export const TestManagement = () => {
                     }
                 );
                 if (!response.data.error) {
-                    message.success('Thêm câu hỏi thành công');
                     setQuestionModalVisible(false);
+                    setEditingQuestion(null);
+                    setSuccessMessage('Thêm câu hỏi thành công');
+                    setSuccessModalVisible(true);
                     fetchTests();
+                } else {
+                    setQuestionModalVisible(false);
+                    setErrorMessage(response.data.message || 'Không thể thêm câu hỏi');
+                    setErrorModalVisible(true);
                 }
             }
         } catch (error) {
             console.error('Failed to save question', error);
-            message.error('Không thể lưu câu hỏi');
+            setQuestionModalVisible(false);
+            setErrorMessage('Không thể lưu câu hỏi. Vui lòng thử lại.');
+            setErrorModalVisible(true);
         }
     };
 
@@ -657,6 +647,20 @@ export const TestManagement = () => {
                     </Form.Item>
                 </Form>
             </Modal>
+
+            {/* Error Modal */}
+            <ErrorModal
+                open={errorModalVisible}
+                message={errorMessage}
+                onClose={() => setErrorModalVisible(false)}
+            />
+
+            {/* Success Modal */}
+            <SuccessModal
+                open={successModalVisible}
+                message={successMessage}
+                onClose={() => setSuccessModalVisible(false)}
+            />
         </div>
     );
 };

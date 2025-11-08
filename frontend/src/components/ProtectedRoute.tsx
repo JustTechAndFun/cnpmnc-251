@@ -27,16 +27,12 @@ export const ProtectedRoute = ({
         );
     }
 
-    // Skip auth check in development mode
-    const isDevMode = import.meta.env.DEV;
-    
-    if (requireAuth && !isAuthenticated && !isDevMode) {
+    if (requireAuth && !isAuthenticated) {
         return <Navigate to="/login" replace />;
     }
 
-    // In dev mode, skip role check to allow testing different roles
-    // In production, check role permissions
-    if (!isDevMode && allowedRoles && user && !allowedRoles.includes(user.role)) {
+    // Check role permissions
+    if (allowedRoles && user && !allowedRoles.includes(user.role)) {
         return <Navigate to="/unauthorized" replace />;
     }
 
