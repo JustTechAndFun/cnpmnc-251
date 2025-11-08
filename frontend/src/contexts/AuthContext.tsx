@@ -135,17 +135,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const logoutCallback = useCallback(async () => {
         setIsLoggingOut(true);
         try {
+            // Call logout API
             await authApi.logout();
-        } catch (error) {
-            console.error('Logout error', error);
-        } finally {
+            
             // Clear all stored data
             localStorage.removeItem(USER_KEY);
             setUser(null);
-            // Small delay to show loading, then redirect to login page
-            setTimeout(() => {
-                window.location.href = '/login';
-            }, 500);
+            
+            // Small delay to show loading animation
+            await new Promise(resolve => setTimeout(resolve, 800));
+        } catch (error) {
+            console.error('Logout error', error);
+            
+            // Even if API fails, still clear local data
+            localStorage.removeItem(USER_KEY);
+            setUser(null);
+            
+            // Small delay
+            await new Promise(resolve => setTimeout(resolve, 800));
+        } finally {
+            setIsLoggingOut(false);
+            
+            // Use window.location for full page reload to ensure clean state
+            window.location.href = '/login';
         }
     }, []);
 

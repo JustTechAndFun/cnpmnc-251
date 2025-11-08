@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { Navigate } from 'react-router';
-import { Card, Button, Typography, Divider, Space } from 'antd';
-import { GoogleOutlined, UserOutlined, BookOutlined, IdcardOutlined } from '@ant-design/icons';
+import { Card, Button, Typography } from 'antd';
+import { GoogleOutlined, UserOutlined } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
-import { Role } from '../types';
 
 const { Title, Text } = Typography;
 
@@ -12,12 +11,10 @@ const isDevMode = import.meta.env.DEV;
 export const LoginPage = () => {
     const auth = useAuth();
     const [isLoading, setIsLoading] = useState(false);
-    const [isFakeLogging, setIsFakeLogging] = useState(false);
 
     // Safe access to auth values
     const login = auth?.login;
     const isAuthenticated = auth?.isAuthenticated ?? false;
-    const fakeLogin = auth?.fakeLogin;
 
     // Only redirect if authenticated in production mode
     // In dev mode, allow showing login page even if authenticated (for testing different roles)
@@ -29,13 +26,6 @@ export const LoginPage = () => {
         if (login) {
             setIsLoading(true);
             login();
-        }
-    };
-
-    const handleFakeLogin = (role: Role) => {
-        if (fakeLogin) {
-            setIsFakeLogging(true);
-            fakeLogin(role);
         }
     };
 
