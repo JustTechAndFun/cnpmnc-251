@@ -1,5 +1,6 @@
 package cnpmnc.assignment.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -9,6 +10,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -42,6 +44,10 @@ public class Class {
         inverseJoinColumns = @JoinColumn(name = "student_id")
     )
     private Set<User> students = new HashSet<>();
+
+    @OneToMany(mappedBy = "clazz", fetch = FetchType.LAZY)
+    @JsonIgnore
+    List<Test> tests;
     
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
