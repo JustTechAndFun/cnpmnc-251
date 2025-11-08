@@ -1,46 +1,21 @@
-import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router';
 import { useAuth } from '../contexts/AuthContext';
 import { Role } from '../types';
 import '../styles/class.css';
 
-interface Student {
-    id: string;
-    name: string;
-    email: string;
-    studentId: string;
-    status: 'Active' | 'Inactive';
-}
-
-interface Test {
-    id: string;
-    title: string;
-    createdAt: string;
-    duration: number;
-    status: 'Upcoming' | 'In Progress' | 'Completed';
-}
-
-interface ClassInfo {
-    id: string;
-    name: string;
-    description: string;
-    totalStudents: number;
-    totalTests: number;
-}
 
 export const ClassPage = () => {
     const auth = useAuth();
     const user = auth?.user;
-    const [classInfo, setClassInfo] = useState<ClassInfo>({
+    const classInfo = {
         id: '1',
         name: 'Công nghệ phần mềm nâng cao',
         description: 'Lớp học về các kỹ thuật phát triển phần mềm hiện đại',
         totalStudents: 35,
         totalTests: 5
-    }
-    );
+    };
 
-    const [students, setStudents] = useState<Student[]>([
+    const students = [
         {
             id: '1',
             name: 'Nguyễn Văn A',
@@ -49,18 +24,18 @@ export const ClassPage = () => {
             status: 'Active'
         },
         // Thêm dữ liệu mẫu khác ở đây
-    ]);
+    ]
 
-    const [tests, setTests] = useState<Test[]>([
+    const tests = [
         {
             id: '1',
             title: 'Kiểm tra giữa kỳ',
             createdAt: '2025-10-15',
             duration: 90,
             status: 'Completed'
-        },
+        }
         // Thêm dữ liệu mẫu khác ở đây
-    ]);
+    ];
 
     // Kiểm tra quyền truy cập
     if (!user || user.role !== Role.TEACHER) {
