@@ -29,14 +29,14 @@ export const AdminDashboard = () => {
         try {
             // Calculate stats from users list
             const usersResponse = await adminApi.getAllUsers();
-            
+
             if (!usersResponse.error && usersResponse.data) {
                 const users = usersResponse.data;
                 const totalUsers = users.length;
                 const totalTeachers = users.filter(u => u.role === 'TEACHER').length;
                 const totalStudents = users.filter(u => u.role === 'STUDENT').length;
                 const activeUsers = users.filter(u => u.activate).length;
-                
+
                 setStats({
                     totalUsers,
                     totalTeachers,
