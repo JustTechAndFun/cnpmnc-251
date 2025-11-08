@@ -161,7 +161,11 @@ export const ManageAssignments = () => {
             dataIndex: 'createdAt',
             key: 'createdAt',
             render: (date: string) => formatDate(date),
-            sorter: (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+            sorter: (a, b) => {
+                const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                return dateA - dateB;
+            }
         },
         {
             title: 'Thao tác',
@@ -174,7 +178,12 @@ export const ManageAssignments = () => {
                         type="primary"
                         size="small"
                         icon={<EyeOutlined />}
-                        onClick={() => handleViewTest(record.classId, record.id)}
+                        onClick={() => {
+                            if (record.classId && record.id) {
+                                handleViewTest(record.classId, record.id);
+                            }
+                        }}
+                        disabled={!record.classId || !record.id}
                     >
                         Chi tiết
                     </Button>

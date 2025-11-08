@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Card, Typography, Table, Button, Space, Tag, Spin, Empty, Alert, Modal, Form, Input, Select, message } from 'antd';
-import { UserAddOutlined, ReloadOutlined, TeamOutlined, PlusOutlined } from '@ant-design/icons';
+import { Card, Typography, Table, Button, Space, Tag, Spin, Empty, Alert, Modal, Form, Input, Select, message, Popconfirm } from 'antd';
+import { UserAddOutlined, ReloadOutlined, TeamOutlined, PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router';
 import { teacherApi } from '../../apis';
 import type { ClassDto } from '../../apis/teacherApi';
@@ -14,8 +14,10 @@ export const ManageClasses = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [addStudentModalVisible, setAddStudentModalVisible] = useState(false);
+    const [editModalVisible, setEditModalVisible] = useState(false);
     const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
     const [addStudentForm] = Form.useForm();
+    const [editForm] = Form.useForm();
     const [submitting, setSubmitting] = useState(false);
     const navigate = useNavigate();
 
@@ -76,6 +78,56 @@ export const ManageClasses = () => {
             message.error('Không thể thêm học sinh vào lớp');
         } finally {
             setSubmitting(false);
+        }
+    };
+
+    const handleEditClass = (classData: ClassDto) => {
+        setSelectedClassId(classData.id);
+        setEditModalVisible(true);
+        editForm.setFieldsValue({
+            className: classData.name,
+            classCode: classData.classCode,
+            semester: classData.semester,
+            year: classData.year
+        });
+    };
+
+    const handleEditSubmit = async (values: { className: string; classCode: string; semester: string; year: number }) => {
+        if (!selectedClassId) return;
+
+        setSubmitting(true);
+        try {
+            const response = await teacherApi.updateClass(selectedClassId, values);
+
+            if (!response.error) {
+                message.success('Cập nhật lớp học thành công');
+                setEditModalVisible(false);
+                editForm.resetFields();
+                fetchClasses();
+            } else {
+                message.error(response.message || 'Không thể cập nhật lớp học');
+            }
+        } catch (error) {
+            console.error('Failed to update class', error);
+            message.error('Không thể cập nhật lớp học');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const handleDeleteClass = async (classId: string) => {
+        try {
+            const response = await teacherApi.deleteClass(classId);
+
+            if (!response.error) {
+                message.success('Xóa lớp học thành công');
+                fetchClasses();
+            } else {
+                message.error(response.message || 'Không thể xóa lớp học');
+            }
+        } catch (error) {
+            console.error('Failed to delete class', error);
+            message.error('Không thể xóa lớp học');
         }
     };
 
@@ -140,6 +192,30 @@ export const ManageClasses = () => {
                     >
                         Thêm SV
                     </Button>
+                    <Button
+                        type="default"
+                        size="small"
+                        icon={<EditOutlined />}
+                        onClick={() => handleEditClass(record)}
+                    >
+                        Sửa
+                    </Button>
+                    <Popconfirm
+                        title="Xóa lớp học"
+                        description="Bạn có chắc chắn muốn xóa lớp học này?"
+                        onConfirm={() => handleDeleteClass(record.id)}
+                        okText="Xóa"
+                        cancelText="Hủy"
+                        okButtonProps={{ danger: true }}
+                    >
+                        <Button
+                            danger
+                            size="small"
+                            icon={<DeleteOutlined />}
+                        >
+                            Xóa
+                        </Button>
+                    </Popconfirm>
                 </Space>
             )
         }
@@ -292,6 +368,79 @@ export const ManageClasses = () => {
                                 icon={<UserAddOutlined />}
                             >
                                 Thêm sinh viên
+                            </Button>
+                        </Space>
+                    </Form.Item>
+                </Form>
+            </Modal>
+
+            {/* Edit Class Modal */}
+            <Modal
+                title="Chỉnh sửa thông tin lớp học"
+                open={editModalVisible}
+                onCancel={() => {
+                    setEditModalVisible(false);
+                    editForm.resetFields();
+                }}
+                footer={null}
+            >
+                <Form
+                    form={editForm}
+                    layout="vertical"
+                    onFinish={handleEditSubmit}
+                >
+                    <Form.Item
+                        name="className"
+                        label="Tên lớp"
+                        rules={[{ required: true, message: 'Vui lòng nhập tên lớp' }]}
+                    >
+                        <Input placeholder="Ví dụ: Lập trình C cơ bản" />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="classCode"
+                        label="Mã lớp"
+                        rules={[{ required: true, message: 'Vui lòng nhập mã lớp' }]}
+                    >
+                        <Input placeholder="Ví dụ: CS101" />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="semester"
+                        label="Học kỳ"
+                        rules={[{ required: true, message: 'Vui lòng nhập học kỳ' }]}
+                    >
+                        <Input placeholder="Ví dụ: HK1" />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="year"
+                        label="Năm học"
+                        rules={[
+                            { required: true, message: 'Vui lòng nhập năm học' },
+                            { type: 'number', min: 2000, max: 2100, message: 'Năm học không hợp lệ' }
+                        ]}
+                    >
+                        <Input type="number" placeholder="Ví dụ: 2024" />
+                    </Form.Item>
+
+                    <Form.Item className="mb-0">
+                        <Space className="w-full justify-end">
+                            <Button
+                                onClick={() => {
+                                    setEditModalVisible(false);
+                                    editForm.resetFields();
+                                }}
+                            >
+                                Hủy
+                            </Button>
+                            <Button
+                                type="primary"
+                                htmlType="submit"
+                                loading={submitting}
+                                icon={<EditOutlined />}
+                            >
+                                Cập nhật
                             </Button>
                         </Space>
                     </Form.Item>

@@ -116,3 +116,15 @@ export const deleteTeacher = async (id: string): Promise<ApiResponse<void>> => {
     const response = await apiClient.delete<ApiResponse<void>>(`/api/admin/users/teachers/${id}`);
     return response.data;
 };
+
+/**
+ * Toggle user activation status
+ * @param id - User ID
+ * @param activate - New activation status
+ */
+export const toggleUserActivation = async (id: string, activate: boolean): Promise<ApiResponse<UserDto>> => {
+    const response = await apiClient.put<ApiResponse<UserDto>>(`/api/admin/users/${id}/activate`, null, {
+        params: { activate }
+    });
+    return response.data;
+};

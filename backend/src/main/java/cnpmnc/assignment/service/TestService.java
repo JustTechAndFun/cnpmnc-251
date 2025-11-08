@@ -222,7 +222,7 @@ public class TestService {
         }
 
         // Verify question belongs to this test
-        if (!questionEntity.getTest().getId().equals(testId)) {
+        if (!questionEntity.getTestId().equals(testId)) {
             throw new IllegalArgumentException("Question does not belong to this test");
         }
 
@@ -271,7 +271,7 @@ public class TestService {
         }
 
         // Verify question belongs to this test
-        if (!questionEntity.getTest().getId().equals(testId)) {
+        if (!questionEntity.getTestId().equals(testId)) {
             throw new IllegalArgumentException("Question does not belong to this test");
         }
 

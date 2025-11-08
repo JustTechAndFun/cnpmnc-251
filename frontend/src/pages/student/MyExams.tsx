@@ -1,168 +1,241 @@
-import React, { useEffect, useState } from "react";
-import { Card, Typography, Modal, message, Alert, Spin } from "antd";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { Card, Typography, Modal, message, Alert, Spin, Input, Button, Space } from "antd";
+import { useParams, useNavigate } from "react-router";
+import { useAuth } from "../../contexts/AuthContext";
+import { studentApi } from "../../apis";
 
 const { Title, Text } = Typography;
-const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || "http://localhost:8000";
 
-type Question = { id: number; questionText: string; options: string[] };
+interface QuestionForStudent {
+  id: string;
+  content: string;
+  choiceA: string;
+  choiceB: string;
+  choiceC: string;
+  choiceD: string;
+}
 
-const mockQuestions: Question[] = [
-  { id: 1, questionText: "What is 2 + 2?", options: ["3", "4", "5", "6"] },
-  { id: 2, questionText: "Which language is used for styling web pages?", options: ["HTML", "CSS", "Python", "C++"] },
-  { id: 3, questionText: "Which company developed TypeScript?", options: ["Facebook", "Google", "Microsoft", "Amazon"] },
-  { id: 4, questionText: "What does 'JSX' stand for?", options: ["JavaScript XML", "JavaScript eXtensions", "Just Simple XML", "Java Small eXecute"] },
-];
+interface AnswerSubmission {
+  questionId: string;
+  submitAnswer: string;
+}
 
 export const MyExams: React.FC = () => {
   const { examId } = useParams<{ examId: string }>();
   const navigate = useNavigate();
+  const auth = useAuth();
 
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [selected, setSelected] = useState<Record<number, number | null>>({});
-  const [loading, setLoading] = useState(true);
+  const [questions, setQuestions] = useState<QuestionForStudent[]>([]);
+  const [selected, setSelected] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [unanswered, setUnanswered] = useState<number>(0);
   const [errorLog, setErrorLog] = useState<string | null>(null);
+  const [passcode, setPasscode] = useState<string>("");
+  const [passcodeEntered, setPasscodeEntered] = useState(false);
+  const [loadingPasscode, setLoadingPasscode] = useState(false);
 
-  const studentId = 1;
+  const fetchQuestionsWithPasscode = async (passcodeValue: string) => {
+    if (!examId) return;
 
-  useEffect(() => {
-    const fetchQuestions = async () => {
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/exams/${examId}/questions`);
-        if (!res.ok) throw new Error("Failed to load questions");
-        const data = await res.json();
-        setQuestions(Array.isArray(data) && data.length ? data : mockQuestions);
-      } catch {
-        setQuestions(mockQuestions);
-      } finally {
-        setLoading(false);
+    setLoadingPasscode(true);
+    try {
+      const response = await studentApi.getExamQuestions(examId, passcodeValue);
+
+      if (!response.error && response.data) {
+        setQuestions(response.data);
+        setPasscodeEntered(true);
+        message.success("Đã tải câu hỏi thành công!");
+      } else {
+        message.error(response.message || "Mã truy cập không đúng hoặc không thể tải câu hỏi");
       }
-    };
-    fetchQuestions();
-  }, [examId]);
+    } catch (error) {
+      console.error("Failed to fetch questions", error);
+      message.error("Không thể kết nối đến server");
+    } finally {
+      setLoadingPasscode(false);
+    }
+  };
 
-  const select = (qid: number, idx: number) =>
-    setSelected((s) => ({ ...s, [qid]: idx }));
+  const handlePasscodeSubmit = () => {
+    if (!passcode.trim()) {
+      message.warning("Vui lòng nhập mã truy cập");
+      return;
+    }
+    fetchQuestionsWithPasscode(passcode);
+  };
+
+  const select = (questionId: string, choice: string) => {
+    setSelected((s) => ({ ...s, [questionId]: choice }));
+  };
 
   const handleOpenSubmit = () => {
-    const count = questions.filter((q) => selected[q.id] == null).length;
+    const count = questions.filter((q) => !selected[q.id]).length;
     setUnanswered(count);
     setShowModal(true);
   };
 
   const handleSubmit = async () => {
-    if (unanswered > 0) return; // không cho submit khi còn câu chưa làm
+    if (unanswered > 0) return;
+    if (!auth?.user?.id || !examId) {
+      message.error("Thông tin người dùng không hợp lệ");
+      return;
+    }
+
+    setLoading(true);
     try {
-      const payload = {
-        examId,
-        studentId,
-        answers: Object.entries(selected).map(([id, idx]) => ({
-          questionId: Number(id),
-          selectedOption: idx,
-        })),
-      };
-      const res = await fetch(`${API_BASE_URL}/api/submissions`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error(await res.text());
-      message.success("Exam submitted successfully");
-      navigate("/student/grades");
+      const answers: AnswerSubmission[] = Object.entries(selected).map(([questionId, choice]) => ({
+        questionId,
+        submitAnswer: choice
+      }));
+
+      const response = await studentApi.submitExam(examId, auth.user.id, answers);
+
+      if (!response.error) {
+        message.success("Nộp bài thành công!");
+        navigate("/student/grades");
+      } else {
+        throw new Error(response.message || "Không thể nộp bài");
+      }
     } catch (err: any) {
       setErrorLog(err.message || "Unknown error");
+      message.error("Không thể nộp bài. Vui lòng thử lại.");
     } finally {
       setShowModal(false);
+      setLoading(false);
     }
   };
 
-  if (loading)
+  // Show passcode input if not entered yet
+  if (!passcodeEntered) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="w-full max-w-md shadow-lg">
+          <div className="text-center mb-6">
+            <Title level={3}>Nhập mã truy cập</Title>
+            <Text type="secondary">Vui lòng nhập mã truy cập để bắt đầu làm bài</Text>
+          </div>
+          <Space.Compact className="w-full">
+            <Input
+              size="large"
+              placeholder="Nhập mã truy cập..."
+              value={passcode}
+              onChange={(e) => setPasscode(e.target.value.toUpperCase())}
+              onPressEnter={handlePasscodeSubmit}
+              style={{ textTransform: 'uppercase' }}
+            />
+            <Button
+              type="primary"
+              size="large"
+              onClick={handlePasscodeSubmit}
+              loading={loadingPasscode}
+            >
+              Xác nhận
+            </Button>
+          </Space.Compact>
+        </Card>
+      </div>
+    );
+  }
+
+  if (loadingPasscode || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Spin size="large" />
       </div>
     );
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center gap-4 p-4">
-      <Title level={3}>Exam {examId}</Title>
+      <Title level={3}>Bài thi {examId}</Title>
 
-      {questions.map((q) => (
-        <Card
-          key={q.id}
-          className="w-full max-w-4xl shadow-sm"
-          title={
-            <div>
-              <Title level={5} className="!m-0">
-                Question {q.id}
-              </Title>
-              <Text type="secondary">{q.questionText}</Text>
+      {questions.map((q) => {
+        const choices = [
+          { key: 'CHOICE_A', label: 'A', text: q.choiceA },
+          { key: 'CHOICE_B', label: 'B', text: q.choiceB },
+          { key: 'CHOICE_C', label: 'C', text: q.choiceC },
+          { key: 'CHOICE_D', label: 'D', text: q.choiceD }
+        ];
+
+        return (
+          <Card
+            key={q.id}
+            className="w-full max-w-4xl shadow-sm"
+            title={
+              <div>
+                <Title level={5} className="m-0!">
+                  Câu hỏi
+                </Title>
+                <Text type="secondary">{q.content}</Text>
+              </div>
+            }
+          >
+            <div className="flex flex-col gap-2">
+              {choices.map((choice) => {
+                const checked = selected[q.id] === choice.key;
+                return (
+                  <label
+                    key={choice.key}
+                    className={`flex items-center gap-2 px-3 py-2 rounded border cursor-pointer select-none transition
+                    ${checked ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:bg-gray-50"}`}
+                  >
+                    <input
+                      type="radio"
+                      name={`q-${q.id}`}
+                      checked={checked}
+                      onChange={() => select(q.id, choice.key)}
+                    />
+                    <span><strong>{choice.label}.</strong> {choice.text}</span>
+                  </label>
+                );
+              })}
+              <Alert
+                className="mt-2"
+                message={
+                  selected[q.id]
+                    ? `Đã chọn: ${choices.find(c => c.key === selected[q.id])?.label}`
+                    : "Chưa trả lời"
+                }
+                type={selected[q.id] ? "success" : "warning"}
+                showIcon
+              />
             </div>
-          }
-        >
-          <div className="flex flex-col gap-2">
-            {q.options.map((opt, i) => {
-              const checked = selected[q.id] === i;
-              return (
-                <label
-                  key={i}
-                  className={`flex items-center gap-2 px-3 py-2 rounded border cursor-pointer select-none transition
-                  ${checked ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:bg-gray-50"}`}
-                >
-                  <input
-                    type="radio"
-                    name={`q-${q.id}`}
-                    checked={checked}
-                    onChange={() => select(q.id, i)}
-                  />
-                  <span>{opt}</span>
-                </label>
-              );
-            })}
-            <Alert
-              className="mt-2"
-              message={
-                selected[q.id] != null
-                  ? `Selected: ${q.options[selected[q.id]!]}`
-                  : "Unanswered"
-              }
-              type={selected[q.id] != null ? "success" : "warning"}
-              showIcon
-            />
-          </div>
-        </Card>
-      ))}
+          </Card>
+        );
+      })}
 
-      <button
+      <Button
+        type="primary"
+        size="large"
         onClick={handleOpenSubmit}
-        className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded"
+        className="bg-blue-500 hover:bg-blue-600"
       >
-        Submit
-      </button>
+        Nộp bài
+      </Button>
 
       <Modal
-        title="Finish Exam"
+        title="Hoàn thành bài thi"
         open={showModal}
         onOk={handleSubmit}
         onCancel={() => setShowModal(false)}
-        okText="Submit"
-        okButtonProps={{ danger: unanswered > 0 }}
+        okText="Nộp bài"
+        cancelText="Hủy"
+        okButtonProps={{ danger: unanswered > 0, loading }}
       >
         {unanswered > 0 ? (
           <Alert
             type="error"
-            message={`You still have ${unanswered} unanswered question(s). Please complete them before submitting.`}
+            message={`Bạn còn ${unanswered} câu chưa trả lời. Vui lòng hoàn thành trước khi nộp bài.`}
             showIcon
           />
         ) : (
-          <p>Are you sure you want to submit your exam?</p>
+          <p>Bạn có chắc chắn muốn nộp bài thi này không?</p>
         )}
       </Modal>
 
       <Modal
-        title="Submission Error Log"
+        title="Lỗi nộp bài"
         open={!!errorLog}
         onCancel={() => setErrorLog(null)}
         footer={null}

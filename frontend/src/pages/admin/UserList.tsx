@@ -173,8 +173,8 @@ export const UserList = () => {
     ];
 
     return (
-        <div className="p-8 max-w-7xl mx-auto">
-            <div className="mb-8 flex justify-between items-start">
+        <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
+            <div className="mb-6 md:mb-8 flex flex-col md:flex-row md:justify-between md:items-start gap-4">
                 <div>
                     <Title level={2} className="mb-2">Quản lý người dùng</Title>
                     <Text type="secondary">Danh sách tất cả người dùng trong hệ thống</Text>
@@ -196,13 +196,13 @@ export const UserList = () => {
                         size="large"
                         allowClear
                     />
-                    <div className="flex items-center gap-4 flex-wrap">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-wrap">
                         <div className="flex items-center gap-2">
                             <Text className="font-medium">Trạng thái:</Text>
                             <Select
                                 value={filterActivate === null ? 'ALL' : String(filterActivate)}
                                 onChange={handleActivateFilterChange}
-                                style={{ width: 180 }}
+                                className="w-full sm:w-[180px]"
                                 size="large"
                             >
                                 <Select.Option value="ALL">Tất cả</Select.Option>
@@ -215,7 +215,7 @@ export const UserList = () => {
                             <Select
                                 value={filterRole}
                                 onChange={(value) => setFilterRole(value)}
-                                style={{ width: 180 }}
+                                className="w-full sm:w-[180px]"
                                 size="large"
                             >
                                 <Select.Option value="ALL">Tất cả</Select.Option>
@@ -229,17 +229,19 @@ export const UserList = () => {
             </Card>
 
             <Card className="shadow-sm">
-                <Table
-                    columns={columns}
-                    dataSource={filteredUsers}
-                    rowKey="id"
-                    loading={loading}
-                    pagination={{
-                        pageSize: 10,
-                        showSizeChanger: true,
-                        showTotal: (total) => `Tổng ${total} người dùng`,
-                    }}
-                    locale={{
+                <div className="overflow-x-auto">
+                    <Table
+                        columns={columns}
+                        dataSource={filteredUsers}
+                        rowKey="id"
+                        loading={loading}
+                        scroll={{ x: 'max-content' }}
+                        pagination={{
+                            pageSize: 10,
+                            showSizeChanger: true,
+                            showTotal: (total) => `Tổng ${total} người dùng`,
+                        }}
+                        locale={{
                         emptyText: (
                             <div className="py-12 text-center">
                                 <UserOutlined className="text-5xl text-gray-300 mb-4" />
@@ -247,7 +249,8 @@ export const UserList = () => {
                             </div>
                         ),
                     }}
-                />
+                    />
+                </div>
             </Card>
 
             {/* Error Modal */}

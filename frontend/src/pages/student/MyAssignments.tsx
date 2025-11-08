@@ -3,7 +3,6 @@ import { Typography, Modal, Input, message, Alert } from 'antd';
 import { useNavigate } from 'react-router';
 
 const { Title } = Typography;
-const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8000';
 
 export const MyAssignments: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -20,38 +19,19 @@ export const MyAssignments: React.FC = () => {
 
   const handleJoin = useCallback(async () => {
     const trimmed = code?.trim();
-    if (!/^\d{6}$/.test(trimmed)) {
-      setError('Mã phải gồm 6 ký tự số');
+    if (!trimmed) {
+      setError('Vui lòng nhập mã bài kiểm tra');
       return;
     }
 
     setError('');
     setLoading(true);
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/exams/join`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: trimmed }),
-      });
-      const data = await res.json().catch(() => ({}));
 
-      if (!res.ok) {
-        const errMsg = data?.message || data?.error || `Lỗi: ${res.status}`;
-        setError(errMsg);
-        message.error(errMsg);
-        return;
-      }
-
-      message.success(data?.message || 'Tham gia thành công');
-      setIsModalOpen(false);
-      navigate(`/student/exams/${trimmed}`);
-    } catch {
-      const errMsg = 'Không thể kết nối tới server';
-      setError(errMsg);
-      message.error(errMsg);
-    } finally {
-      setLoading(false);
-    }
+    // Navigate to exam page - will validate passcode there
+    message.success('Đang chuyển đến bài kiểm tra...');
+    setIsModalOpen(false);
+    navigate(`/student/exams/${trimmed}`);
+    setLoading(false);
   }, [code, navigate]);
 
   return (

@@ -29,8 +29,9 @@ export const UserDetail = () => {
     const fetchUserDetail = async (userId: string) => {
         try {
             const token = localStorage.getItem('auth_token');
-            const response = await axios.get<ApiResponse<User>>(
-            `${API_BASE_URL}/api/admin/users/${userId}`,
+            // Since backend doesn't have /api/admin/users/{id}, we fetch all users and filter
+            const response = await axios.get<ApiResponse<User[]>>(
+                `${API_BASE_URL}/api/admin/users`,
                 {
                     headers: token ? { Authorization: `Bearer ${token}` } : {},
                     withCredentials: true
@@ -38,7 +39,12 @@ export const UserDetail = () => {
             );
 
             if (!response.data.error && response.data.data) {
-                setUser(response.data.data);
+                const foundUser = response.data.data.find(u => u.id === userId);
+                if (foundUser) {
+                    setUser(foundUser);
+                } else {
+                    setNotFound(true);
+                }
             } else {
                 setNotFound(true);
             }
@@ -126,7 +132,7 @@ export const UserDetail = () => {
                                     src={user.picture}
                                     size={80}
                                     icon={<UserOutlined />}
-                                    className="bg-gradient-to-br from-purple-500 to-indigo-600"
+                                    className="bg-linear-to-br from-purple-500 to-indigo-600"
                                 >
                                     {user.name?.[0] || user.email[0]?.toUpperCase()}
                                 </Avatar>

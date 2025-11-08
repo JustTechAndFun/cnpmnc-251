@@ -22,7 +22,8 @@ import {
     PlusOutlined,
     ClockCircleOutlined,
     KeyOutlined,
-    EyeOutlined
+    EyeOutlined,
+    FileTextOutlined
 } from '@ant-design/icons';
 import type { ApiResponse, Test, Question } from '../../types';
 import { ErrorModal } from '../../components/ErrorModal';
@@ -118,6 +119,29 @@ export const TestManagement = () => {
         }
     };
 
+    // Refresh questions for a specific test
+    const refreshTestQuestions = async (classId: string, testId: string) => {
+        try {
+            const response = await apiClient.get<ApiResponse<Question[]>>(
+                `/api/classes/${classId}/test/${testId}/questions`
+            );
+
+            if (!response.data.error && response.data.data) {
+                // Update the test's questions in the tests array
+                setTests(prevTests =>
+                    prevTests.map(test =>
+                        test.id === testId
+                            ? { ...test, questions: response.data.data }
+                            : test
+                    )
+                );
+            }
+        } catch (error) {
+            console.error('Failed to refresh test questions', error);
+            // Don't show error to user, just log it
+        }
+    };
+
     const handleEditTest = (test: Test) => {
         setSelectedTest(test);
         testInfoForm.setFieldsValue({
@@ -138,9 +162,17 @@ export const TestManagement = () => {
         if (!selectedTest || !selectedTest.classId) return;
 
         try {
+            // Map 'name' to 'title' for backend
+            const requestData = {
+                title: values.name,
+                description: values.description,
+                duration: values.duration,
+                passcode: values.passcode
+            };
+
             const response = await apiClient.put<ApiResponse<Test>>(
-                `/api/teacher/tests/${selectedTest.id}`,
-                values
+                `/api/classes/${selectedTest.classId}/tests/${selectedTest.id}`,
+                requestData
             );
 
             if (!response.data.error && response.data.data) {
@@ -171,7 +203,7 @@ export const TestManagement = () => {
 
         try {
             await apiClient.delete<ApiResponse<void>>(
-                `/api/teacher/tests/${testId}`
+                `/api/classes/${testToDelete.classId}/tests/${testId}`
             );
             setSuccessMessage('Xóa test thành công');
             setSuccessModalVisible(true);
@@ -206,12 +238,14 @@ export const TestManagement = () => {
         }
 
         try {
+            // Use correct API endpoint
             await apiClient.delete<ApiResponse<void>>(
-                `/api/teacher/tests/${testId}/questions/${questionId}`
+                `/api/classes/${test.classId}/tests/${testId}/questions/${questionId}`
             );
             setSuccessMessage('Xóa câu hỏi thành công');
             setSuccessModalVisible(true);
-            fetchTests();
+            // Reload questions for this specific test
+            await refreshTestQuestions(test.classId, testId);
         } catch (error) {
             console.error('Failed to delete question', error);
             setErrorMessage('Không thể xóa câu hỏi. Vui lòng thử lại.');
@@ -267,9 +301,9 @@ export const TestManagement = () => {
 
         try {
             if (editingQuestion) {
-                // Update question
+                // Update question - Use correct API endpoint
                 const response = await apiClient.put<ApiResponse<Question>>(
-                    `/api/teacher/tests/${selectedTest.id}/questions/${editingQuestion.id}`,
+                    `/api/classes/${selectedTest.classId}/tests/${selectedTest.id}/questions/${editingQuestion.id}`,
                     questionData
                 );
                 if (!response.data.error) {
@@ -277,16 +311,17 @@ export const TestManagement = () => {
                     setEditingQuestion(null);
                     setSuccessMessage('Cập nhật câu hỏi thành công');
                     setSuccessModalVisible(true);
-                    fetchTests();
+                    // Reload questions for this specific test
+                    await refreshTestQuestions(selectedTest.classId, selectedTest.id);
                 } else {
                     setQuestionModalVisible(false);
                     setErrorMessage(response.data.message || 'Không thể cập nhật câu hỏi');
                     setErrorModalVisible(true);
                 }
             } else {
-                // Create question
+                // Create question - Use correct API endpoint
                 const response = await apiClient.post<ApiResponse<Question>>(
-                    `/api/teacher/tests/${selectedTest.id}/questions`,
+                    `/api/classes/${selectedTest.classId}/tests/${selectedTest.id}`,
                     questionData
                 );
                 if (!response.data.error) {
@@ -294,7 +329,8 @@ export const TestManagement = () => {
                     setEditingQuestion(null);
                     setSuccessMessage('Thêm câu hỏi thành công');
                     setSuccessModalVisible(true);
-                    fetchTests();
+                    // Reload questions for this specific test
+                    await refreshTestQuestions(selectedTest.classId, selectedTest.id);
                 } else {
                     setQuestionModalVisible(false);
                     setErrorMessage(response.data.message || 'Không thể thêm câu hỏi');
@@ -383,7 +419,7 @@ export const TestManagement = () => {
     };
 
     const expandableRowRender = (test: Test) => {
-        const sortedQuestions = [...test.questions].sort((a, b) => a.order - b.order);
+        const sortedQuestions = test.questions ? [...test.questions].sort((a, b) => a.order - b.order) : [];
         const handleAddQuestionClick = () => {
             setSelectedTest(test);
             handleAddQuestion();
@@ -392,7 +428,7 @@ export const TestManagement = () => {
         return (
             <div className="p-4 bg-gray-50">
                 <div className="flex justify-between items-center mb-4">
-                    <Title level={4} className="mb-0">Danh sách câu hỏi ({test.questions.length})</Title>
+                    <Title level={4} className="mb-0">Danh sách câu hỏi ({test.questions?.length || 0})</Title>
                     <Button
                         type="primary"
                         icon={<PlusOutlined />}
@@ -402,7 +438,7 @@ export const TestManagement = () => {
                     </Button>
                 </div>
 
-                {test.questions.length === 0 ? (
+                {!test.questions || test.questions.length === 0 ? (
                     <Empty description="Chưa có câu hỏi nào" />
                 ) : (
                     <div className="space-y-4">
@@ -413,17 +449,27 @@ export const TestManagement = () => {
         );
     };
 
+    // Handle row expand to load questions
+    const handleRowExpand = (expanded: boolean, record: Test) => {
+        if (expanded && !record.questions && record.classId) {
+            refreshTestQuestions(record.classId, record.id);
+        }
+    };
+
     const columns = [
         {
             title: 'Tên test',
-            dataIndex: 'name',
-            key: 'name',
-            render: (_: string, record: Test) => (
-                <div>
-                    <Text strong className="block">{record.name}</Text>
-                    <Text type="secondary" className="text-xs">{record.description}</Text>
-                </div>
-            ),
+            dataIndex: 'title',
+            key: 'title',
+            render: (_: string, record: Test) => {
+                const testRecord = record as any;
+                return (
+                    <div>
+                        <Text strong className="block">{testRecord.title || record.name}</Text>
+                        <Text type="secondary" className="text-xs">{record.description}</Text>
+                    </div>
+                );
+            },
         },
         {
             title: 'Thời gian',
@@ -449,7 +495,7 @@ export const TestManagement = () => {
             title: 'Số câu hỏi',
             key: 'questionsCount',
             render: (_: unknown, record: Test) => {
-                const count = record.questions.length;
+                const count = record.questions?.length || 0;
                 return <Tag color="blue">{count} câu</Tag>;
             },
         },
@@ -458,6 +504,13 @@ export const TestManagement = () => {
             key: 'action',
             render: (_: unknown, record: Test) => (
                 <Space>
+                    <Button
+                        icon={<FileTextOutlined />}
+                        onClick={() => navigate(`/teacher/classes/${record.classId}/tests/${record.id}/questions`)}
+                        type="primary"
+                    >
+                        Câu hỏi
+                    </Button>
                     <Button
                         icon={<EyeOutlined />}
                         onClick={() => navigate(`/teacher/tests/${record.id}`)}
@@ -522,6 +575,7 @@ export const TestManagement = () => {
                         expandable={{
                             expandedRowRender: expandableRowRender,
                             expandIconColumnIndex: -1,
+                            onExpand: handleRowExpand,
                         }}
                         pagination={{
                             pageSize: 10,

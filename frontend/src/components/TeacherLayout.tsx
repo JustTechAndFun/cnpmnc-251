@@ -56,7 +56,7 @@ export const TeacherLayout = () => {
 
     const selectedKeys = [location.pathname];
     // Only override selectedKeys for test detail/results pages, not for create page
-    if (location.pathname.startsWith('/teacher/tests/') && 
+    if (location.pathname.startsWith('/teacher/tests/') &&
         !location.pathname.endsWith('/create') &&
         location.pathname !== '/teacher/tests/create') {
         selectedKeys[0] = '/teacher/tests';
@@ -66,7 +66,7 @@ export const TeacherLayout = () => {
         <Layout className="min-h-screen bg-gray-50 flex">
             {/* Logout Loading Overlay */}
             {isLoggingOut && (
-                <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[9999] flex items-center justify-center">
+                <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-9999 flex items-center justify-center">
                     <div className="bg-white rounded-2xl p-12 text-center shadow-2xl">
                         <Spin size="large" className="mb-4" />
                         <p className="text-gray-700 font-medium">Đang đăng xuất...</p>
@@ -77,13 +77,15 @@ export const TeacherLayout = () => {
             {/* Desktop Sidebar */}
             <Sider
                 width={280}
+                breakpoint="lg"
+                collapsedWidth={0}
                 className="bg-white shadow-lg hidden lg:flex fixed left-0 top-0 h-screen z-30"
                 theme="light"
-                style={{ display: 'flex', flexDirection: 'column', position: 'sticky' }}
+                style={{ flexDirection: 'column', position: 'sticky' }}
             >
                 <div className="flex flex-col h-full">
                     {/* Header */}
-                    <div className="flex items-center gap-3 p-6 border-b border-gray-200 flex-shrink-0">
+                    <div className="flex items-center gap-3 p-6 border-b border-gray-200 shrink-0">
                         <div className="w-10 h-10 rounded-lg bg-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white">
                             <BookOutlined className="text-xl" />
                         </div>
@@ -104,12 +106,12 @@ export const TeacherLayout = () => {
                     </div>
 
                     {/* Footer */}
-                    <div className="border-t border-gray-200 bg-gray-50 p-4 flex-shrink-0">
+                    <div className="border-t border-gray-200 bg-gray-50 p-4 shrink-0">
                         <div className="flex items-center gap-3 mb-4">
                             <Avatar
                                 src={user?.picture}
                                 size={48}
-                                className="bg-to-br from-purple-500 to-purple-700"
+                                className="bg-linear-to-br from-purple-500 to-purple-700"
                             >
                                 {user?.name?.[0] || user?.email[0]?.toUpperCase()}
                             </Avatar>
@@ -162,7 +164,7 @@ export const TeacherLayout = () => {
                 <div className="h-full flex flex-col bg-white">
                     {/* Header */}
                     <div className="flex items-center gap-3 p-6 border-b border-gray-200">
-                        <div className="w-10 h-10 rounded-lg bg-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white">
+                        <div className="w-10 h-10 rounded-lg bg-linear-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white">
                             <BookOutlined className="text-xl" />
                         </div>
                         <Text strong className="text-lg bg-linear-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
@@ -188,7 +190,7 @@ export const TeacherLayout = () => {
                             <Avatar
                                 src={user?.picture}
                                 size={48}
-                                className="bg-to-br from-purple-500 to-purple-700"
+                                className="bg-linear-to-br from-purple-500 to-purple-700"
                             >
                                 {user?.name?.[0] || user?.email[0]?.toUpperCase()}
                             </Avatar>

@@ -13,7 +13,7 @@ export interface ClassDto {
 
 export interface TestDTO {
     id: string;
-    name: string;
+    title: string;
     description?: string;
     duration: number;
     passcode?: string;
@@ -64,13 +64,77 @@ export const getTestDetail = async (classId: string, testId: string): Promise<Ap
 };
 
 /**
- * Get test result by submission ID
- * @param submissionId - Submission ID
+ * Get test result by submission ID or test ID
+ * @param id - Submission ID or Test ID
  */
-export const getTestResult = async (submissionId: string): Promise<ApiResponse<import('../types').TestResult>> => {
-    const response = await apiClient.get<ApiResponse<import('../types').TestResult>>(`/api/student/test-submissions/${submissionId}/result`);
+export const getTestResult = async (id: string): Promise<ApiResponse<import('../types').TestResult>> => {
+    const response = await apiClient.get<ApiResponse<import('../types').TestResult>>(`/api/getresult/${id}`);
     return response.data;
 };
 
-// Note: Additional student-specific endpoints (grades, assignments, etc.)
-// will need to be added as they are implemented on the backend
+/**
+ * Join a class by class code
+ * @param classCode - Class code to join
+ */
+export const joinClass = async (classCode: string): Promise<ApiResponse<ClassDto>> => {
+    const response = await apiClient.post<ApiResponse<ClassDto>>('/api/classes/join', { classCode });
+    return response.data;
+};
+
+/**
+ * Get student's grades from all submissions
+ */
+export const getMyGrades = async (): Promise<ApiResponse<Array<{
+    submissionId: string;
+    testId: string;
+    testName: string;
+    classId: string;
+    className: string;
+    score: number;
+    maxScore: number;
+    percentage: number;
+    submittedAt: string;
+    status: string;
+}>>> => {
+    const response = await apiClient.get('/api/getresult/student/grades');
+    return response.data;
+};
+
+/**
+ * Get exam questions with passcode (for taking exam)
+ * @param examId - Exam/Test ID
+ * @param passcode - Passcode to access the exam
+ */
+export const getExamQuestions = async (examId: string, passcode: string): Promise<ApiResponse<Array<{
+    id: string;
+    content: string;
+    choiceA: string;
+    choiceB: string;
+    choiceC: string;
+    choiceD: string;
+}>>> => {
+    const response = await apiClient.get(`/api/exams/${examId}/questions`, {
+        params: { passcode }
+    });
+    return response.data;
+};
+
+/**
+ * Submit exam answers
+ * @param examId - Exam/Test ID
+ * @param userId - User ID
+ * @param answers - Array of answers
+ */
+export const submitExam = async (
+    examId: string,
+    userId: string,
+    answers: Array<{ questionId: string; submitAnswer: string }>
+): Promise<ApiResponse<any>> => {
+    const response = await apiClient.post('/api/submissions', {
+        testId: examId,
+        userId,
+        answers
+    });
+    return response.data;
+};
+

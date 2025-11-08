@@ -28,13 +28,14 @@ export interface AddStudentRequest {
 
 export interface TestDTO {
     id: string;
-    name: string;
+    title: string;  // Backend uses 'title'
+    name?: string;  // Keep for backward compatibility
     description?: string;
     duration: number;
     passcode?: string;
-    classId: string;
-    createdAt: string;
-    updatedAt: string;
+    classId?: string;
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 export interface AddTestRequestDTO {
@@ -42,6 +43,26 @@ export interface AddTestRequestDTO {
     description?: string;
     duration: number;
     passcode?: string;
+}
+
+export interface AddQuestionRequest {
+    content: string;
+    choiceA: string;
+    choiceB: string;
+    choiceC: string;
+    choiceD: string;
+    answer: 'CHOICE_A' | 'CHOICE_B' | 'CHOICE_C' | 'CHOICE_D';
+}
+
+export interface QuestionDTO {
+    id: string;
+    content: string;
+    choiceA: string;
+    choiceB: string;
+    choiceC: string;
+    choiceD: string;
+    answer: string;
+    order?: number;
 }
 
 export interface TestDetail extends TestDTO {
@@ -61,6 +82,40 @@ export interface TestDetail extends TestDTO {
  */
 export const getMyClasses = async (): Promise<ApiResponse<ClassDto[]>> => {
     const response = await apiClient.get<ApiResponse<ClassDto[]>>('/api/classes/my-classes');
+    return response.data;
+};
+
+/**
+ * Update class information
+ * @param id - Class ID
+ * @param classData - Updated class data
+ */
+export const updateClass = async (id: string, classData: {
+    className: string;
+    classCode: string;
+    semester: string;
+    year: number;
+}): Promise<ApiResponse<ClassDto>> => {
+    const response = await apiClient.put<ApiResponse<ClassDto>>(`/api/classes/${id}`, classData);
+    return response.data;
+};
+
+/**
+ * Delete class
+ * @param id - Class ID
+ */
+export const deleteClass = async (id: string): Promise<ApiResponse<void>> => {
+    const response = await apiClient.delete<ApiResponse<void>>(`/api/classes/${id}`);
+    return response.data;
+};
+
+/**
+ * Remove student from class
+ * @param classId - Class ID
+ * @param studentId - Student ID
+ */
+export const removeStudentFromClass = async (classId: string, studentId: string): Promise<ApiResponse<void>> => {
+    const response = await apiClient.delete<ApiResponse<void>>(`/api/classes/${classId}/students/${studentId}`);
     return response.data;
 };
 
@@ -129,5 +184,75 @@ export const getTestDetail = async (classId: string, testId: string): Promise<Ap
  */
 export const getTestResults = async (classId: string, testId: string): Promise<ApiResponse<any>> => {
     const response = await apiClient.get<ApiResponse<any>>(`/api/classes/${classId}/tests/${testId}/results`);
+    return response.data;
+};
+
+/**
+ * Add question to test
+ * @param classId - Class ID
+ * @param testId - Test ID
+ * @param question - Question data
+ */
+export const addQuestionToTest = async (
+    classId: string,
+    testId: string,
+    question: AddQuestionRequest
+): Promise<ApiResponse<QuestionDTO>> => {
+    const response = await apiClient.post<ApiResponse<QuestionDTO>>(
+        `/api/classes/${classId}/tests/${testId}`,
+        question
+    );
+    return response.data;
+};
+
+/**
+ * Update question in test
+ * @param classId - Class ID
+ * @param testId - Test ID
+ * @param questionId - Question ID
+ * @param question - Updated question data
+ */
+export const updateQuestion = async (
+    classId: string,
+    testId: string,
+    questionId: string,
+    question: AddQuestionRequest
+): Promise<ApiResponse<QuestionDTO>> => {
+    const response = await apiClient.put<ApiResponse<QuestionDTO>>(
+        `/api/classes/${classId}/tests/${testId}/questions/${questionId}`,
+        question
+    );
+    return response.data;
+};
+
+/**
+ * Delete question from test
+ * @param classId - Class ID
+ * @param testId - Test ID
+ * @param questionId - Question ID
+ */
+export const deleteQuestion = async (
+    classId: string,
+    testId: string,
+    questionId: string
+): Promise<ApiResponse<void>> => {
+    const response = await apiClient.delete<ApiResponse<void>>(
+        `/api/classes/${classId}/tests/${testId}/questions/${questionId}`
+    );
+    return response.data;
+};
+
+/**
+ * Get questions of a test
+ * @param classId - Class ID
+ * @param testId - Test ID
+ */
+export const getTestQuestions = async (
+    classId: string,
+    testId: string
+): Promise<ApiResponse<QuestionDTO[]>> => {
+    const response = await apiClient.get<ApiResponse<QuestionDTO[]>>(
+        `/api/classes/${classId}/test/${testId}/questions`
+    );
     return response.data;
 };

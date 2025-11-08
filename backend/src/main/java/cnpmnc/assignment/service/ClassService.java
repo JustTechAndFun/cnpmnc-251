@@ -216,4 +216,80 @@ public class ClassService {
             .activate(student.getActivate())
             .build();
     }
+    
+    @Transactional
+    public ClassDto joinClassByCode(String classCode, User student) {
+        // Find class by class code
+        Class classEntity = classRepository.findByClassCode(classCode)
+            .orElseThrow(() -> new IllegalArgumentException("Class not found with code: " + classCode));
+        
+        // Check if student is already enrolled
+        boolean alreadyEnrolled = classEntity.getStudents().stream()
+            .anyMatch(s -> s.getId().equals(student.getId()));
+        
+        if (alreadyEnrolled) {
+            throw new IllegalArgumentException("You are already enrolled in this class");
+        }
+        
+        // Add student to class
+        classEntity.getStudents().add(student);
+        classRepository.save(classEntity);
+        
+        return convertToClassDto(classEntity);
+    }
+    
+    @Transactional
+    public ClassDto updateClass(String classId, CreateClassRequestDTO request, User currentUser) {
+        Class classEntity = classRepository.findById(classId)
+            .orElseThrow(() -> new IllegalArgumentException("Class not found"));
+        
+        // Check authorization - teacher can only update their own classes
+        if (!classEntity.getTeacher().getId().equals(currentUser.getId())) {
+            throw new SecurityException("You are not authorized to update this class");
+        }
+        
+        // Update class information
+        classEntity.setName(request.getClassName());
+        classEntity.setClassCode(request.getClassCode());
+        classEntity.setSemester(request.getSemester());
+        classEntity.setYear(request.getYear());
+        
+        Class updatedClass = classRepository.save(classEntity);
+        return convertToClassDto(updatedClass);
+    }
+    
+    @Transactional
+    public void deleteClass(String classId, User currentUser) {
+        Class classEntity = classRepository.findById(classId)
+            .orElseThrow(() -> new IllegalArgumentException("Class not found"));
+        
+        // Check authorization - teacher can only delete their own classes
+        if (!classEntity.getTeacher().getId().equals(currentUser.getId())) {
+            throw new SecurityException("You are not authorized to delete this class");
+        }
+        
+        classRepository.delete(classEntity);
+    }
+
+    @Transactional
+    public void removeStudentFromClass(String classId, String studentId, User currentUser) {
+        Class classEntity = classRepository.findById(classId)
+            .orElseThrow(() -> new IllegalArgumentException("Class not found"));
+        
+        // Check authorization - teacher can only remove students from their own classes
+        if (!classEntity.getTeacher().getId().equals(currentUser.getId())) {
+            throw new SecurityException("You are not authorized to modify this class");
+        }
+        
+        User student = userRepository.findById(studentId)
+            .orElseThrow(() -> new IllegalArgumentException("Student not found"));
+        
+        // Remove student from class
+        if (classEntity.getStudents().contains(student)) {
+            classEntity.getStudents().remove(student);
+            classRepository.save(classEntity);
+        } else {
+            throw new IllegalArgumentException("Student is not enrolled in this class");
+        }
+    }
 }

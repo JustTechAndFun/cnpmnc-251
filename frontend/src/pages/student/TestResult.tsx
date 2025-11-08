@@ -22,14 +22,27 @@ import {
     TrophyOutlined
 } from '@ant-design/icons';
 import { studentApi } from '../../apis';
-import type { TestResult as TestResultType, Question, SubmissionAnswer } from '../../types';
 
 const { Title, Text } = Typography;
+
+interface QuestionResult {
+    id: string;
+    questionText: string;
+    selectedAnswer: string | null;
+    correctAnswer: string;
+}
+
+interface TestResultData {
+    totalScore: number;
+    correctCount: number;
+    wrongCount: number;
+    questions: QuestionResult[];
+}
 
 export const TestResult = () => {
     const { submissionId } = useParams<{ submissionId: string }>();
     const navigate = useNavigate();
-    const [result, setResult] = useState<TestResultType | null>(null);
+    const [result, setResult] = useState<TestResultData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -49,7 +62,8 @@ export const TestResult = () => {
             const response = await studentApi.getTestResult(id);
 
             if (!response.error && response.data) {
-                setResult(response.data);
+                // Cast the response data to TestResultData
+                setResult(response.data as any);
             } else {
                 setError(response.message || 'Failed to load test result');
             }
@@ -62,39 +76,15 @@ export const TestResult = () => {
     };
 
     const handlePrint = () => {
-        // eslint-disable-next-line no-restricted-globals
-        window.print(); // Browser API for printing
+        window.print();
     };
 
-    const getQuestionAnswer = (questionId: string): SubmissionAnswer | undefined => {
-        return result?.answers.find(answer => answer.questionId === questionId);
+    const isCorrectAnswer = (question: QuestionResult): boolean => {
+        return question.selectedAnswer === question.correctAnswer;
     };
 
-    const formatAnswer = (answer: string | string[]): string => {
-        if (Array.isArray(answer)) {
-            return answer.join(', ');
-        }
-        return answer;
-    };
-
-    const getQuestionTypeLabel = (type: string): string => {
-        switch (type) {
-            case 'MULTIPLE_CHOICE':
-                return 'Trắc nghiệm';
-            case 'TRUE_FALSE':
-                return 'Đúng/Sai';
-            case 'SHORT_ANSWER':
-                return 'Tự luận';
-            default:
-                return type;
-        }
-    };
-
-    const renderQuestionCard = (question: Question, index: number) => {
-        const answer = getQuestionAnswer(question.id);
-        const isCorrect = answer?.isCorrect ?? false;
-        const selectedAnswer = answer?.selectedAnswer;
-        const correctAnswer = question.correctAnswer;
+    const renderQuestionCard = (question: QuestionResult, index: number) => {
+        const isCorrect = isCorrectAnswer(question);
 
         return (
             <Card
@@ -117,133 +107,31 @@ export const TestResult = () => {
                                 <><CloseCircleOutlined /> Sai</>
                             )}
                         </Tag>
-                        <Tag>{getQuestionTypeLabel(question.questionType)}</Tag>
-                        <Tag>Điểm: {answer?.pointsEarned ?? 0}/{question.points}</Tag>
                     </div>
                 </div>
 
-                <Text className="text-base mb-4 block">{question.content}</Text>
+                <Text className="text-base mb-4 block">{question.questionText}</Text>
 
-                {question.questionType === 'MULTIPLE_CHOICE' && question.options && (
-                    <div className="space-y-2 mb-4">
-                        {question.options.map((option, optIndex) => {
-                            const optionLabel = String.fromCodePoint(65 + optIndex); // A, B, C, D
-                            const isSelected = Array.isArray(selectedAnswer)
-                                ? selectedAnswer.includes(option)
-                                : selectedAnswer === option;
-                            const isCorrectOption = Array.isArray(correctAnswer)
-                                ? correctAnswer.includes(option)
-                                : correctAnswer === option;
-
-                            let bgColor = 'bg-gray-50';
-                            let borderColor = 'border-gray-200';
-                            let textColor = 'text-gray-700';
-
-                            if (isCorrectOption) {
-                                bgColor = 'bg-green-50';
-                                borderColor = 'border-green-500';
-                                textColor = 'text-green-700';
-                            } else if (isSelected && !isCorrectOption) {
-                                bgColor = 'bg-red-50';
-                                borderColor = 'border-red-500';
-                                textColor = 'text-red-700';
-                            }
-
-                            return (
-                                <div
-                                    key={`${question.id}-option-${optIndex}`}
-                                    className={`p-3 rounded-lg border-2 ${bgColor} ${borderColor} ${textColor}`}
-                                >
-                                    <Text strong className={textColor}>
-                                        {optionLabel}. {option}
-                                    </Text>
-                                    {isCorrectOption && (
-                                        <Tag color="success" className="ml-2">
-                                            Đáp án đúng
-                                        </Tag>
-                                    )}
-                                    {isSelected && !isCorrectOption && (
-                                        <Tag color="error" className="ml-2">
-                                            Bạn đã chọn (sai)
-                                        </Tag>
-                                    )}
-                                    {isSelected && isCorrectOption && (
-                                        <Tag color="success" className="ml-2">
-                                            Bạn đã chọn (đúng)
-                                        </Tag>
-                                    )}
-                                </div>
-                            );
-                        })}
+                <div className="space-y-3 mb-4">
+                    <div className="p-3 rounded-lg border-2 border-gray-200 bg-gray-50">
+                        <Text strong className="text-gray-600 block mb-2">
+                            Đáp án của bạn:
+                        </Text>
+                        <Text className="text-gray-700">
+                            {question.selectedAnswer || '(Không có đáp án)'}
+                        </Text>
                     </div>
-                )}
-
-                {question.questionType === 'TRUE_FALSE' && (
-                    <div className="space-y-2 mb-4">
-                        {['True', 'False'].map((option) => {
-                            const isSelected = formatAnswer(selectedAnswer || '') === option;
-                            const isCorrectOption = formatAnswer(correctAnswer) === option;
-
-                            let bgColor = 'bg-gray-50';
-                            let borderColor = 'border-gray-200';
-                            let textColor = 'text-gray-700';
-
-                            if (isCorrectOption) {
-                                bgColor = 'bg-green-50';
-                                borderColor = 'border-green-500';
-                                textColor = 'text-green-700';
-                            } else if (isSelected && !isCorrectOption) {
-                                bgColor = 'bg-red-50';
-                                borderColor = 'border-red-500';
-                                textColor = 'text-red-700';
-                            }
-
-                            return (
-                                <div
-                                    key={option}
-                                    className={`p-3 rounded-lg border-2 ${bgColor} ${borderColor} ${textColor}`}
-                                >
-                                    <Text strong className={textColor}>
-                                        {option}
-                                    </Text>
-                                    {isCorrectOption && (
-                                        <Tag color="success" className="ml-2">
-                                            Đáp án đúng
-                                        </Tag>
-                                    )}
-                                    {isSelected && !isCorrectOption && (
-                                        <Tag color="error" className="ml-2">
-                                            Bạn đã chọn
-                                        </Tag>
-                                    )}
-                                </div>
-                            );
-                        })}
+                    <div className={`p-3 rounded-lg border-2 ${isCorrect ? 'border-green-500 bg-green-50' : 'border-blue-500 bg-blue-50'}`}>
+                        <Text strong className={isCorrect ? 'text-green-700' : 'text-blue-700'} style={{ display: 'block', marginBottom: '0.5rem' }}>
+                            Đáp án đúng:
+                        </Text>
+                        <Text className={isCorrect ? 'text-green-700' : 'text-blue-700'}>
+                            {question.correctAnswer}
+                        </Text>
                     </div>
-                )}
+                </div>
 
-                {question.questionType === 'SHORT_ANSWER' && (
-                    <div className="space-y-3 mb-4">
-                        <div className="p-3 rounded-lg border-2 border-gray-200 bg-gray-50">
-                            <Text strong className="text-gray-600 block mb-2">
-                                Đáp án của bạn:
-                            </Text>
-                            <Text className="text-gray-700">
-                                {formatAnswer(selectedAnswer || '') || '(Không có đáp án)'}
-                            </Text>
-                        </div>
-                        <div className="p-3 rounded-lg border-2 border-blue-500 bg-blue-50">
-                            <Text strong className="text-blue-700 block mb-2">
-                                Đáp án đúng:
-                            </Text>
-                            <Text className="text-blue-700">
-                                {formatAnswer(correctAnswer)}
-                            </Text>
-                        </div>
-                    </div>
-                )}
-
-                {!selectedAnswer && (
+                {!question.selectedAnswer && (
                     <Alert
                         message="Bạn chưa trả lời câu hỏi này"
                         type="warning"
@@ -281,7 +169,9 @@ export const TestResult = () => {
         );
     }
 
-    const percentage = result.maxScore > 0 ? (result.totalScore / result.maxScore) * 100 : 0;
+    const totalQuestions = result.questions.length;
+    const maxScore = totalQuestions; // Assuming 1 point per question
+    const percentage = maxScore > 0 ? (result.totalScore / maxScore) * 100 : 0;
 
     return (
         <div className="p-8 max-w-7xl mx-auto">
@@ -312,7 +202,7 @@ export const TestResult = () => {
                             Kết quả bài thi
                         </Title>
                         <Text type="secondary">
-                            {result.testName}
+                            Bài thi #{submissionId}
                         </Text>
                     </div>
                     <Button
@@ -333,7 +223,7 @@ export const TestResult = () => {
                         <Statistic
                             title="Tổng điểm"
                             value={result.totalScore}
-                            suffix={`/ ${result.maxScore}`}
+                            suffix={`/ ${maxScore}`}
                             prefix={<TrophyOutlined />}
                             valueStyle={{ color: percentage >= 50 ? '#3f8600' : '#cf1322' }}
                         />
@@ -370,19 +260,9 @@ export const TestResult = () => {
             <Card className="mb-6 shadow-sm">
                 <Space direction="vertical" size="small" className="w-full">
                     <div className="flex justify-between">
-                        <Text strong>Ngày nộp bài:</Text>
-                        <Text>{new Date(result.submittedAt).toLocaleString('vi-VN')}</Text>
-                    </div>
-                    <div className="flex justify-between">
                         <Text strong>Tổng số câu hỏi:</Text>
-                        <Text>{result.totalQuestions}</Text>
+                        <Text>{totalQuestions}</Text>
                     </div>
-                    {result.studentName && (
-                        <div className="flex justify-between">
-                            <Text strong>Học sinh:</Text>
-                            <Text>{result.studentName}</Text>
-                        </div>
-                    )}
                 </Space>
             </Card>
 
@@ -390,9 +270,7 @@ export const TestResult = () => {
 
             {/* Questions Review */}
             <div>
-                {result.questions
-                    .sort((a, b) => a.order - b.order)
-                    .map((question, index) => renderQuestionCard(question, index))}
+                {result.questions.map((question, index) => renderQuestionCard(question, index))}
             </div>
 
             {/* Print Footer */}

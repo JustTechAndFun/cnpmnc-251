@@ -3,6 +3,8 @@ package cnpmnc.assignment.controller;
 
 import cnpmnc.assignment.dto.*;
 import cnpmnc.assignment.dto.RequestDTO.AddTestRequestDTO;
+import cnpmnc.assignment.dto.TestDTO;
+import cnpmnc.assignment.dto.TestResultsResponseDTO;
 import cnpmnc.assignment.model.Class;
 import cnpmnc.assignment.model.Question;
 import cnpmnc.assignment.model.Test;

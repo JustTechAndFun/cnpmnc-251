@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Card, Typography, Spin, Empty, Row, Col, Tag, Button, Space, Alert } from 'antd';
-import { BookOutlined, TeamOutlined, CalendarOutlined, ReloadOutlined } from '@ant-design/icons';
+import { Card, Typography, Spin, Empty, Row, Col, Tag, Button, Space, Alert, Modal, Input, message } from 'antd';
+import { BookOutlined, TeamOutlined, CalendarOutlined, ReloadOutlined, PlusOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router';
 import { studentApi } from '../../apis';
 import type { ClassDto } from '../../apis/studentApi';
@@ -11,6 +11,9 @@ export const MyCourses = () => {
     const [classes, setClasses] = useState<ClassDto[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [joinModalVisible, setJoinModalVisible] = useState(false);
+    const [classCode, setClassCode] = useState('');
+    const [joiningClass, setJoiningClass] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -39,13 +42,48 @@ export const MyCourses = () => {
         navigate(`/student/courses/${classId}`);
     };
 
+    const handleJoinClass = async () => {
+        if (!classCode.trim()) {
+            message.warning('Vui lòng nhập mã lớp học');
+            return;
+        }
+
+        setJoiningClass(true);
+        try {
+            const response = await studentApi.joinClass(classCode.toUpperCase());
+            if (!response.error) {
+                message.success('Tham gia lớp học thành công!');
+                setJoinModalVisible(false);
+                setClassCode('');
+                fetchMyClasses(); // Refresh the list
+            } else {
+                message.error(response.message || 'Không thể tham gia lớp học');
+            }
+        } catch (error) {
+            console.error('Failed to join class', error);
+            message.error('Không thể kết nối đến server');
+        } finally {
+            setJoiningClass(false);
+        }
+    };
+
     return (
         <div className="p-8 max-w-7xl mx-auto">
-            <div className="mb-8">
-                <Title level={2} className="mb-2 bg-linear-to-r from-green-600 to-green-800 bg-clip-text text-transparent">
-                    Lớp học của tôi
-                </Title>
-                <Text type="secondary">Danh sách các lớp học bạn đã đăng ký</Text>
+            <div className="mb-8 flex items-center justify-between">
+                <div>
+                    <Title level={2} className="mb-2 bg-linear-to-r from-green-600 to-green-800 bg-clip-text text-transparent">
+                        Lớp học của tôi
+                    </Title>
+                    <Text type="secondary">Danh sách các lớp học bạn đã đăng ký</Text>
+                </div>
+                <Button
+                    type="primary"
+                    icon={<PlusOutlined />}
+                    size="large"
+                    onClick={() => setJoinModalVisible(true)}
+                >
+                    Tham gia lớp học
+                </Button>
             </div>
 
             {loading ? (
@@ -127,6 +165,38 @@ export const MyCourses = () => {
                     ))}
                 </Row>
             )}
+
+            {/* Join Class Modal */}
+            <Modal
+                title="Tham gia lớp học"
+                open={joinModalVisible}
+                onOk={handleJoinClass}
+                onCancel={() => {
+                    setJoinModalVisible(false);
+                    setClassCode('');
+                }}
+                okText="Tham gia"
+                cancelText="Hủy"
+                confirmLoading={joiningClass}
+            >
+                <div className="py-4">
+                    <Text className="block mb-3">
+                        Nhập mã lớp học để tham gia:
+                    </Text>
+                    <Input
+                        size="large"
+                        placeholder="Ví dụ: CSE301_L01"
+                        value={classCode}
+                        onChange={(e) => setClassCode(e.target.value.toUpperCase())}
+                        onPressEnter={handleJoinClass}
+                        style={{ textTransform: 'uppercase' }}
+                        maxLength={50}
+                    />
+                    <Text type="secondary" className="text-xs mt-2 block">
+                        Bạn có thể nhận mã lớp học từ giảng viên
+                    </Text>
+                </div>
+            </Modal>
         </div>
     );
 };

@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
-import { Card, Statistic, List, Avatar, Spin, Typography } from 'antd';
-import { BookOutlined, FileTextOutlined, ClockCircleOutlined, TeamOutlined } from '@ant-design/icons';
-import type { ApiResponse } from '../../types';
+import { Card, Statistic, List, Spin, Typography } from 'antd';
+import {
+    BookOutlined,
+    FileTextOutlined,
+    TeamOutlined,
+    ClockCircleOutlined
+} from '@ant-design/icons';
 import { ErrorModal } from '../../components/ErrorModal';
 import { teacherApi } from '../../apis';
 
 const { Title, Text } = Typography;
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 interface TeacherStats {
     totalClasses: number;
@@ -35,38 +36,34 @@ export const TeacherDashboard = () => {
     const fetchDashboardStats = async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem('auth_token');
-
-            // Calculate stats from other APIs
-            const [classesResponse, testsResponse] = await Promise.allSettled([
-                teacherApi.getMyClasses(),
-                axios.get<ApiResponse<import('../../types').Test[]>>(
-                    `${API_BASE_URL}/api/teacher/tests`,
-                    {
-                        headers: token ? { Authorization: `Bearer ${token}` } : {},
-                        withCredentials: true
-                    }
-                )
-            ]);
+            // Calculate stats from APIs
+            const classesResponse = await teacherApi.getMyClasses();
 
             let totalClasses = 0;
             let totalStudents = 0;
-            let totalAssignments = 0;
+            let totalTests = 0;
 
             // Calculate from classes
-            if (classesResponse.status === 'fulfilled' && !classesResponse.value.error && classesResponse.value.data) {
-                totalClasses = classesResponse.value.data.length;
-                totalStudents = classesResponse.value.data.reduce((sum, cls) => sum + (cls.studentCount || 0), 0);
-            }
+            if (!classesResponse.error && classesResponse.data) {
+                totalClasses = classesResponse.data.length;
+                totalStudents = classesResponse.data.reduce((sum, cls) => sum + (cls.studentCount || 0), 0);
 
-            // Calculate from tests
-            if (testsResponse.status === 'fulfilled' && !testsResponse.value.data.error && testsResponse.value.data.data) {
-                totalAssignments = testsResponse.value.data.data.length;
+                // Fetch tests for each class
+                const testsPromises = classesResponse.data.map(cls =>
+                    teacherApi.getTestsInClass(cls.id).catch(() => ({ error: true, data: [], message: '' }))
+                );
+                const testsResults = await Promise.all(testsPromises);
+
+                testsResults.forEach(result => {
+                    if (!result.error && result.data) {
+                        totalTests += result.data.length;
+                    }
+                });
             }
 
             setStats({
                 totalClasses,
-                totalAssignments,
+                totalAssignments: totalTests,
                 pendingGrading: 0, // Can be calculated from test results in the future
                 totalStudents
             });
@@ -154,7 +151,7 @@ export const TeacherDashboard = () => {
                             renderItem={(item) => (
                                 <List.Item className="hover:bg-gray-50 rounded-lg px-4 py-3 transition-colors">
                                     <List.Item.Meta
-                                        avatar={<Avatar icon={<span>{item.icon}</span>} className="bg-gray-100" />}
+                                        avatar={<span className="text-2xl">{item.icon}</span>}
                                         title={<Text strong>{item.title}</Text>}
                                         description={<Text type="secondary" className="text-xs">{item.time}</Text>}
                                     />

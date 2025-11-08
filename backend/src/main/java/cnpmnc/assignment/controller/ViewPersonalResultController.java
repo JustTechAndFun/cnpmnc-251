@@ -2,18 +2,25 @@ package cnpmnc.assignment.controller;
 
 import cnpmnc.assignment.dto.ApiResponse;
 import cnpmnc.assignment.dto.QuestionResultDto;
+import cnpmnc.assignment.dto.StudentGradeDTO;
 import cnpmnc.assignment.dto.SubmissionResponseDto;
 import cnpmnc.assignment.model.Choice;
 import cnpmnc.assignment.model.PersonalResult;
 import cnpmnc.assignment.model.Question;
+import cnpmnc.assignment.model.Submission;
+import cnpmnc.assignment.model.User;
 import cnpmnc.assignment.repository.ChoiceRepository;
 import cnpmnc.assignment.repository.PersonalResultRepository;
 import cnpmnc.assignment.repository.QuestionRepository;
+import cnpmnc.assignment.repository.SubmissionRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpSession;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,13 +39,16 @@ public class ViewPersonalResultController {
     private final PersonalResultRepository personalResultRepository;
     private final QuestionRepository questionRepository;
     private final ChoiceRepository choiceRepository;
+    private final SubmissionRepository submissionRepository;
 
     public ViewPersonalResultController(PersonalResultRepository personalResultRepository,
                                         QuestionRepository questionRepository,
-                                        ChoiceRepository choiceRepository) {
+                                        ChoiceRepository choiceRepository,
+                                        SubmissionRepository submissionRepository) {
         this.personalResultRepository = personalResultRepository;
         this.questionRepository = questionRepository;
         this.choiceRepository = choiceRepository;
+        this.submissionRepository = submissionRepository;
     }
 
     @GetMapping("/{id}")
@@ -80,5 +90,38 @@ public class ViewPersonalResultController {
         SubmissionResponseDto resp = new SubmissionResponseDto(totalScore, correctCount, wrongCount, questionResults);
 
         return ResponseEntity.ok(ApiResponse.success(resp, "Personal result retrieved"));
+    }
+
+    @GetMapping("/student/grades")
+    @PreAuthorize("hasAnyAuthority('STUDENT')")
+    @Operation(summary = "Get student's all grades", description = "Get all test submissions and grades for the current student")
+    @SecurityRequirement(name = "cookieAuth")
+    public ResponseEntity<ApiResponse<List<StudentGradeDTO>>> getStudentGrades(HttpSession session) {
+        User currentUser = (User) session.getAttribute("user");
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("User not authenticated"));
+        }
+
+        List<Submission> submissions = submissionRepository.findByStudentId(currentUser.getId());
+        
+        List<StudentGradeDTO> grades = submissions.stream()
+                .map(submission -> {
+                    StudentGradeDTO dto = new StudentGradeDTO();
+                    dto.setSubmissionId(submission.getId());
+                    dto.setTestId(submission.getTest().getId());
+                    dto.setTestName(submission.getTest().getTitle());
+                    dto.setClassId(submission.getTest().getClazz().getId());
+                    dto.setClassName(submission.getTest().getClazz().getName());
+                    dto.setScore(submission.getScore());
+                    dto.setMaxScore(submission.getMaxScore());
+                    dto.setPercentage((submission.getScore() / submission.getMaxScore()) * 100);
+                    dto.setSubmittedAt(submission.getSubmittedAt());
+                    dto.setStatus(submission.getStatus().name());
+                    return dto;
+                })
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(ApiResponse.success(grades, "Grades retrieved successfully"));
     }
 }

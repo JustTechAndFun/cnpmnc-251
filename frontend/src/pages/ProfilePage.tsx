@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Card, Descriptions, Spin, Typography, Alert, Button, Space } from 'antd';
-import { MailOutlined, BankOutlined, UserOutlined, ReloadOutlined } from '@ant-design/icons';
+import { Card, Descriptions, Spin, Typography, Alert, Button, Space, Modal, Form, Input, message } from 'antd';
+import { MailOutlined, BankOutlined, UserOutlined, ReloadOutlined, EditOutlined } from '@ant-design/icons';
 import type { Profile } from '../types';
 import { profileApi } from '../apis';
 import { ErrorModal } from '../components/ErrorModal';
@@ -13,6 +13,9 @@ export const ProfilePage = () => {
     const [error, setError] = useState<string | null>(null);
     const [errorModalVisible, setErrorModalVisible] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
+    const [editModalVisible, setEditModalVisible] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+    const [form] = Form.useForm();
 
     useEffect(() => {
         fetchProfile();
@@ -42,6 +45,34 @@ export const ProfilePage = () => {
         }
     };
 
+    const handleEditProfile = () => {
+        form.setFieldsValue({
+            studentId: profile?.studentId || ''
+        });
+        setEditModalVisible(true);
+    };
+
+    const handleUpdateProfile = async (values: { studentId: string }) => {
+        setSubmitting(true);
+        try {
+            const response = await profileApi.updateProfile(values);
+
+            if (!response.error && response.data) {
+                message.success('Cập nhật profile thành công');
+                setProfile(response.data);
+                setEditModalVisible(false);
+                form.resetFields();
+            } else {
+                message.error(response.message || 'Không thể cập nhật profile');
+            }
+        } catch (error) {
+            console.error('Failed to update profile', error);
+            message.error('Không thể cập nhật profile');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
     const formatDate = (dateString?: string) => {
         if (!dateString) return 'Chưa cập nhật';
         try {
@@ -58,9 +89,20 @@ export const ProfilePage = () => {
 
     return (
         <div className="p-8 max-w-7xl mx-auto">
-            <div className="mb-8">
-                <Title level={2} className="mb-2">Thông tin cá nhân</Title>
-                <Text type="secondary">Xem và xác nhận thông tin tài khoản của bạn</Text>
+            <div className="mb-8 flex justify-between items-center">
+                <div>
+                    <Title level={2} className="mb-2">Thông tin cá nhân</Title>
+                    <Text type="secondary">Xem và xác nhận thông tin tài khoản của bạn</Text>
+                </div>
+                {!loading && !error && profile && (
+                    <Button
+                        type="primary"
+                        icon={<EditOutlined />}
+                        onClick={handleEditProfile}
+                    >
+                        Chỉnh sửa
+                    </Button>
+                )}
             </div>
 
             {loading && (
@@ -124,6 +166,9 @@ export const ProfilePage = () => {
                         className="shadow-sm"
                     >
                         <Descriptions column={{ xxl: 2, xl: 2, lg: 2, md: 1, sm: 1, xs: 1 }} bordered>
+                            <Descriptions.Item label="Mã số sinh viên" span={2}>
+                                {profile.studentId || 'Chưa cập nhật'}
+                            </Descriptions.Item>
                             <Descriptions.Item label="Họ và tên" span={2}>
                                 {profile.information?.name || 'Chưa cập nhật'}
                             </Descriptions.Item>
@@ -145,6 +190,55 @@ export const ProfilePage = () => {
                     </Card>
                 </Space>
             )}
+
+            {/* Edit Profile Modal */}
+            <Modal
+                title="Chỉnh sửa profile"
+                open={editModalVisible}
+                onCancel={() => {
+                    setEditModalVisible(false);
+                    form.resetFields();
+                }}
+                footer={null}
+            >
+                <Form
+                    form={form}
+                    layout="vertical"
+                    onFinish={handleUpdateProfile}
+                >
+                    <Form.Item
+                        name="studentId"
+                        label="Mã số sinh viên"
+                        rules={[
+                            { required: true, message: 'Vui lòng nhập mã số sinh viên' },
+                            { pattern: /^[A-Z0-9]{6,10}$/, message: 'Mã số sinh viên phải từ 6-10 ký tự chữ in hoa và số' }
+                        ]}
+                    >
+                        <Input placeholder="Ví dụ: SV123456" maxLength={10} />
+                    </Form.Item>
+
+                    <Form.Item className="mb-0">
+                        <Space className="w-full justify-end">
+                            <Button
+                                onClick={() => {
+                                    setEditModalVisible(false);
+                                    form.resetFields();
+                                }}
+                            >
+                                Hủy
+                            </Button>
+                            <Button
+                                type="primary"
+                                htmlType="submit"
+                                loading={submitting}
+                                icon={<EditOutlined />}
+                            >
+                                Cập nhật
+                            </Button>
+                        </Space>
+                    </Form.Item>
+                </Form>
+            </Modal>
 
             {/* Error Modal */}
             <ErrorModal

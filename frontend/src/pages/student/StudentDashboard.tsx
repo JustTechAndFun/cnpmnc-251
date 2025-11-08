@@ -1,13 +1,9 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
-import { Card, Statistic, List, Avatar, Spin, Typography, Tag } from 'antd';
-import { BookOutlined, FileTextOutlined, CheckCircleOutlined, StarOutlined } from '@ant-design/icons';
-import type { ApiResponse } from '../../types';
-import { ErrorModal } from '../../components/ErrorModal';
+import { Card, Statistic, Spin, Typography, Alert, Button, Empty } from 'antd';
+import { BookOutlined, FileTextOutlined, CheckCircleOutlined, StarOutlined, ReloadOutlined } from '@ant-design/icons';
+import { studentApi } from '../../apis';
 
 const { Title, Text } = Typography;
-
-const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 interface StudentStats {
     enrolledCourses: number;
@@ -24,37 +20,66 @@ export const StudentDashboard = () => {
         averageGrade: 0
     });
     const [loading, setLoading] = useState(true);
-    const [errorModalVisible, setErrorModalVisible] = useState(false);
-    const [errorMessage, setErrorMessage] = useState('');
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         fetchDashboardStats();
     }, []);
 
     const fetchDashboardStats = async () => {
+        setLoading(true);
         try {
-            const token = localStorage.getItem('auth_token');
-            const response = await axios.get<ApiResponse<StudentStats>>(
-                `${API_BASE_URL}/api/student/stats`,
-                {
-                    headers: token ? { Authorization: `Bearer ${token}` } : {},
-                    withCredentials: true
-                }
-            );
+            // Fetch data from APIs
+            const [classesResponse, gradesResponse] = await Promise.all([
+                studentApi.getMyClasses(),
+                studentApi.getMyGrades()
+            ]);
 
-            if (!response.data.error && response.data.data) {
-                setStats(response.data.data);
+            let enrolledCourses = 0;
+            let activeAssignments = 0;
+            let completedAssignments = 0;
+            let averageGrade = 0;
+
+            // Calculate from classes
+            if (!classesResponse.error && classesResponse.data) {
+                enrolledCourses = classesResponse.data.length;
+
+                // Get tests from all classes to calculate assignments
+                const testPromises = classesResponse.data.map(cls =>
+                    studentApi.getTestsInClass(cls.id).catch(() => ({ error: true, data: [] }))
+                );
+                const testResults = await Promise.allSettled(testPromises);
+
+                let totalTests = 0;
+                for (const result of testResults) {
+                    if (result.status === 'fulfilled' && !result.value.error && result.value.data) {
+                        totalTests += result.value.data.length;
+                    }
+                }
+
+                activeAssignments = totalTests;
             }
+
+            // Calculate from grades
+            if (!gradesResponse.error && gradesResponse.data) {
+                const grades = gradesResponse.data;
+                completedAssignments = grades.length;
+
+                if (grades.length > 0) {
+                    const totalScore = grades.reduce((sum, g) => sum + g.score, 0);
+                    averageGrade = totalScore / grades.length;
+                }
+            }
+
+            setStats({
+                enrolledCourses,
+                activeAssignments,
+                completedAssignments,
+                averageGrade
+            });
         } catch (error) {
             console.error('Failed to fetch dashboard stats', error);
-            setStats({
-                enrolledCourses: 5,
-                activeAssignments: 8,
-                completedAssignments: 12,
-                averageGrade: 8.5
-            });
-            setErrorMessage('Không thể tải thống kê dashboard. Vui lòng thử lại sau.');
-            setErrorModalVisible(true);
+            setError('Không thể tải thống kê dashboard. Vui lòng thử lại sau.');
         } finally {
             setLoading(false);
         }
@@ -65,45 +90,24 @@ export const StudentDashboard = () => {
             title: 'Khóa học đã đăng ký',
             value: stats.enrolledCourses,
             prefix: <BookOutlined className="text-green-500" />,
-            suffix: <Tag color="green">+2</Tag>,
         },
         {
             title: 'Bài tập đang làm',
             value: stats.activeAssignments,
             prefix: <FileTextOutlined className="text-blue-500" />,
-            suffix: <Tag color="blue">+3</Tag>,
         },
         {
             title: 'Bài tập đã hoàn thành',
             value: stats.completedAssignments,
             prefix: <CheckCircleOutlined className="text-purple-500" />,
-            suffix: <Tag color="purple">+5</Tag>,
         },
         {
             title: 'Điểm trung bình',
-            value: stats.averageGrade.toFixed(1),
+            value: stats.averageGrade > 0 ? stats.averageGrade.toFixed(1) : '0.0',
             prefix: <StarOutlined className="text-orange-500" />,
-            suffix: <Tag color="orange">+0.2</Tag>,
         }
     ];
 
-    const activities = [
-        {
-            icon: '📝',
-            title: 'Đã nộp bài tập mới',
-            time: '10 phút trước',
-        },
-        {
-            icon: '✅',
-            title: 'Nhận được điểm số cho bài tập',
-            time: '2 giờ trước',
-        },
-        {
-            icon: '📚',
-            title: 'Đã tham gia khóa học mới',
-            time: '1 ngày trước',
-        },
-    ];
 
     return (
         <div className="p-8 max-w-7xl mx-auto">
@@ -119,44 +123,40 @@ export const StudentDashboard = () => {
                     <Spin size="large" />
                     <Text className="mt-4 text-gray-600">Đang tải dữ liệu...</Text>
                 </div>
+            ) : error ? (
+                <Alert
+                    message="Lỗi tải dữ liệu"
+                    description={error}
+                    type="error"
+                    showIcon
+                    action={
+                        <Button size="small" type="primary" onClick={fetchDashboardStats} icon={<ReloadOutlined />}>
+                            Thử lại
+                        </Button>
+                    }
+                />
+            ) : stats.enrolledCourses === 0 ? (
+                <Empty
+                    description="Bạn chưa đăng ký lớp học nào"
+                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                >
+                    <Button type="primary" onClick={() => window.location.href = '/student/courses'}>
+                        Xem các lớp học
+                    </Button>
+                </Empty>
             ) : (
-                <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                        {statCards.map((card) => (
-                            <Card key={card.title} className="hover:shadow-lg transition-shadow">
-                                <Statistic
-                                    title={card.title}
-                                    value={card.value}
-                                    prefix={card.prefix}
-                                    suffix={card.suffix}
-                                />
-                            </Card>
-                        ))}
-                    </div>
-
-                    <Card title="Hoạt động gần đây" className="shadow-sm">
-                        <List
-                            dataSource={activities}
-                            renderItem={(item) => (
-                                <List.Item className="hover:bg-gray-50 rounded-lg px-4 py-3 transition-colors">
-                                    <List.Item.Meta
-                                        avatar={<Avatar icon={<span>{item.icon}</span>} className="bg-gray-100" />}
-                                        title={<Text strong>{item.title}</Text>}
-                                        description={<Text type="secondary" className="text-xs">{item.time}</Text>}
-                                    />
-                                </List.Item>
-                            )}
-                        />
-                    </Card>
-                </>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    {statCards.map((card) => (
+                        <Card key={card.title} className="hover:shadow-lg transition-shadow">
+                            <Statistic
+                                title={card.title}
+                                value={card.value}
+                                prefix={card.prefix}
+                            />
+                        </Card>
+                    ))}
+                </div>
             )}
-
-            {/* Error Modal */}
-            <ErrorModal
-                open={errorModalVisible}
-                message={errorMessage}
-                onClose={() => setErrorModalVisible(false)}
-            />
         </div>
     );
 };

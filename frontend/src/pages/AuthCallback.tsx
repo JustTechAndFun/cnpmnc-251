@@ -50,7 +50,7 @@ export const AuthCallbackPage = () => {
 
     if (processing) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+            <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 via-indigo-50 to-purple-50">
                 <div className="bg-white/80 backdrop-blur-lg p-10 rounded-2xl shadow-2xl max-w-md w-full mx-4 text-center border border-white/20">
                     <div className="relative inline-flex items-center justify-center mb-6">
                         <div className="absolute animate-ping inline-flex h-16 w-16 rounded-full bg-blue-400 opacity-20"></div>
