@@ -100,5 +100,41 @@ export const getMyGrades = async (): Promise<ApiResponse<Array<{
     return response.data;
 };
 
-// Note: Additional student-specific endpoints (grades, assignments, etc.)
-// will need to be added as they are implemented on the backend
+/**
+ * Get exam questions with passcode (for taking exam)
+ * @param examId - Exam/Test ID
+ * @param passcode - Passcode to access the exam
+ */
+export const getExamQuestions = async (examId: string, passcode: string): Promise<ApiResponse<Array<{
+    id: string;
+    content: string;
+    choiceA: string;
+    choiceB: string;
+    choiceC: string;
+    choiceD: string;
+}>>> => {
+    const response = await apiClient.get(`/api/exams/${examId}/questions`, {
+        params: { passcode }
+    });
+    return response.data;
+};
+
+/**
+ * Submit exam answers
+ * @param examId - Exam/Test ID
+ * @param userId - User ID
+ * @param answers - Array of answers
+ */
+export const submitExam = async (
+    examId: string,
+    userId: string,
+    answers: Array<{ questionId: string; submitAnswer: string }>
+): Promise<ApiResponse<any>> => {
+    const response = await apiClient.post('/api/submissions', {
+        testId: examId,
+        userId,
+        answers
+    });
+    return response.data;
+};
+

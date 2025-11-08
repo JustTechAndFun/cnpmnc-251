@@ -6,6 +6,7 @@ import { AdminDashboard } from '../pages/admin/AdminDashboard';
 import { UserList } from '../pages/admin/UserList';
 import { UserDetail } from '../pages/admin/UserDetail';
 import { TeacherManagement } from '../pages/admin/TeacherManagement';
+import { AdminClassList } from '../pages/admin/AdminClassList';
 
 export const adminRoutes: RouteObject[] = [
     {
@@ -31,6 +32,10 @@ export const adminRoutes: RouteObject[] = [
             {
                 path: 'teachers',
                 element: <TeacherManagement />
+            },
+            {
+                path: 'classes',
+                element: <AdminClassList />
             }
         ]
     }

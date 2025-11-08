@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation, Outlet } from 'react-router';
 import { Layout, Menu, Avatar, Button, Spin, Typography, Drawer } from 'antd';
-import { DashboardOutlined, UserOutlined, LogoutOutlined, MenuOutlined, TeamOutlined } from '@ant-design/icons';
+import { DashboardOutlined, UserOutlined, LogoutOutlined, MenuOutlined, TeamOutlined, BookOutlined } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
 
 const { Sider, Content } = Layout;
@@ -33,6 +33,11 @@ export const AdminLayout = () => {
             icon: <TeamOutlined />,
             label: 'Quản lý Giáo viên',
         },
+        {
+            key: '/admin/classes',
+            icon: <BookOutlined />,
+            label: 'Quản lý Lớp học',
+        },
     ];
 
     const handleMenuClick = ({ key }: { key: string }) => {
@@ -45,6 +50,9 @@ export const AdminLayout = () => {
     }
     if (location.pathname.startsWith('/admin/teachers/')) {
         selectedKeys[0] = '/admin/teachers';
+    }
+    if (location.pathname.startsWith('/admin/classes/')) {
+        selectedKeys[0] = '/admin/classes';
     }
 
     return (
