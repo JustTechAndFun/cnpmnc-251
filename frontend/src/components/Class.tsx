@@ -1,32 +1,8 @@
-import { useState } from 'react';
 import { Navigate } from 'react-router';
 import { useAuth } from '../contexts/AuthContext';
 import { Role } from '../types';
 import '../styles/class.css';
 
-interface Student {
-    id: string;
-    name: string;
-    email: string;
-    studentId: string;
-    status: 'Active' | 'Inactive';
-}
-
-interface Test {
-    id: string;
-    title: string;
-    createdAt: string;
-    duration: number;
-    status: 'Upcoming' | 'In Progress' | 'Completed';
-}
-
-interface ClassInfo {
-    id: string;
-    name: string;
-    description: string;
-    totalStudents: number;
-    totalTests: number;
-}
 
 export const ClassPage = () => {
     const auth = useAuth();
