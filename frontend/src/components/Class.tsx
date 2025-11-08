@@ -31,16 +31,15 @@ interface ClassInfo {
 export const ClassPage = () => {
     const auth = useAuth();
     const user = auth?.user;
-    const [classInfo, setClassInfo] = useState<ClassInfo>({
+    const classInfo = {
         id: '1',
         name: 'Công nghệ phần mềm nâng cao',
         description: 'Lớp học về các kỹ thuật phát triển phần mềm hiện đại',
         totalStudents: 35,
         totalTests: 5
-    }
-    );
+    };
 
-    const [students, setStudents] = useState<Student[]>([
+    const students = [
         {
             id: '1',
             name: 'Nguyễn Văn A',
@@ -49,18 +48,18 @@ export const ClassPage = () => {
             status: 'Active'
         },
         // Thêm dữ liệu mẫu khác ở đây
-    ]);
+    ]
 
-    const [tests, setTests] = useState<Test[]>([
+    const tests = [
         {
             id: '1',
             title: 'Kiểm tra giữa kỳ',
             createdAt: '2025-10-15',
             duration: 90,
             status: 'Completed'
-        },
+        }
         // Thêm dữ liệu mẫu khác ở đây
-    ]);
+    ];
 
     // Kiểm tra quyền truy cập
     if (!user || user.role !== Role.TEACHER) {

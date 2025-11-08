@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Card, Descriptions, Spin, Typography, Alert, Button, Space } from 'antd';
 import { MailOutlined, BankOutlined, UserOutlined, ReloadOutlined } from '@ant-design/icons';
-import { useAuth } from '../contexts/AuthContext';
 import type { ApiResponse, Profile } from '../types';
 
 const { Title, Text } = Typography;
