@@ -4,6 +4,7 @@ import cnpmnc.assignment.dto.AddStudentRequest;
 import cnpmnc.assignment.dto.ApiResponse;
 import cnpmnc.assignment.dto.ClassDto;
 import cnpmnc.assignment.dto.StudentDto;
+import cnpmnc.assignment.dto.CreateClassRequestDTO;
 import cnpmnc.assignment.model.User;
 import cnpmnc.assignment.service.ClassService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,6 +13,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -140,5 +142,33 @@ public class ClassController {
         
         List<ClassDto> classes = classService.getTeacherClasses(currentUser);
         return ResponseEntity.ok(ApiResponse.success(classes, "Classes retrieved successfully"));
+    }
+    
+    @PostMapping
+    @PreAuthorize("hasAnyAuthority('TEACHER')")
+    @Operation(summary = "Create a new class", description = "Teacher creates a new class for themselves")
+    @SecurityRequirement(name = "cookieAuth")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Class created successfully"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request or class code already exists")
+    })
+    public ResponseEntity<ApiResponse<ClassDto>> createClass(
+            @Valid @RequestBody CreateClassRequestDTO request,
+            HttpSession session) {
+        
+        User currentUser = (User) session.getAttribute("user");
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.error("User not authenticated"));
+        }
+        
+        try {
+            ClassDto classDto = classService.createClassForTeacher(request, currentUser);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(classDto, "Class created successfully"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(e.getMessage()));
+        }
     }
 }

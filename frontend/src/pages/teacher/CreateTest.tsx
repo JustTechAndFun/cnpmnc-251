@@ -113,7 +113,7 @@ export const CreateTest = () => {
                             }
                             options={classes.map(cls => ({
                                 value: cls.id,
-                                label: `${cls.className} - ${cls.classCode}`,
+                                label: `${cls.name || cls.className} - ${cls.classCode}`,
                             }))}
                         />
                     </Form.Item>

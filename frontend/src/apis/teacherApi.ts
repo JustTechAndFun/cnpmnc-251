@@ -3,12 +3,13 @@ import type { ApiResponse } from '../types';
 
 export interface ClassDto {
     id: string;
+    name: string;
     className: string;
     classCode: string;
-    teacherId: string;
-    teacherName: string;
-    semester: string;
-    year: number;
+    teacherId?: string;
+    teacherName?: string;
+    semester?: string;
+    year?: number;
     studentCount?: number;
 }
 

@@ -82,10 +82,10 @@ export const ManageClasses = () => {
     const columns: ColumnsType<ClassDto> = [
         {
             title: 'Tên lớp',
-            dataIndex: 'className',
-            key: 'className',
+            dataIndex: 'name',
+            key: 'name',
             render: (text: string) => <Text strong>{text}</Text>,
-            sorter: (a, b) => a.className.localeCompare(b.className)
+            sorter: (a, b) => (a.name || '').localeCompare(b.name || '')
         },
         {
             title: 'Mã lớp',
@@ -97,14 +97,14 @@ export const ManageClasses = () => {
             title: 'Học kỳ',
             dataIndex: 'semester',
             key: 'semester',
-            sorter: (a, b) => a.semester.localeCompare(b.semester)
+            sorter: (a, b) => (a.semester || '').localeCompare(b.semester || '')
         },
         {
             title: 'Năm học',
             dataIndex: 'year',
             key: 'year',
             align: 'center',
-            sorter: (a, b) => a.year - b.year
+            sorter: (a, b) => (a.year || 0) - (b.year || 0)
         },
         {
             title: 'Số học sinh',

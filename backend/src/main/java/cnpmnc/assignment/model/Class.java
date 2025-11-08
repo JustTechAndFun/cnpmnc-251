@@ -33,6 +33,12 @@ public class Class {
     @Column(nullable = false, unique = true, length = 50)
     private String classCode;
     
+    @Column(length = 20)
+    private String semester;
+    
+    @Column
+    private Integer year;
+    
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "teacher_id", nullable = false)
     private User teacher;
