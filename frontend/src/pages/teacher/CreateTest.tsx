@@ -4,6 +4,8 @@ import { PlusOutlined, FileTextOutlined } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router';
 import { teacherApi } from '../../apis';
 import type { ClassDto } from '../../apis/teacherApi';
+import { SuccessModal } from '../../components/SuccessModal';
+import { ErrorModal } from '../../components/ErrorModal';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -21,6 +23,10 @@ export const CreateTest = () => {
     const [loading, setLoading] = useState(false);
     const [classes, setClasses] = useState<ClassDto[]>([]);
     const [loadingClasses, setLoadingClasses] = useState(true);
+    const [successModalVisible, setSuccessModalVisible] = useState(false);
+    const [errorModalVisible, setErrorModalVisible] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
     const navigate = useNavigate();
     const location = useLocation();
     const preselectedClassId = location.state?.preselectedClassId;
@@ -65,18 +71,21 @@ export const CreateTest = () => {
             const response = await teacherApi.addTestToClass(classId, requestData);
 
             if (!response.error) {
-                message.success('Tạo bài kiểm tra thành công!');
+                setSuccessMessage('Tạo bài kiểm tra thành công!');
+                setSuccessModalVisible(true);
                 form.resetFields();
-                // Navigate to test management after 1 second
+                // Navigate to test management after closing modal
                 setTimeout(() => {
                     navigate('/teacher/tests');
-                }, 1000);
+                }, 1500);
             } else {
-                message.error(response.message || 'Không thể tạo bài kiểm tra');
+                setErrorMessage(response.message || 'Không thể tạo bài kiểm tra');
+                setErrorModalVisible(true);
             }
         } catch (error) {
             console.error('Failed to create test', error);
-            message.error('Không thể kết nối đến server');
+            setErrorMessage('Không thể kết nối đến server');
+            setErrorModalVisible(true);
         } finally {
             setLoading(false);
         }
@@ -231,6 +240,17 @@ export const CreateTest = () => {
                     </div>
                 )}
             </Card>
+
+            <SuccessModal
+                open={successModalVisible}
+                message={successMessage}
+                onClose={() => setSuccessModalVisible(false)}
+            />
+            <ErrorModal
+                open={errorModalVisible}
+                message={errorMessage}
+                onClose={() => setErrorModalVisible(false)}
+            />
         </div>
     );
 };

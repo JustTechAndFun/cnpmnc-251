@@ -4,6 +4,8 @@ import { BookOutlined, TeamOutlined, CalendarOutlined, ReloadOutlined, PlusOutli
 import { useNavigate } from 'react-router';
 import { studentApi } from '../../apis';
 import type { ClassDto } from '../../apis/studentApi';
+import { SuccessModal } from '../../components/SuccessModal';
+import { ErrorModal } from '../../components/ErrorModal';
 
 const { Title, Text } = Typography;
 
@@ -14,6 +16,10 @@ export const MyCourses = () => {
     const [joinModalVisible, setJoinModalVisible] = useState(false);
     const [classCode, setClassCode] = useState('');
     const [joiningClass, setJoiningClass] = useState(false);
+    const [successModalVisible, setSuccessModalVisible] = useState(false);
+    const [errorModalVisible, setErrorModalVisible] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -52,16 +58,19 @@ export const MyCourses = () => {
         try {
             const response = await studentApi.joinClass(classCode.toUpperCase());
             if (!response.error) {
-                message.success('Tham gia lớp học thành công!');
+                setSuccessMessage('Tham gia lớp học thành công!');
+                setSuccessModalVisible(true);
                 setJoinModalVisible(false);
                 setClassCode('');
                 fetchMyClasses(); // Refresh the list
             } else {
-                message.error(response.message || 'Không thể tham gia lớp học');
+                setErrorMessage(response.message || 'Không thể tham gia lớp học');
+                setErrorModalVisible(true);
             }
         } catch (error) {
             console.error('Failed to join class', error);
-            message.error('Không thể kết nối đến server');
+            setErrorMessage('Không thể kết nối đến server');
+            setErrorModalVisible(true);
         } finally {
             setJoiningClass(false);
         }
@@ -197,6 +206,17 @@ export const MyCourses = () => {
                     </Text>
                 </div>
             </Modal>
+
+            <SuccessModal
+                open={successModalVisible}
+                message={successMessage}
+                onClose={() => setSuccessModalVisible(false)}
+            />
+            <ErrorModal
+                open={errorModalVisible}
+                message={errorMessage}
+                onClose={() => setErrorModalVisible(false)}
+            />
         </div>
     );
 };

@@ -3,6 +3,8 @@ import { Card, Typography, Modal, message, Alert, Spin, Input, Button, Space } f
 import { useParams, useNavigate } from "react-router";
 import { useAuth } from "../../contexts/AuthContext";
 import { studentApi } from "../../apis";
+import { SuccessModal } from "../../components/SuccessModal";
+import { ErrorModal } from "../../components/ErrorModal";
 
 const { Title, Text } = Typography;
 
@@ -33,6 +35,10 @@ export const MyExams: React.FC = () => {
   const [errorLog, setErrorLog] = useState<string | null>(null);
   const [passcode, setPasscode] = useState<string>("");
   const [passcodeEntered, setPasscodeEntered] = useState(false);
+  const [successModalVisible, setSuccessModalVisible] = useState(false);
+  const [errorModalVisible, setErrorModalVisible] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const [loadingPasscode, setLoadingPasscode] = useState(false);
   const [testTitle, setTestTitle] = useState<string>("");
   const [actualTestId, setActualTestId] = useState<string>("");
@@ -135,16 +141,24 @@ export const MyExams: React.FC = () => {
       const response = await studentApi.submitExam(testIdToSubmit, auth.user.id, answers);
 
       if (!response.error) {
-        message.success("Nộp bài thành công!");
-        navigate("/student/grades");
+        setSuccessMessage("Nộp bài thành công!");
+        setSuccessModalVisible(true);
+        setShowModal(false);
+        // Navigate to grades after closing modal
+        setTimeout(() => {
+          navigate("/student/grades");
+        }, 1500);
       } else {
-        throw new Error(response.message || "Không thể nộp bài");
+        setErrorMessage(response.message || "Không thể nộp bài");
+        setErrorModalVisible(true);
+        setShowModal(false);
       }
     } catch (err: any) {
       setErrorLog(err.message || "Unknown error");
-      message.error("Không thể nộp bài. Vui lòng thử lại.");
-    } finally {
+      setErrorMessage("Không thể nộp bài. Vui lòng thử lại.");
+      setErrorModalVisible(true);
       setShowModal(false);
+    } finally {
       setLoading(false);
     }
   };
@@ -285,6 +299,17 @@ export const MyExams: React.FC = () => {
       >
         <pre className="text-red-500 whitespace-pre-wrap">{errorLog}</pre>
       </Modal>
+
+      <SuccessModal
+        open={successModalVisible}
+        message={successMessage}
+        onClose={() => setSuccessModalVisible(false)}
+      />
+      <ErrorModal
+        open={errorModalVisible}
+        message={errorMessage}
+        onClose={() => setErrorModalVisible(false)}
+      />
     </div>
   );
 };

@@ -6,6 +6,8 @@ import { Card, Typography, Button, Spin, Descriptions, Tag, Modal, Form, Input, 
 import { ArrowLeftOutlined, PlusOutlined, DeleteOutlined, QuestionCircleOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { teacherApi } from '../../apis';
 import type { Question } from '../../types';
+import { SuccessModal } from '../../components/SuccessModal';
+import { ErrorModal } from '../../components/ErrorModal';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -35,9 +37,12 @@ export const TestDetail = () => {
     const [questionForm] = Form.useForm();
     const [addingQuestion, setAddingQuestion] = useState(false);
     const [questionType, setQuestionType] = useState<'MULTIPLE_CHOICE' | 'SHORT_ANSWER'>('MULTIPLE_CHOICE');
-    const [options, setOptions] = useState<string[]>(['', '']);
+    const [options, setOptions] = useState<string[]>(['', '', '', '']); // Initialize with 4 options for multiple choice
     const [correctAnswerIndex, setCorrectAnswerIndex] = useState<number>(0);
     const [errorMessage, setErrorMessage] = useState<string>('');
+    const [successModalVisible, setSuccessModalVisible] = useState(false);
+    const [errorModalVisible, setErrorModalVisible] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
 
     useEffect(() => {
         if (testId) {
@@ -99,25 +104,26 @@ export const TestDetail = () => {
                             closeTime: testData.closeTime ?? null,
                             createdAt: testData.createdAt
                         });
-
-                        // Fetch questions separately
+                        
+                        // Fetch questions separately using getTestQuestions API
                         try {
                             const questionsResponse = await teacherApi.getTestQuestions(foundClassId, testId);
                             if (!questionsResponse.error && questionsResponse.data) {
-                                setQuestions(questionsResponse.data.map((q: any) => ({
+                                const questionsData = questionsResponse.data.map((q: any) => ({
                                     id: q.id,
-                                    testId: testId,
+                                    testId: testData.id,
                                     content: q.content,
-                                    questionType: q.questionType as 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER',
-                                    options: q.options,
-                                    correctAnswer: q.correctAnswer,
-                                    points: q.points,
-                                    order: q.order
-                                })));
+                                    questionType: 'MULTIPLE_CHOICE' as const, // Backend returns choiceA, choiceB, etc.
+                                    options: [q.choiceA, q.choiceB, q.choiceC, q.choiceD].filter((opt: string) => opt && opt.trim() !== ''),
+                                    correctAnswer: q.answer,
+                                    points: 10, // Default points if not provided
+                                    order: q.order || 0
+                                }));
+                                setQuestions(questionsData);
                             }
-                        } catch (error) {
-                            console.error('Failed to fetch questions', error);
-                            // Don't set error message - questions are optional
+                        } catch (err) {
+                            console.error('Failed to fetch questions', err);
+                            // Continue even if questions fetch fails
                         }
                     } else {
                         setErrorMessage(response.message || 'Không thể tải thông tin bài kiểm tra');
@@ -141,14 +147,14 @@ export const TestDetail = () => {
         setAddQuestionModalVisible(true);
         questionForm.resetFields();
         setQuestionType('MULTIPLE_CHOICE');
-        setOptions(['', '']);
+        setOptions(['', '', '', '']); // Initialize with 4 empty options for multiple choice
         setCorrectAnswerIndex(0);
     };
 
     const handleQuestionTypeChange = (value: 'MULTIPLE_CHOICE' | 'SHORT_ANSWER') => {
         setQuestionType(value);
         if (value === 'MULTIPLE_CHOICE') {
-            setOptions(['', '']);
+            setOptions(['', '', '', '']); // Initialize with 4 empty options
             setCorrectAnswerIndex(0);
         }
     };
@@ -176,78 +182,103 @@ export const TestDetail = () => {
         points: number;
         correctAnswer?: string;
     }) => {
+        if (!test?.classId || !testId) {
+            message.error('Thông tin test không hợp lệ');
+            return;
+        }
+
         setAddingQuestion(true);
         try {
-            let correctAnswer: string | string[];
-
+            let answer: 'CHOICE_A' | 'CHOICE_B' | 'CHOICE_C' | 'CHOICE_D';
+            
             if (questionType === 'MULTIPLE_CHOICE') {
-                // Get valid options (non-empty) with their original indices
-                const validOptionsWithIndices = options
-                    .map((opt, idx) => ({ value: opt.trim(), originalIndex: idx }))
-                    .filter(item => item.value !== '');
-
-                if (validOptionsWithIndices.length < 2) {
-                    message.error('Cần ít nhất 2 đáp án cho câu hỏi trắc nghiệm');
+                // Ensure we have exactly 4 options
+                if (options.length < 4) {
+                    message.error('Cần đủ 4 đáp án cho câu hỏi trắc nghiệm');
                     setAddingQuestion(false);
                     return;
                 }
-
-                // Find the correct answer in the valid options based on original index
-                const selectedOption = validOptionsWithIndices.find(item => item.originalIndex === correctAnswerIndex);
-
-                if (!selectedOption) {
+                
+                // Check that all 4 options are filled
+                const trimmedOptions = options.map(opt => opt.trim());
+                const emptyOptions = trimmedOptions.filter(opt => opt === '');
+                
+                if (emptyOptions.length > 0) {
+                    message.error('Vui lòng điền đầy đủ 4 đáp án');
+                    setAddingQuestion(false);
+                    return;
+                }
+                
+                // Validate correctAnswerIndex is within range
+                if (correctAnswerIndex < 0 || correctAnswerIndex >= 4) {
                     message.error('Vui lòng chọn đáp án đúng');
                     setAddingQuestion(false);
                     return;
                 }
-
-                // Get correct answer value
-                correctAnswer = selectedOption.value;
+                
+                // Map index to CHOICE_A, CHOICE_B, CHOICE_C, CHOICE_D
+                const answerMap: Record<number, 'CHOICE_A' | 'CHOICE_B' | 'CHOICE_C' | 'CHOICE_D'> = {
+                    0: 'CHOICE_A',
+                    1: 'CHOICE_B',
+                    2: 'CHOICE_C',
+                    3: 'CHOICE_D'
+                };
+                answer = answerMap[correctAnswerIndex];
             } else {
-                // SHORT_ANSWER
-                if (!values.correctAnswer || values.correctAnswer.trim() === '') {
-                    message.error('Vui lòng nhập câu trả lời đúng');
-                    setAddingQuestion(false);
-                    return;
-                }
-                correctAnswer = values.correctAnswer.trim();
+                message.error('Hiện tại chỉ hỗ trợ câu hỏi trắc nghiệm');
+                setAddingQuestion(false);
+                return;
             }
 
-            // Prepare final options array (filtered and trimmed)
-            const finalOptions = questionType === 'MULTIPLE_CHOICE'
-                ? options.filter(opt => opt.trim() !== '').map(opt => opt.trim())
-                : undefined;
-
-            // Debug log
-            console.log('Saving question:', {
-                correctAnswer,
-                options: finalOptions,
-                correctAnswerIndex,
-                questionType
-            });
-
-            const newQuestion: Question = {
-                id: `q-${Date.now()}`,
-                testId: testId || '',
+            // Prepare question data for API
+            const questionData = {
                 content: values.content,
-                questionType: questionType,
-                options: finalOptions,
-                correctAnswer: correctAnswer,
-                points: values.points,
-                order: questions.length + 1
+                choiceA: options[0]?.trim() || '',
+                choiceB: options[1]?.trim() || '',
+                choiceC: options[2]?.trim() || '',
+                choiceD: options[3]?.trim() || '',
+                answer: answer
             };
 
-            // Add question to list (demo - no API call)
-            setQuestions([...questions, newQuestion]);
-            message.success('Thêm câu hỏi thành công!');
-            setAddQuestionModalVisible(false);
-            questionForm.resetFields();
-            setQuestionType('MULTIPLE_CHOICE');
-            setOptions(['', '']);
-            setCorrectAnswerIndex(0);
+            // Call API to add question
+            const response = await teacherApi.addQuestionToTest(test.classId, testId, questionData);
+            
+            if (!response.error) {
+                setSuccessMessage('Thêm câu hỏi thành công!');
+                setSuccessModalVisible(true);
+                setAddQuestionModalVisible(false);
+                questionForm.resetFields();
+                setQuestionType('MULTIPLE_CHOICE');
+                setOptions(['', '', '', '']); // Reset to 4 empty options
+                setCorrectAnswerIndex(0);
+                
+                // Refresh questions list
+                try {
+                    const questionsResponse = await teacherApi.getTestQuestions(test.classId, testId);
+                    if (!questionsResponse.error && questionsResponse.data) {
+                        const questionsData = questionsResponse.data.map((q: any) => ({
+                            id: q.id,
+                            testId: testId,
+                            content: q.content,
+                            questionType: 'MULTIPLE_CHOICE' as const,
+                            options: [q.choiceA, q.choiceB, q.choiceC, q.choiceD].filter((opt: string) => opt && opt.trim() !== ''),
+                            correctAnswer: q.answer,
+                            points: 10,
+                            order: q.order || 0
+                        }));
+                        setQuestions(questionsData);
+                    }
+                } catch (err) {
+                    console.error('Failed to refresh questions', err);
+                }
+            } else {
+                setErrorMessage(response.message || 'Không thể thêm câu hỏi');
+                setErrorModalVisible(true);
+            }
         } catch (error) {
             console.error('Failed to add question', error);
-            message.error('Không thể thêm câu hỏi. Vui lòng thử lại.');
+            setErrorMessage('Không thể thêm câu hỏi. Vui lòng thử lại.');
+            setErrorModalVisible(true);
         } finally {
             setAddingQuestion(false);
         }
@@ -340,31 +371,86 @@ export const TestDetail = () => {
                                 </Button>
                             </div>
 
-                            {questions.length === 0 ? (
-                                <Card className="text-center py-8">
-                                    <Text type="secondary">Chưa có câu hỏi nào. Hãy thêm câu hỏi để bắt đầu.</Text>
-                                </Card>
-                            ) : (
-                                <List
-                                    dataSource={questions}
-                                    renderItem={(question, index) => (
-                                        <Card className="mb-4 shadow-sm">
-                                            <div className="flex justify-between items-start mb-3">
-                                                <div className="flex-1">
-                                                    <div className="flex items-center gap-2 mb-2">
-                                                        <Text strong className="text-lg">
-                                                            Câu {index + 1}:
-                                                        </Text>
-                                                        <Tag color={question.questionType === 'MULTIPLE_CHOICE' ? 'blue' : 'green'}>
-                                                            {question.questionType === 'MULTIPLE_CHOICE' ? 'Trắc nghiệm' : 'Tự luận'}
-                                                        </Tag>
-                                                        <Tag color="purple">{question.points} điểm</Tag>
-                                                    </div>
-                                                    <Text className="text-base">{question.content}</Text>
+                        {questions.length === 0 ? (
+                            <Card className="text-center py-8">
+                                <Text type="secondary">Chưa có câu hỏi nào. Hãy thêm câu hỏi để bắt đầu.</Text>
+                            </Card>
+                        ) : (
+                            <List
+                                dataSource={questions}
+                                renderItem={(question, index) => (
+                                    <Card className="mb-4 shadow-sm">
+                                        <div className="flex justify-between items-start mb-3">
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <Text strong className="text-lg">
+                                                        Câu {index + 1}:
+                                                    </Text>
+                                                    <Tag color={question.questionType === 'MULTIPLE_CHOICE' ? 'blue' : 'green'}>
+                                                        {question.questionType === 'MULTIPLE_CHOICE' ? 'Trắc nghiệm' : 'Tự luận'}
+                                                    </Tag>
+                                                    <Tag color="purple">{question.points} điểm</Tag>
+                                                </div>
+                                                <Text className="text-base">{question.content}</Text>
+                                            </div>
+                                        </div>
+
+                                        {question.questionType === 'MULTIPLE_CHOICE' && question.options && (
+                                            <div className="mt-4">
+                                                <Text strong className="block mb-2">Các đáp án:</Text>
+                                                <List
+                                                    dataSource={question.options}
+                                                    renderItem={(option, optIndex) => {
+                                                        // Handle correctAnswer - backend returns CHOICE_A, CHOICE_B, CHOICE_C, CHOICE_D
+                                                        const correctAnswerValue = Array.isArray(question.correctAnswer) 
+                                                            ? question.correctAnswer[0] 
+                                                            : question.correctAnswer;
+                                                        
+                                                        // Map CHOICE_A -> 0, CHOICE_B -> 1, CHOICE_C -> 2, CHOICE_D -> 3
+                                                        const answerIndexMap: Record<string, number> = {
+                                                            'CHOICE_A': 0,
+                                                            'CHOICE_B': 1,
+                                                            'CHOICE_C': 2,
+                                                            'CHOICE_D': 3
+                                                        };
+                                                        
+                                                        const correctAnswerIndex = answerIndexMap[String(correctAnswerValue || '').trim()];
+                                                        const isCorrect = correctAnswerIndex !== undefined && correctAnswerIndex === optIndex;
+                                                        
+                                                        return (
+                                                            <div className={`p-2 mb-2 rounded border ${
+                                                                isCorrect
+                                                                    ? 'bg-green-50 border-green-300' 
+                                                                    : 'bg-gray-50 border-gray-200'
+                                                            }`}>
+                                                                <Space>
+                                                                    {isCorrect && (
+                                                                        <CheckCircleOutlined className="text-green-600" />
+                                                                    )}
+                                                                    <Text className={isCorrect ? 'text-green-700 font-semibold' : ''}>
+                                                                        {String.fromCodePoint(65 + optIndex)}. {option}
+                                                                    </Text>
+                                                                    {isCorrect && (
+                                                                        <Tag color="green">Đáp án đúng</Tag>
+                                                                    )}
+                                                                </Space>
+                                                            </div>
+                                                        );
+                                                    }}
+                                                />
+                                            </div>
+                                        )}
+
+                                        {question.questionType === 'SHORT_ANSWER' && (
+                                            <div className="mt-4">
+                                                <Text strong className="block mb-2">Đáp án đúng:</Text>
+                                                <div className="p-3 bg-green-50 border border-green-300 rounded">
+                                                    <Text className="text-green-700">{question.correctAnswer}</Text>
                                                 </div>
                                             </div>
+                                        )}
 
-                                            {question.questionType === 'MULTIPLE_CHOICE' && question.options && (
+                                        {question.questionType === 'MULTIPLE_CHOICE' && question.options && (
                                                 <div className="mt-4">
                                                     <Text strong className="block mb-2">Các đáp án:</Text>
                                                     <List
@@ -440,7 +526,7 @@ export const TestDetail = () => {
                     setAddQuestionModalVisible(false);
                     questionForm.resetFields();
                     setQuestionType('MULTIPLE_CHOICE');
-                    setOptions(['', '']);
+                    setOptions(['', '', '', '']); // Reset to 4 empty options
                     setCorrectAnswerIndex(0);
                 }}
                 onOk={() => questionForm.submit()}
@@ -509,7 +595,7 @@ export const TestDetail = () => {
                                     >
                                         Đúng
                                     </Button>
-                                    {options.length > 2 && (
+                                    {options.length > 4 && (
                                         <Button
                                             danger
                                             icon={<DeleteOutlined />}
@@ -517,16 +603,16 @@ export const TestDetail = () => {
                                         />
                                     )}
                                 </div>
-                            ))}
-                            <Button
-                                type="dashed"
-                                icon={<PlusOutlined />}
-                                onClick={handleAddOption}
-                                block
-                                className="mt-2"
-                            >
-                                Thêm đáp án
-                            </Button>
+                                ))}
+                                <Button
+                                    type="dashed"
+                                    icon={<PlusOutlined />}
+                                    onClick={handleAddOption}
+                                    block
+                                    className="mt-2"
+                                >
+                                    Thêm đáp án
+                                </Button>
                         </Form.Item>
                     )}
 
@@ -561,6 +647,17 @@ export const TestDetail = () => {
                     </Form.Item>
                 </Form>
             </Modal>
+
+            <SuccessModal
+                open={successModalVisible}
+                message={successMessage}
+                onClose={() => setSuccessModalVisible(false)}
+            />
+            <ErrorModal
+                open={errorModalVisible}
+                message={errorMessage}
+                onClose={() => setErrorModalVisible(false)}
+            />
         </div>
     );
 };

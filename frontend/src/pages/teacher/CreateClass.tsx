@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { Card, Typography, Form, Input, Button, message, Select } from 'antd';
+import { Card, Typography, Form, Input, Button, Select } from 'antd';
 import { PlusOutlined, BookOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router';
 import apiClient from '../../apis/axiosConfig';
 import type { ApiResponse } from '../../types';
+import { SuccessModal } from '../../components/SuccessModal';
+import { ErrorModal } from '../../components/ErrorModal';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -18,6 +20,10 @@ interface CreateClassRequest {
 export const CreateClass = () => {
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
+    const [successModalVisible, setSuccessModalVisible] = useState(false);
+    const [errorModalVisible, setErrorModalVisible] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
     const navigate = useNavigate();
 
     const currentYear = new Date().getFullYear();
@@ -32,18 +38,21 @@ export const CreateClass = () => {
             );
 
             if (!response.data.error) {
-                message.success('Tạo lớp học thành công!');
+                setSuccessMessage('Tạo lớp học thành công!');
+                setSuccessModalVisible(true);
                 form.resetFields();
-                // Navigate to classes list after 1 second
+                // Navigate to classes list after closing modal
                 setTimeout(() => {
                     navigate('/teacher/classes');
-                }, 1000);
+                }, 1500);
             } else {
-                message.error(response.data.message || 'Không thể tạo lớp học');
+                setErrorMessage(response.data.message || 'Không thể tạo lớp học');
+                setErrorModalVisible(true);
             }
         } catch (error) {
             console.error('Failed to create class', error);
-            message.error('Không thể kết nối đến server');
+            setErrorMessage('Không thể kết nối đến server');
+            setErrorModalVisible(true);
         } finally {
             setLoading(false);
         }
@@ -150,6 +159,17 @@ export const CreateClass = () => {
                     </Form.Item>
                 </Form>
             </Card>
+
+            <SuccessModal
+                open={successModalVisible}
+                message={successMessage}
+                onClose={() => setSuccessModalVisible(false)}
+            />
+            <ErrorModal
+                open={errorModalVisible}
+                message={errorMessage}
+                onClose={() => setErrorModalVisible(false)}
+            />
         </div>
     );
 };

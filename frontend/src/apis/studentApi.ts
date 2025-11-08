@@ -17,9 +17,12 @@ export interface TestDTO {
     description?: string;
     duration: number;
     passcode?: string;
-    classId: string;
-    createdAt: string;
-    updatedAt: string;
+    classId?: string; // May not always be present in response
+    createdAt?: string;
+    updatedAt?: string;
+    openTime?: string;
+    closeTime?: string;
+    status?: string;
 }
 
 export interface TestDetail extends TestDTO {
@@ -50,6 +53,14 @@ export const getMyClasses = async (): Promise<ApiResponse<ClassDto[]>> => {
  */
 export const getTestsInClass = async (classId: string): Promise<ApiResponse<TestDTO[]>> => {
     const response = await apiClient.get<ApiResponse<TestDTO[]>>(`/api/classes/${classId}/tests`);
+    return response.data;
+};
+
+/**
+ * Get all tests for student (from all enrolled classes)
+ */
+export const getAllStudentTests = async (): Promise<ApiResponse<TestDTO[]>> => {
+    const response = await apiClient.get<ApiResponse<TestDTO[]>>('/api/student/tests');
     return response.data;
 };
 
@@ -151,10 +162,14 @@ export const submitExam = async (
     userId: string,
     answers: Array<{ questionId: string; submitAnswer: string }>
 ): Promise<ApiResponse<any>> => {
+    // Backend expects snake_case field names
     const response = await apiClient.post('/api/submissions', {
-        testId: examId,
-        userId,
-        answers
+        test_id: examId,
+        user_id: userId,
+        answers: answers.map(a => ({
+            question_id: a.questionId,
+            submit_answer: a.submitAnswer
+        }))
     });
     return response.data;
 };
