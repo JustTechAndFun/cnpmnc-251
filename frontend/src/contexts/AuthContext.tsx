@@ -92,7 +92,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             prompt: 'consent'
         });
         console.log(params.toString())
-        window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+        globalThis.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
     }, []);
 
     const handleCallbackMemo = useCallback(async (code: string) => {
@@ -166,8 +166,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } finally {
             setIsLoggingOut(false);
 
-            // Use window.location for full page reload to ensure clean state
-            window.location.href = '/login';
+            // Use globalThis.location for full page reload to ensure clean state
+            globalThis.location.href = '/login';
         }
     }, []);
 

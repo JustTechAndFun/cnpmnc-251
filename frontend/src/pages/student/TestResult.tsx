@@ -62,7 +62,8 @@ export const TestResult = () => {
     };
 
     const handlePrint = () => {
-        window.print();
+        // eslint-disable-next-line no-restricted-globals
+        window.print(); // Browser API for printing
     };
 
     const getQuestionAnswer = (questionId: string): SubmissionAnswer | undefined => {
@@ -126,7 +127,7 @@ export const TestResult = () => {
                 {question.questionType === 'MULTIPLE_CHOICE' && question.options && (
                     <div className="space-y-2 mb-4">
                         {question.options.map((option, optIndex) => {
-                            const optionLabel = String.fromCharCode(65 + optIndex); // A, B, C, D
+                            const optionLabel = String.fromCodePoint(65 + optIndex); // A, B, C, D
                             const isSelected = Array.isArray(selectedAnswer)
                                 ? selectedAnswer.includes(option)
                                 : selectedAnswer === option;
@@ -150,7 +151,7 @@ export const TestResult = () => {
 
                             return (
                                 <div
-                                    key={optIndex}
+                                    key={`${question.id}-option-${optIndex}`}
                                     className={`p-3 rounded-lg border-2 ${bgColor} ${borderColor} ${textColor}`}
                                 >
                                     <Text strong className={textColor}>

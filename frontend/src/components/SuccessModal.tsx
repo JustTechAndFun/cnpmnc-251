@@ -25,6 +25,8 @@ export const SuccessModal = ({ open, title = 'Thành công', message, onClose }:
             okText="Đóng"
             cancelButtonProps={{ style: { display: 'none' } }}
             width={500}
+            zIndex={10000}
+            styles={{ mask: { zIndex: 9999 } }}
         >
             <Text>{message}</Text>
         </Modal>
