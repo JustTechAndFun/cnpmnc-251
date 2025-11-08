@@ -59,15 +59,15 @@ export const TestResults = () => {
         try {
             setLoading(true);
             setError(null);
-            
+
             // First, get test info to find classId
             // We need to fetch from all classes to find which class this test belongs to
             const classesResponse = await teacherApi.getMyClasses();
-            
+
             if (!classesResponse.error && classesResponse.data) {
                 const classes = classesResponse.data;
                 let foundClassId: string | null = null;
-                
+
                 // Check each class for this test
                 for (const cls of classes) {
                     const testsResponse = await teacherApi.getTestsInClass(cls.id);
@@ -79,7 +79,7 @@ export const TestResults = () => {
                         }
                     }
                 }
-                
+
                 if (foundClassId) {
                     fetchTestResults(foundClassId, id);
                 } else {

@@ -57,27 +57,24 @@ export const TestManagement = () => {
     const fetchTests = async () => {
         try {
             setLoading(true);
-            const response = await apiClient.get<ApiResponse<Test[]>>('/api/teacher/tests');
+
+            // First, get all classes of the teacher
+            const classesResponse = await apiClient.get<ApiResponse<any[]>>('/api/classes/my-classes');
 
             if (!classesResponse.data.error && classesResponse.data.data) {
                 const classes = classesResponse.data.data;
 
                 // Fetch tests from all classes
                 const allTestsPromises = classes.map((cls: any) =>
-                    axios.get<ApiResponse<Test[]>>(
-                        `${API_BASE_URL}/api/classes/${cls.id}/tests`,
-                        {
-                            headers: token ? { Authorization: `Bearer ${token}` } : {},
-                            withCredentials: true
-                        }
-                    ).then((response: any) => ({
-                        classId: cls.id,
-                        response
-                    }))
-                    .catch((error: any) => {
-                        console.error(`Failed to fetch tests for class ${cls.id}`, error);
-                        return { classId: cls.id, response: { data: { error: true, data: [] } } };
-                    })
+                    apiClient.get<ApiResponse<Test[]>>(`/api/classes/${cls.id}/tests`)
+                        .then((response: any) => ({
+                            classId: cls.id,
+                            response
+                        }))
+                        .catch((error: any) => {
+                            console.error(`Failed to fetch tests for class ${cls.id}`, error);
+                            return { classId: cls.id, response: { data: { error: true, data: [] } } };
+                        })
                 );
 
                 const testsResponses = await Promise.all(allTestsPromises);
@@ -96,8 +93,6 @@ export const TestManagement = () => {
 
                 setTests(allTests);
             } else {
-                const errorMsg = response.data.message || 'Không thể tải danh sách test';
-                setErrorMessage(errorMsg);
                 setErrorMessage('Không thể tải danh sách lớp học');
                 setErrorModalVisible(true);
                 setTests([]);
