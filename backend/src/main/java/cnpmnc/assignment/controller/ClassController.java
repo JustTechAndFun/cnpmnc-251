@@ -263,4 +263,36 @@ public class ClassController {
                 .body(ApiResponse.error(e.getMessage()));
         }
     }
+    
+    @DeleteMapping("/{classId}/students/{studentId}")
+    @PreAuthorize("hasAnyAuthority('TEACHER')")
+    @Operation(summary = "Remove student from class", description = "Teacher removes a student from their class")
+    @SecurityRequirement(name = "cookieAuth")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Student removed successfully"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Not authorized to modify this class"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Class or student not found")
+    })
+    public ResponseEntity<ApiResponse<Void>> removeStudentFromClass(
+            @Parameter(description = "Class ID") @PathVariable String classId,
+            @Parameter(description = "Student ID") @PathVariable String studentId,
+            HttpSession session) {
+        
+        User currentUser = (User) session.getAttribute("user");
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.error("User not authenticated"));
+        }
+        
+        try {
+            classService.removeStudentFromClass(classId, studentId, currentUser);
+            return ResponseEntity.ok(ApiResponse.success(null, "Student removed from class successfully"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(e.getMessage()));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.error(e.getMessage()));
+        }
+    }
 }

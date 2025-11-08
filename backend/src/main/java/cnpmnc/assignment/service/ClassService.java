@@ -270,4 +270,26 @@ public class ClassService {
         
         classRepository.delete(classEntity);
     }
+
+    @Transactional
+    public void removeStudentFromClass(String classId, String studentId, User currentUser) {
+        Class classEntity = classRepository.findById(classId)
+            .orElseThrow(() -> new IllegalArgumentException("Class not found"));
+        
+        // Check authorization - teacher can only remove students from their own classes
+        if (!classEntity.getTeacher().getId().equals(currentUser.getId())) {
+            throw new SecurityException("You are not authorized to modify this class");
+        }
+        
+        User student = userRepository.findById(studentId)
+            .orElseThrow(() -> new IllegalArgumentException("Student not found"));
+        
+        // Remove student from class
+        if (classEntity.getStudents().contains(student)) {
+            classEntity.getStudents().remove(student);
+            classRepository.save(classEntity);
+        } else {
+            throw new IllegalArgumentException("Student is not enrolled in this class");
+        }
+    }
 }

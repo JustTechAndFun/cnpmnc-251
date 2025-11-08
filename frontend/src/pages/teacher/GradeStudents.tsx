@@ -1,29 +1,29 @@
 import { useEffect, useState } from 'react';
-import { Card, Typography, Table, Select, Space, Tag, Spin, Empty, Alert, Button, Input, Modal, Form, InputNumber, message } from 'antd';
-import { SearchOutlined, ReloadOutlined, EditOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { Card, Typography, Table, Select, Space, Tag, Spin, Empty, Alert, Button, Input, message } from 'antd';
+import { SearchOutlined, ReloadOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { teacherApi } from '../../apis';
-import type { ClassDto, StudentDto, TestDTO } from '../../apis/teacherApi';
+import type { ClassDto, TestDTO } from '../../apis/teacherApi';
 import type { ColumnsType } from 'antd/es/table';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 
 interface StudentGrade {
+    submissionId: string;
     studentId: string;
     studentName: string;
     studentEmail: string;
-    testId: string;
-    testName: string;
-    score?: number;
+    testId?: string;
+    testName?: string;
+    score: number;
     maxScore: number;
     submittedAt?: string;
-    gradedAt?: string;
-    status: 'submitted' | 'graded' | 'not-submitted';
+    completionTime?: number;
+    status: string;
 }
 
 export const GradeStudents = () => {
     const [classes, setClasses] = useState<ClassDto[]>([]);
-    const [students, setStudents] = useState<StudentDto[]>([]);
     const [tests, setTests] = useState<TestDTO[]>([]);
     const [grades, setGrades] = useState<StudentGrade[]>([]);
     const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
@@ -31,10 +31,6 @@ export const GradeStudents = () => {
     const [loading, setLoading] = useState(true);
     const [gradesLoading, setGradesLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [gradeModalVisible, setGradeModalVisible] = useState(false);
-    const [selectedStudent, setSelectedStudent] = useState<StudentGrade | null>(null);
-    const [gradeForm] = Form.useForm();
-    const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
         fetchClasses();
@@ -75,14 +71,7 @@ export const GradeStudents = () => {
 
     const fetchStudentsAndTests = async (classId: string) => {
         try {
-            const [studentsResponse, testsResponse] = await Promise.all([
-                teacherApi.getClassStudents(classId),
-                teacherApi.getTestsInClass(classId)
-            ]);
-
-            if (!studentsResponse.error && studentsResponse.data) {
-                setStudents(studentsResponse.data);
-            }
+            const testsResponse = await teacherApi.getTestsInClass(classId);
 
             if (!testsResponse.error && testsResponse.data) {
                 setTests(testsResponse.data);
@@ -91,90 +80,37 @@ export const GradeStudents = () => {
                 }
             }
         } catch (error) {
-            console.error('Failed to fetch students and tests', error);
+            console.error('Failed to fetch tests', error);
         }
     };
 
-    const fetchGrades = async (_classId: string, testId: string) => {
+    const fetchGrades = async (classId: string, testId: string) => {
         setGradesLoading(true);
         try {
-            // TODO: Implement actual API call when backend endpoint is ready
-            // For now, generate mock data based on students and selected test
-            await new Promise(resolve => setTimeout(resolve, 800));
-
-            const selectedTest = tests.find(t => t.id === testId);
-            if (!selectedTest) return;
-
-            const mockGrades: StudentGrade[] = students.map((student) => {
-                const isSubmitted = Math.random() > 0.2; // 80% submission rate
-                const isGraded = isSubmitted && Math.random() > 0.3; // 70% of submitted are graded
-
-                return {
-                    studentId: student.id,
-                    studentName: student.name || 'Chưa có tên',
-                    studentEmail: student.email,
-                    testId: testId,
-                    testName: selectedTest.name,
-                    score: isGraded ? parseFloat((Math.random() * 10).toFixed(1)) : undefined,
-                    maxScore: 10,
-                    submittedAt: isSubmitted ? new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString() : undefined,
-                    gradedAt: isGraded ? new Date(Date.now() - Math.random() * 3 * 24 * 60 * 60 * 1000).toISOString() : undefined,
-                    status: isGraded ? 'graded' : isSubmitted ? 'submitted' : 'not-submitted'
-                };
-            });
-
-            setGrades(mockGrades);
+            const response = await teacherApi.getTestResults(classId, testId);
+            
+            if (!response.error && response.data) {
+                setGrades(response.data.submissions || []);
+            } else {
+                message.error(response.message || 'Không thể tải danh sách điểm');
+                setGrades([]);
+            }
         } catch (error) {
             console.error('Failed to fetch grades', error);
             message.error('Không thể tải danh sách điểm');
+            setGrades([]);
         } finally {
             setGradesLoading(false);
         }
     };
 
-    const handleGradeStudent = (record: StudentGrade) => {
-        setSelectedStudent(record);
-        gradeForm.setFieldsValue({
-            score: record.score || 0
-        });
-        setGradeModalVisible(true);
-    };
-
-    const handleSubmitGrade = async (_values: { score: number }) => {
-        if (!selectedStudent) return;
-
-        setSubmitting(true);
-        try {
-            // TODO: Implement actual API call when backend endpoint is ready
-            await new Promise(resolve => setTimeout(resolve, 500));
-
-            message.success('Chấm điểm thành công');
-            setGradeModalVisible(false);
-            gradeForm.resetFields();
-
-            // Refresh grades
-            if (selectedClassId && selectedTestId) {
-                fetchGrades(selectedClassId, selectedTestId);
-            }
-        } catch (error) {
-            console.error('Failed to submit grade', error);
-            message.error('Không thể lưu điểm');
-        } finally {
-            setSubmitting(false);
+    const getStatusTag = (status: string) => {
+        if (status === 'GRADED') {
+            return <Tag color="success" icon={<CheckCircleOutlined />}>Đã chấm</Tag>;
+        } else if (status === 'SUBMITTED') {
+            return <Tag color="processing">Đã nộp</Tag>;
         }
-    };
-
-    const getStatusTag = (status: StudentGrade['status']) => {
-        switch (status) {
-            case 'graded':
-                return <Tag color="success" icon={<CheckCircleOutlined />}>Đã chấm</Tag>;
-            case 'submitted':
-                return <Tag color="warning">Chờ chấm</Tag>;
-            case 'not-submitted':
-                return <Tag color="error">Chưa nộp</Tag>;
-            default:
-                return <Tag>Không xác định</Tag>;
-        }
+        return <Tag color="default">{status}</Tag>;
     };
 
     const getScoreColor = (score: number) => {
@@ -267,23 +203,6 @@ export const GradeStudents = () => {
                 if (!b.submittedAt) return -1;
                 return new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime();
             }
-        },
-        {
-            title: 'Thao tác',
-            key: 'actions',
-            align: 'center',
-            width: 100,
-            render: (_, record) => (
-                <Button
-                    type={record.status === 'graded' ? 'default' : 'primary'}
-                    size="small"
-                    icon={<EditOutlined />}
-                    onClick={() => handleGradeStudent(record)}
-                    disabled={record.status === 'not-submitted'}
-                >
-                    {record.status === 'graded' ? 'Sửa' : 'Chấm'}
-                </Button>
-            )
         }
     ];
 
@@ -291,11 +210,8 @@ export const GradeStudents = () => {
 
     const stats = {
         total: grades.length,
-        graded: grades.filter(g => g.status === 'graded').length,
-        pending: grades.filter(g => g.status === 'submitted').length,
-        notSubmitted: grades.filter(g => g.status === 'not-submitted').length,
-        avgScore: grades.filter(g => g.score !== undefined).reduce((sum, g) => sum + (g.score || 0), 0) /
-            grades.filter(g => g.score !== undefined).length || 0
+        submitted: grades.length,
+        avgScore: grades.length > 0 ? grades.reduce((sum, g) => sum + g.score, 0) / grades.length : 0
     };
 
     return (
@@ -345,22 +261,14 @@ export const GradeStudents = () => {
             ) : (
                 <>
                     {/* Statistics Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                         <Card className="shadow-sm text-center">
-                            <Text type="secondary">Tổng số SV</Text>
+                            <Text type="secondary">Tổng số bài nộp</Text>
                             <Title level={3} className="mb-0">{stats.total}</Title>
                         </Card>
                         <Card className="shadow-sm text-center">
-                            <Text type="secondary">Đã chấm</Text>
-                            <Title level={3} className="mb-0 text-green-600">{stats.graded}</Title>
-                        </Card>
-                        <Card className="shadow-sm text-center">
-                            <Text type="secondary">Chờ chấm</Text>
-                            <Title level={3} className="mb-0 text-orange-600">{stats.pending}</Title>
-                        </Card>
-                        <Card className="shadow-sm text-center">
-                            <Text type="secondary">Chưa nộp</Text>
-                            <Title level={3} className="mb-0 text-red-600">{stats.notSubmitted}</Title>
+                            <Text type="secondary">Đã nộp</Text>
+                            <Title level={3} className="mb-0 text-green-600">{stats.submitted}</Title>
                         </Card>
                         <Card className="shadow-sm text-center">
                             <Text type="secondary">Điểm TB</Text>
@@ -433,71 +341,8 @@ export const GradeStudents = () => {
                     </Card>
                 </>
             )}
-
-            {/* Grade Modal */}
-            <Modal
-                title={`Chấm điểm - ${selectedStudent?.studentName}`}
-                open={gradeModalVisible}
-                onCancel={() => {
-                    setGradeModalVisible(false);
-                    gradeForm.resetFields();
-                }}
-                footer={null}
-            >
-                <Form
-                    form={gradeForm}
-                    layout="vertical"
-                    onFinish={handleSubmitGrade}
-                >
-                    <Space direction="vertical" size="small" className="w-full mb-4">
-                        <Text type="secondary">Bài kiểm tra: {selectedStudent?.testName}</Text>
-                        <Text type="secondary">Email: {selectedStudent?.studentEmail}</Text>
-                        {selectedStudent?.submittedAt && (
-                            <Text type="secondary">
-                                Ngày nộp: {new Date(selectedStudent.submittedAt).toLocaleString('vi-VN')}
-                            </Text>
-                        )}
-                    </Space>
-
-                    <Form.Item
-                        name="score"
-                        label="Điểm số"
-                        rules={[
-                            { required: true, message: 'Vui lòng nhập điểm số' },
-                            { type: 'number', min: 0, max: 10, message: 'Điểm số phải từ 0 đến 10' }
-                        ]}
-                    >
-                        <InputNumber
-                            min={0}
-                            max={10}
-                            step={0.1}
-                            precision={1}
-                            style={{ width: '100%' }}
-                            placeholder="Nhập điểm (0-10)"
-                        />
-                    </Form.Item>
-
-                    <Form.Item className="mb-0">
-                        <Space className="w-full justify-end">
-                            <Button onClick={() => {
-                                setGradeModalVisible(false);
-                                gradeForm.resetFields();
-                            }}>
-                                Hủy
-                            </Button>
-                            <Button
-                                type="primary"
-                                htmlType="submit"
-                                loading={submitting}
-                                icon={<CheckCircleOutlined />}
-                            >
-                                Lưu điểm
-                            </Button>
-                        </Space>
-                    </Form.Item>
-                </Form>
-            </Modal>
         </div>
     );
 };
 
+export default GradeStudents;

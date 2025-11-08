@@ -16,6 +16,8 @@ public interface SubmissionRepository extends JpaRepository<Submission, String> 
     
     List<Submission> findByTestId(String testId);
     
+    List<Submission> findByStudentId(String studentId);
+    
     Optional<Submission> findByTestAndStudent(Test test, User student);
     
     @Query("SELECT s FROM Submission s WHERE s.test.id = :testId ORDER BY s.score DESC")

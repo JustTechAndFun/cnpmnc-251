@@ -4,8 +4,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { Role } from '../types';
 import { teacherApi } from '../apis';
 import type { ClassDto, StudentDto, TestDTO } from '../apis/teacherApi';
-import { Spin, Alert, Empty, Button, Space, message } from 'antd';
-import { ReloadOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { Spin, Alert, Empty, Button, Space, message, Popconfirm } from 'antd';
+import { ReloadOutlined, ExclamationCircleOutlined, DeleteOutlined } from '@ant-design/icons';
 import '../styles/class.css';
 
 interface ClassInfo {
@@ -102,6 +102,25 @@ export const ClassPage = () => {
         navigate(`/teacher/tests/${testId}`);
     };
 
+    const handleRemoveStudent = async (studentId: string, studentName: string) => {
+        if (!classId) return;
+
+        try {
+            const response = await teacherApi.removeStudentFromClass(classId, studentId);
+
+            if (!response.error) {
+                message.success(`Đã xóa sinh viên ${studentName} khỏi lớp`);
+                // Reload students list
+                loadClassData();
+            } else {
+                message.error(response.message || 'Không thể xóa sinh viên');
+            }
+        } catch (error) {
+            console.error('Failed to remove student', error);
+            message.error('Không thể xóa sinh viên khỏi lớp');
+        }
+    };
+
     // Loading state
     if (loading) {
         return (
@@ -191,12 +210,13 @@ export const ClassPage = () => {
                                 <th>Email</th>
                                 <th>MSSV</th>
                                 <th>Trạng thái</th>
+                                <th>Thao tác</th>
                             </tr>
                         </thead>
                         <tbody>
                             {students.length === 0 ? (
                                 <tr>
-                                    <td colSpan={4} className="text-center py-4">
+                                    <td colSpan={5} className="text-center py-4">
                                         <Empty description="Chưa có sinh viên nào" image={Empty.PRESENTED_IMAGE_SIMPLE} />
                                     </td>
                                 </tr>
@@ -208,6 +228,24 @@ export const ClassPage = () => {
                                         <td>{student.studentId || '-'}</td>
                                         <td>
                                             <span className="status active">Active</span>
+                                        </td>
+                                        <td>
+                                            <Popconfirm
+                                                title="Xóa sinh viên"
+                                                description={`Bạn có chắc chắn muốn xóa ${student.name} khỏi lớp?`}
+                                                onConfirm={() => handleRemoveStudent(student.id, student.name || student.email)}
+                                                okText="Xóa"
+                                                cancelText="Hủy"
+                                                okButtonProps={{ danger: true }}
+                                            >
+                                                <Button
+                                                    danger
+                                                    size="small"
+                                                    icon={<DeleteOutlined />}
+                                                >
+                                                    Xóa
+                                                </Button>
+                                            </Popconfirm>
                                         </td>
                                     </tr>
                                 ))

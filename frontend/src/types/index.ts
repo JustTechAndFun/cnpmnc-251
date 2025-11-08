@@ -38,8 +38,13 @@ export interface ApiResponse<T> {
 }
 
 export interface Profile {
+    id?: string;
     email: string;
+    studentId?: string;
+    role?: string;
     school?: string;
+    schoolName?: string;
+    activate?: boolean;
     information?: {
         name?: string;
         gender?: string;

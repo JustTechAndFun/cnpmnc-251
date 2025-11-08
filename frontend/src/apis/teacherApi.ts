@@ -109,6 +109,16 @@ export const deleteClass = async (id: string): Promise<ApiResponse<void>> => {
 };
 
 /**
+ * Remove student from class
+ * @param classId - Class ID
+ * @param studentId - Student ID
+ */
+export const removeStudentFromClass = async (classId: string, studentId: string): Promise<ApiResponse<void>> => {
+    const response = await apiClient.delete<ApiResponse<void>>(`/api/classes/${classId}/students/${studentId}`);
+    return response.data;
+};
+
+/**
  * Get class information
  * @param id - Class ID
  */

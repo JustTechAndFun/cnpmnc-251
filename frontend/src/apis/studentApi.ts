@@ -81,5 +81,24 @@ export const joinClass = async (classCode: string): Promise<ApiResponse<ClassDto
     return response.data;
 };
 
+/**
+ * Get student's grades from all submissions
+ */
+export const getMyGrades = async (): Promise<ApiResponse<Array<{
+    submissionId: string;
+    testId: string;
+    testName: string;
+    classId: string;
+    className: string;
+    score: number;
+    maxScore: number;
+    percentage: number;
+    submittedAt: string;
+    status: string;
+}>>> => {
+    const response = await apiClient.get('/api/getresult/student/grades');
+    return response.data;
+};
+
 // Note: Additional student-specific endpoints (grades, assignments, etc.)
 // will need to be added as they are implemented on the backend

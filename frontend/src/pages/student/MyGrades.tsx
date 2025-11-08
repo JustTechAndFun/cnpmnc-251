@@ -3,20 +3,22 @@ import { Card, Typography, Table, Tag, Spin, Empty, Select, Space, Statistic, Ro
 import { LineChartOutlined, TrophyOutlined, BookOutlined, ReloadOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { ErrorModal } from '../../components/ErrorModal';
+import { studentApi } from '../../apis';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 
 interface GradeRecord {
-    id: string;
-    className: string;
+    submissionId: string;
+    testId: string;
     testName: string;
+    classId: string;
+    className: string;
     score: number;
     maxScore: number;
     percentage: number;
     submittedAt: string;
-    gradedAt: string;
-    status: 'graded' | 'pending' | 'missing';
+    status: string;
 }
 
 interface GradeStats {
@@ -48,73 +50,29 @@ export const MyGrades = () => {
         setLoading(true);
         setError(null);
         try {
-            // TODO: Implement actual API call when backend endpoint is ready
-            // const response = await studentApi.getMyGrades();
+            const response = await studentApi.getMyGrades();
 
-            // Mock data for demonstration
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            if (!response.error && response.data) {
+                setGrades(response.data);
 
-            const mockGrades: GradeRecord[] = [
-                {
-                    id: '1',
-                    className: 'Lập trình hướng đối tượng',
-                    testName: 'Kiểm tra giữa kỳ',
-                    score: 8.5,
-                    maxScore: 10,
-                    percentage: 85,
-                    submittedAt: '2024-11-01T10:30:00',
-                    gradedAt: '2024-11-03T14:00:00',
-                    status: 'graded'
-                },
-                {
-                    id: '2',
-                    className: 'Cấu trúc dữ liệu',
-                    testName: 'Bài tập tuần 5',
-                    score: 9.0,
-                    maxScore: 10,
-                    percentage: 90,
-                    submittedAt: '2024-10-28T09:00:00',
-                    gradedAt: '2024-10-30T16:00:00',
-                    status: 'graded'
-                },
-                {
-                    id: '3',
-                    className: 'Lập trình hướng đối tượng',
-                    testName: 'Bài tập tuần 8',
-                    score: 7.5,
-                    maxScore: 10,
-                    percentage: 75,
-                    submittedAt: '2024-11-05T11:00:00',
-                    gradedAt: '2024-11-06T10:00:00',
-                    status: 'graded'
-                },
-                {
-                    id: '4',
-                    className: 'Cơ sở dữ liệu',
-                    testName: 'Kiểm tra lý thuyết',
-                    score: 0,
-                    maxScore: 10,
-                    percentage: 0,
-                    submittedAt: '2024-11-07T08:00:00',
-                    gradedAt: '',
-                    status: 'pending'
-                }
-            ];
+                // Calculate statistics
+                const totalScore = response.data.reduce((sum, g) => sum + g.score, 0);
+                const avgScore = response.data.length > 0 ? totalScore / response.data.length : 0;
+                const maxScore = response.data.length > 0 ? Math.max(...response.data.map(g => g.score)) : 0;
 
-            setGrades(mockGrades);
-
-            // Calculate statistics
-            const gradedTests = mockGrades.filter(g => g.status === 'graded');
-            const totalScore = gradedTests.reduce((sum, g) => sum + g.score, 0);
-            const avgScore = gradedTests.length > 0 ? totalScore / gradedTests.length : 0;
-            const maxScore = gradedTests.length > 0 ? Math.max(...gradedTests.map(g => g.score)) : 0;
-
-            setStats({
-                totalTests: mockGrades.length,
-                averageScore: avgScore,
-                highestScore: maxScore,
-                completedTests: gradedTests.length
-            });
+                setStats({
+                    totalTests: response.data.length,
+                    averageScore: avgScore,
+                    highestScore: maxScore,
+                    completedTests: response.data.length
+                });
+            } else {
+                const errorMsg = response.message || 'Không thể tải dữ liệu điểm số';
+                setError(errorMsg);
+                setErrorMessage(errorMsg);
+                setErrorModalVisible(true);
+                setGrades([]);
+            }
         } catch (error) {
             console.error('Failed to fetch grades', error);
             const errorMsg = 'Không thể tải dữ liệu điểm số. Vui lòng thử lại sau.';
@@ -127,17 +85,15 @@ export const MyGrades = () => {
         }
     };
 
-    const getStatusTag = (status: GradeRecord['status']) => {
-        switch (status) {
-            case 'graded':
-                return <Tag color="success">Đã chấm điểm</Tag>;
-            case 'pending':
-                return <Tag color="warning">Đang chờ</Tag>;
-            case 'missing':
-                return <Tag color="error">Chưa nộp</Tag>;
-            default:
-                return <Tag>Không xác định</Tag>;
+    const getStatusTag = (status: string) => {
+        if (status === 'COMPLETED') {
+            return <Tag color="success">Đã hoàn thành</Tag>;
+        } else if (status === 'IN_PROGRESS') {
+            return <Tag color="warning">Đang làm</Tag>;
+        } else if (status === 'NOT_STARTED') {
+            return <Tag color="default">Chưa bắt đầu</Tag>;
         }
+        return <Tag>{status}</Tag>;
     };
 
     const getScoreColor = (percentage: number) => {
@@ -164,13 +120,9 @@ export const MyGrades = () => {
             key: 'score',
             align: 'center',
             render: (_, record) => (
-                record.status === 'graded' ? (
-                    <Text strong className={getScoreColor(record.percentage)}>
-                        {record.score}/{record.maxScore}
-                    </Text>
-                ) : (
-                    <Text type="secondary">-</Text>
-                )
+                <Text strong className={getScoreColor(record.percentage)}>
+                    {record.score.toFixed(1)}/{record.maxScore}
+                </Text>
             )
         },
         {
@@ -178,14 +130,10 @@ export const MyGrades = () => {
             dataIndex: 'percentage',
             key: 'percentage',
             align: 'center',
-            render: (percentage: number, record) => (
-                record.status === 'graded' ? (
-                    <Tag color={percentage >= 80 ? 'green' : percentage >= 60 ? 'blue' : percentage >= 40 ? 'orange' : 'red'}>
-                        {percentage}%
-                    </Tag>
-                ) : (
-                    <Text type="secondary">-</Text>
-                )
+            render: (percentage: number) => (
+                <Tag color={percentage >= 80 ? 'green' : percentage >= 60 ? 'blue' : percentage >= 40 ? 'orange' : 'red'}>
+                    {percentage.toFixed(1)}%
+                </Tag>
             )
         },
         {
@@ -193,18 +141,12 @@ export const MyGrades = () => {
             dataIndex: 'status',
             key: 'status',
             align: 'center',
-            render: (status: GradeRecord['status']) => getStatusTag(status)
+            render: (status: string) => getStatusTag(status)
         },
         {
             title: 'Ngày nộp',
             dataIndex: 'submittedAt',
             key: 'submittedAt',
-            render: (date: string) => date ? new Date(date).toLocaleDateString('vi-VN') : '-'
-        },
-        {
-            title: 'Ngày chấm',
-            dataIndex: 'gradedAt',
-            key: 'gradedAt',
             render: (date: string) => date ? new Date(date).toLocaleDateString('vi-VN') : '-'
         }
     ];
@@ -314,7 +256,7 @@ export const MyGrades = () => {
                                 <Table
                                     columns={columns}
                                     dataSource={filteredGrades}
-                                    rowKey="id"
+                                    rowKey="submissionId"
                                     pagination={{
                                         pageSize: 10,
                                         showSizeChanger: true,
