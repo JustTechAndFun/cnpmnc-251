@@ -33,8 +33,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 }
             }
 
-            // Always verify session with backend (except for fake users)
-            // Backend will check JSESSIONID cookie automatically
+            // Always verify session with backend
+            // Backend will check JSESSIONID cookie (with 30-day max-age) automatically
             const response = await authApi.getCurrentUser();
 
             console.log('[Auth] getCurrentUser response:', {
@@ -125,7 +125,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
                 // Log cookies after successful login (dev only)
                 if (import.meta.env.DEV) {
-                    console.log('[Auth] Login successful. Current cookies:', document.cookie);
+                    console.log('[Auth] Login successful. JSESSIONID cookie maintained with 30-day max-age');
+                    console.log('[Auth] Current cookies:', document.cookie);
                     console.log('[Auth] User data saved to localStorage');
                 }
 
@@ -145,7 +146,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const logoutCallback = useCallback(async () => {
         setIsLoggingOut(true);
         try {
-            // Call logout API
+            // Call logout API to invalidate backend session and clear JSESSIONID cookie
             await authApi.logout();
 
             // Clear all stored data

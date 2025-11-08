@@ -38,26 +38,32 @@ public class AuthController {
                     request.getRedirectUri()
             );
 
-            // Get current session, invalidate it for security
-            HttpSession oldSession = httpRequest.getSession(false);
-            if (oldSession != null) {
-                oldSession.invalidate();
+            // Get or create session (reuse existing if available)
+            HttpSession session = httpRequest.getSession(true);
+            
+            // Check if session already has a different user - invalidate for security
+            Object existingUserObj = session.getAttribute("user");
+            if (existingUserObj instanceof User) {
+                User existingUser = (User) existingUserObj;
+                if (!existingUser.getEmail().equals(user.getEmail())) {
+                    // Different user - invalidate old session and create new one
+                    session.invalidate();
+                    session = httpRequest.getSession(true);
+                    System.out.println("[AUTH] Different user detected, session invalidated and recreated");
+                }
             }
             
-            // Create new session - this will generate a new JSESSIONID cookie
-            HttpSession newSession = httpRequest.getSession(true);
-            
-            // Store user info in new session
-            newSession.setAttribute("user", user);
-            newSession.setAttribute("authenticated", true);
+            // Store/update user info in session
+            session.setAttribute("user", user);
+            session.setAttribute("authenticated", true);
             
             // Set session max inactive interval (30 days in seconds)
-            newSession.setMaxInactiveInterval(2592000);
+            session.setMaxInactiveInterval(2592000);
             
             // Log for debugging
-            System.out.println("[AUTH] New session created: " + newSession.getId());
+            System.out.println("[AUTH] Session ID: " + session.getId());
             System.out.println("[AUTH] User authenticated: " + user.getEmail());
-            System.out.println("[AUTH] Session will expire in: " + newSession.getMaxInactiveInterval() + " seconds");
+            System.out.println("[AUTH] Session max inactive interval: " + session.getMaxInactiveInterval() + " seconds");
 
             // Return UserDto without accessToken
             UserDto userDto = UserDto.fromUser(user);
