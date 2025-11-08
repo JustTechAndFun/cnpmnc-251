@@ -443,6 +443,12 @@ export const TestManagement = () => {
             render: (_: unknown, record: Test) => (
                 <Space>
                     <Button
+                        icon={<EyeOutlined />}
+                        onClick={() => navigate(`/teacher/tests/${record.id}`)}
+                    >
+                        Xem
+                    </Button>
+                    <Button
                         icon={<EditOutlined />}
                         onClick={() => handleEditTest(record)}
                     >
