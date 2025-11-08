@@ -11,9 +11,14 @@ import lombok.Data;
 @Data
 public class PersonalResult {
 
+    // The DB table 'personal_result' doesn't have a column named 'id'.
+    // In the schema the test identifier column is 'test_id' and it is used
+    // as the primary key / identifier for a personal_result. Mark that field
+    // as @Id so JPA selects the correct column (select ... test_id ...).
+
     @Id
-    @Column(length = 255)
-    private String id; // assume id is test id or submission id
+    @Column(name = "test_id", length = 255)
+    private String testId;
 
     @Column(name = "total_score")
     private Double totalScore;
@@ -23,7 +28,4 @@ public class PersonalResult {
 
     @Column(name = "wrong_count")
     private Integer wrongCount;
-
-    @Column(name = "test_id", length = 255)
-    private String testId;
 }
