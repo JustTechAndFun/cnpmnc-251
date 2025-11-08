@@ -77,11 +77,16 @@ public class SecurityConfig {
         // Allow all headers
         configuration.setAllowedHeaders(Arrays.asList("*"));
         
-        // Allow credentials (cookies, authorization headers)
+        // Allow credentials (cookies, authorization headers) - CRITICAL for cookies
         configuration.setAllowCredentials(true);
         
-        // Expose headers that frontend can read
-        configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Type"));
+        // Expose headers that frontend can read (including Set-Cookie for debugging)
+        configuration.setExposedHeaders(Arrays.asList(
+            "Authorization", 
+            "Content-Type", 
+            "Set-Cookie",
+            "Access-Control-Allow-Credentials"
+        ));
         
         // Cache preflight response for 1 hour
         configuration.setMaxAge(3600L);

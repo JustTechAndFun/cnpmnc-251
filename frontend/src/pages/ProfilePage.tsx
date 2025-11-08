@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
 import { Card, Descriptions, Spin, Typography, Alert, Button, Space } from 'antd';
 import { MailOutlined, BankOutlined, UserOutlined, ReloadOutlined } from '@ant-design/icons';
-import type { ApiResponse, Profile } from '../types';
+import type { Profile } from '../types';
+import { profileApi } from '../apis';
 
 const { Title, Text } = Typography;
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export const ProfilePage = () => {
     const [profile, setProfile] = useState<Profile | null>(null);
@@ -19,19 +17,12 @@ export const ProfilePage = () => {
 
     const fetchProfile = async () => {
         try {
-            const token = localStorage.getItem('auth_token');
-            const response = await axios.get<ApiResponse<Profile>>(
-                `${API_BASE_URL}/user/profile`,
-                {
-                    headers: token ? { Authorization: `Bearer ${token}` } : {},
-                    withCredentials: true
-                }
-            );
+            const response = await profileApi.getProfile();
 
-            if (!response.data.error && response.data.data) {
-                setProfile(response.data.data);
+            if (!response.error && response.data) {
+                setProfile(response.data);
             } else {
-                setError(response.data.message || 'Không thể tải thông tin profile');
+                setError(response.message || 'Không thể tải thông tin profile');
             }
         } catch (error) {
             console.error('Failed to fetch profile', error);

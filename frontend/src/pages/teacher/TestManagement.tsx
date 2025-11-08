@@ -21,8 +21,10 @@ import {
     DeleteOutlined,
     PlusOutlined,
     ClockCircleOutlined,
-    KeyOutlined
+    KeyOutlined,
+    EyeOutlined
 } from '@ant-design/icons';
+import { useNavigate } from 'react-router';
 import type { ApiResponse, Test, Question } from '../../types';
 
 const { Title, Text } = Typography;
@@ -34,6 +36,7 @@ export const TestManagement = () => {
     const [tests, setTests] = useState<Test[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedTest, setSelectedTest] = useState<Test | null>(null);
+    const navigate = useNavigate();
 
     // Modals state
     const [testInfoModalVisible, setTestInfoModalVisible] = useState(false);
@@ -440,6 +443,12 @@ export const TestManagement = () => {
             render: (_: unknown, record: Test) => (
                 <Space>
                     <Button
+                        icon={<EyeOutlined />}
+                        onClick={() => navigate(`/teacher/tests/${record.id}`)}
+                    >
+                        Xem
+                    </Button>
+                    <Button
                         icon={<EditOutlined />}
                         onClick={() => handleEditTest(record)}
                     >
@@ -463,11 +472,21 @@ export const TestManagement = () => {
 
     return (
         <div className="p-8 max-w-7xl mx-auto">
-            <div className="mb-8">
-                <Title level={2} className="mb-2 bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
-                    Quản lý Tests
-                </Title>
-                <Text type="secondary">Xem và quản lý tất cả các test bạn đã tạo</Text>
+            <div className="mb-8 flex justify-between items-center">
+                <div>
+                    <Title level={2} className="mb-2 bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+                        Quản lý Tests
+                    </Title>
+                    <Text type="secondary">Xem và quản lý tất cả các test bạn đã tạo</Text>
+                </div>
+                <Button
+                    type="primary"
+                    icon={<PlusOutlined />}
+                    onClick={() => navigate('/teacher/tests/create')}
+                    size="large"
+                >
+                    Tạo bài kiểm tra
+                </Button>
             </div>
 
             <Card className="shadow-sm">

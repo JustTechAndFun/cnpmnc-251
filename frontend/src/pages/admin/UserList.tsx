@@ -1,15 +1,13 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router';
-import axios from 'axios';
 import { Table, Input, Select, Card, Tag, Avatar, Typography, Space, Button } from 'antd';
 import { SearchOutlined, UserOutlined } from '@ant-design/icons';
 import { Role } from '../../types';
-import type { User, ApiResponse } from '../../types';
+import type { User } from '../../types';
+import { adminApi } from '../../apis';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export const UserList = () => {
     const navigate = useNavigate();
@@ -44,30 +42,22 @@ export const UserList = () => {
     const fetchUsers = async (mail: string, activate: boolean | null) => {
         setLoading(true);
         try {
-            const token = localStorage.getItem('auth_token');
-
-            // Build query params
-            const params = new URLSearchParams();
-            if (mail && mail.trim()) {
-                params.append('mail', mail.trim());
-            }
-            if (activate !== null) {
-                params.append('activate', String(activate));
-            }
-
-            const queryString = params.toString();
-            const url = `${API_BASE_URL}/api/admin/users${queryString ? `?${queryString}` : ''}`;
-
-            const response = await axios.get<ApiResponse<User[]>>(
-                url,
-                {
-                    headers: token ? { Authorization: `Bearer ${token}` } : {},
-                    withCredentials: true
-                }
+            const response = await adminApi.getAllUsers(
+                mail && mail.trim() ? mail.trim() : undefined,
+                activate !== null ? activate : undefined
             );
 
-            if (!response.data.error && response.data.data) {
-                setUsers(response.data.data);
+            if (!response.error && response.data) {
+                // Map UserDto to User type
+                const mappedUsers: User[] = response.data.map(user => ({
+                    id: user.id,
+                    email: user.email,
+                    name: user.name,
+                    picture: user.picture,
+                    role: user.role as Role,
+                    activate: user.activate
+                }));
+                setUsers(mappedUsers);
             }
         } catch (error) {
             console.error('Failed to fetch users', error);

@@ -1,10 +1,9 @@
 import { createContext, useContext, useState, useEffect, useMemo, useCallback, type ReactNode } from 'react';
-import axios from 'axios';
-import { Role, type User, type AuthContextType, type ApiResponse } from '../types';
+import { Role, type User, type AuthContextType } from '../types';
+import { authApi } from '../apis';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 const GOOGLE_REDIRECT_URI = import.meta.env.VITE_GOOGLE_REDIRECT_URI || 'https://cnpmnc-251.vercel.app/authenticate';
 
@@ -30,33 +29,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (storedUser) {
                 try {
                     const parsedUser = JSON.parse(storedUser);
-                    setUser(parsedUser);
-                    // In dev mode, skip API call if we have stored user (especially fake users)
-                    if (isDevMode) {
-                        // Check if it's a fake user (has 'fake-' prefix in id)
-                        if (parsedUser.id?.startsWith('fake-')) {
-                            setLoading(false);
-                            return; // Don't make API call for fake users
-                        }
+
+                    // In dev mode, skip API call ONLY for fake users
+                    if (isDevMode && parsedUser.id?.startsWith('fake-')) {
+                        setUser(parsedUser);
                         setLoading(false);
-                        return;
+                        return; // Don't make API call for fake users
                     }
+
+                    // For real users, optimistically set user but still verify with backend
+                    setUser(parsedUser);
                 } catch (e) {
                     console.error('Error parsing stored user data', e);
                 }
             }
 
-            const response = await axios.get<ApiResponse<{
-                email: string;
-                name: string;
-                picture: string;
-                role: string;
-            }>>(`${API_BASE_URL}/api/auth/user`, {
-                withCredentials: true
+            // Log current cookies before API call (dev only)
+            if (isDevMode) {
+                console.log('[Auth] Checking authentication. Current cookies:', document.cookie);
+            }
+
+            // Always verify session with backend (except for fake users)
+            // Backend will check JSESSIONID cookie automatically
+            const response = await authApi.getCurrentUser();
+
+            console.log('[Auth] getCurrentUser response:', {
+                error: response.error,
+                hasData: !!response.data,
+                message: response.message
             });
 
-            if (!response.data.error && response.data.data) {
-                const userData = response.data.data;
+            if (!response.error && response.data) {
+                const userData = response.data;
                 const userObject = {
                     id: userData.email,
                     email: userData.email,
@@ -68,21 +72,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
                 setUser(userObject);
 
-                // Save user data to localStorage
+                // Save user data to localStorage for offline access
                 localStorage.setItem(USER_KEY, JSON.stringify(userObject));
+
+                if (isDevMode) {
+                    console.log('[Auth] User authenticated successfully');
+                }
             } else {
-                // Clear invalid data
+                // Session invalid or expired - clear data
+                console.log('[Auth] No valid session found, clearing data');
                 localStorage.removeItem(USER_KEY);
                 setUser(null);
             }
         } catch (error) {
-            console.error('Not authenticated', error);
-            // In dev mode, don't clear user data to allow bypassing login
-            if (!isDevMode) {
-                // Clear invalid data on error
-                localStorage.removeItem(USER_KEY);
-                setUser(null);
-            }
+            console.error('[Auth] Authentication check failed:', error);
+            // Session expired or network error - clear data
+            localStorage.removeItem(USER_KEY);
+            setUser(null);
         } finally {
             setLoading(false);
         }
@@ -111,20 +117,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const handleCallbackMemo = useCallback(async (code: string) => {
         try {
-            const response = await axios.post<ApiResponse<{
-                email: string;
-                name: string;
-                picture: string;
-                role: string;
-            }>>(`${API_BASE_URL}/api/auth/google/callback`, {
-                code,
-                redirectUri: GOOGLE_REDIRECT_URI
-            }, {
-                withCredentials: true
+            console.log('[Auth] Processing callback with code:', code.substring(0, 10) + '...');
+
+            const response = await authApi.handleGoogleCallback(code, GOOGLE_REDIRECT_URI);
+
+            console.log('[Auth] Callback response:', {
+                error: response.error,
+                hasData: !!response.data,
+                message: response.message
             });
 
-            if (!response.data.error && response.data.data) {
-                const userData = response.data.data;
+            if (!response.error && response.data) {
+                const userData = response.data;
                 const userObject = {
                     id: userData.email,
                     email: userData.email,
@@ -139,11 +143,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 // Save user data to localStorage
                 localStorage.setItem(USER_KEY, JSON.stringify(userObject));
 
+                // Log cookies after successful login (dev only)
+                if (import.meta.env.DEV) {
+                    console.log('[Auth] Login successful. Current cookies:', document.cookie);
+                    console.log('[Auth] User data saved to localStorage');
+                }
+
                 return true;
             }
+
+            console.error('[Auth] Callback failed:', response.message);
             return false;
         } catch (error) {
-            console.error('Callback error', error);
+            console.error('[Auth] Callback error:', error);
             // Clear any partial data on error
             localStorage.removeItem(USER_KEY);
             return false;
@@ -153,19 +165,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const logoutCallback = useCallback(async () => {
         setIsLoggingOut(true);
         try {
-            await axios.post(`${API_BASE_URL}/api/auth/logout`, {}, {
-                withCredentials: true
-            });
-        } catch (error) {
-            console.error('Logout error', error);
-        } finally {
+            // Call logout API
+            await authApi.logout();
+
             // Clear all stored data
             localStorage.removeItem(USER_KEY);
             setUser(null);
-            // Small delay to show loading, then redirect to login page
-            setTimeout(() => {
-                window.location.href = '/login';
-            }, 500);
+
+            // Small delay to show loading animation
+            await new Promise(resolve => setTimeout(resolve, 800));
+        } catch (error) {
+            console.error('Logout error', error);
+
+            // Even if API fails, still clear local data
+            localStorage.removeItem(USER_KEY);
+            setUser(null);
+
+            // Small delay
+            await new Promise(resolve => setTimeout(resolve, 800));
+        } finally {
+            setIsLoggingOut(false);
+
+            // Use window.location for full page reload to ensure clean state
+            window.location.href = '/login';
         }
     }, []);
 
