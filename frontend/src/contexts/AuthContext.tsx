@@ -29,22 +29,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (storedUser) {
                 try {
                     const parsedUser = JSON.parse(storedUser);
-                    setUser(parsedUser);
-                    // In dev mode, skip API call if we have stored user (especially fake users)
-                    if (isDevMode) {
-                        // Check if it's a fake user (has 'fake-' prefix in id)
-                        if (parsedUser.id?.startsWith('fake-')) {
-                            setLoading(false);
-                            return; // Don't make API call for fake users
-                        }
+                    
+                    // In dev mode, skip API call ONLY for fake users
+                    if (isDevMode && parsedUser.id?.startsWith('fake-')) {
+                        setUser(parsedUser);
                         setLoading(false);
-                        return;
+                        return; // Don't make API call for fake users
                     }
+                    
+                    // For real users, optimistically set user but still verify with backend
+                    setUser(parsedUser);
                 } catch (e) {
                     console.error('Error parsing stored user data', e);
                 }
             }
 
+            // Always verify session with backend (except for fake users)
+            // Backend will check JSESSIONID cookie automatically
             const response = await authApi.getCurrentUser();
 
             if (!response.error && response.data) {
@@ -60,21 +61,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
                 setUser(userObject);
 
-                // Save user data to localStorage
+                // Save user data to localStorage for offline access
                 localStorage.setItem(USER_KEY, JSON.stringify(userObject));
             } else {
-                // Clear invalid data
+                // Session invalid or expired - clear data
                 localStorage.removeItem(USER_KEY);
                 setUser(null);
             }
         } catch (error) {
             console.error('Not authenticated', error);
-            // In dev mode, don't clear user data to allow bypassing login
-            if (!isDevMode) {
-                // Clear invalid data on error
-                localStorage.removeItem(USER_KEY);
-                setUser(null);
-            }
+            // Session expired or network error - clear data
+            localStorage.removeItem(USER_KEY);
+            setUser(null);
         } finally {
             setLoading(false);
         }
