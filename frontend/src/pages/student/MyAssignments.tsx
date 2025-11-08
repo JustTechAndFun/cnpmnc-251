@@ -26,7 +26,7 @@ export const MyAssignments: React.FC = () => {
 
     setError('');
     setLoading(true);
-    
+
     // Navigate to exam page - will validate passcode there
     message.success('Đang chuyển đến bài kiểm tra...');
     setIsModalOpen(false);

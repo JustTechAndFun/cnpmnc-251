@@ -64,7 +64,7 @@ export const StudentDashboard = () => {
             if (!gradesResponse.error && gradesResponse.data) {
                 const grades = gradesResponse.data;
                 completedAssignments = grades.length;
-                
+
                 if (grades.length > 0) {
                     const totalScore = grades.reduce((sum, g) => sum + g.score, 0);
                     averageGrade = totalScore / grades.length;
