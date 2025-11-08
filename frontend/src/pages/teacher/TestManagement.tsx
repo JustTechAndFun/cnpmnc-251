@@ -74,18 +74,18 @@ export const TestManagement = () => {
                 const classes = classesResponse.data.data;
 
                 // Fetch tests from all classes
-                const allTestsPromises = classes.map(cls =>
+                const allTestsPromises = classes.map((cls: any) =>
                     axios.get<ApiResponse<Test[]>>(
                         `${API_BASE_URL}/api/classes/${cls.id}/tests`,
                         {
                             headers: token ? { Authorization: `Bearer ${token}` } : {},
                             withCredentials: true
                         }
-                    ).then(response => ({
+                    ).then((response: any) => ({
                         classId: cls.id,
                         response
                     }))
-                    .catch(error => {
+                    .catch((error: any) => {
                         console.error(`Failed to fetch tests for class ${cls.id}`, error);
                         return { classId: cls.id, response: { data: { error: true, data: [] } } };
                     })
@@ -95,9 +95,9 @@ export const TestManagement = () => {
 
                 // Combine all tests from all classes and add classId to each test
                 const allTests: Test[] = [];
-                testsResponses.forEach(({ classId, response }) => {
+                testsResponses.forEach(({ classId, response }: any) => {
                     if (!response.data.error && response.data.data) {
-                        const testsWithClassId = response.data.data.map(test => ({
+                        const testsWithClassId = response.data.data.map((test: any) => ({
                             ...test,
                             classId
                         }));
