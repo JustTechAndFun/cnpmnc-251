@@ -88,7 +88,7 @@ export const GradeStudents = () => {
         setGradesLoading(true);
         try {
             const response = await teacherApi.getTestResults(classId, testId);
-            
+
             if (!response.error && response.data) {
                 setGrades(response.data.submissions || []);
             } else {

@@ -3,7 +3,7 @@ import { Navigate, useParams, useNavigate } from 'react-router';
 import { useAuth } from '../contexts/AuthContext';
 import { Role } from '../types';
 import { teacherApi } from '../apis';
-import type { ClassDto, StudentDto, TestDTO } from '../apis/teacherApi';
+import type { StudentDto, TestDTO } from '../apis/teacherApi';
 import { Spin, Alert, Empty, Button, Space, message, Popconfirm } from 'antd';
 import { ReloadOutlined, ExclamationCircleOutlined, DeleteOutlined } from '@ant-design/icons';
 import '../styles/class.css';

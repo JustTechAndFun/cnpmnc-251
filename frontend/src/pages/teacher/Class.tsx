@@ -1,7 +1,30 @@
 import { useEffect, useState } from 'react';
-import { Card, Typography, Table, Button, Space, Tag, Spin, Empty, Alert, Modal, Form, Input, Select, message } from 'antd';
-import { UserAddOutlined, ReloadOutlined, TeamOutlined, PlusOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router';
+import {
+    Card,
+    Table,
+    Button,
+    Typography,
+    Tag,
+    Spin,
+    message,
+    Modal,
+    Input,
+    Form,
+    Statistic,
+    Row,
+    Col,
+    Select
+} from 'antd';
+import type { Breakpoint } from 'antd';
+import {
+    PlusOutlined,
+    FileAddOutlined,
+    UserOutlined,
+    BookOutlined,
+    TeamOutlined,
+    FileTextOutlined
+} from '@ant-design/icons';
 import { teacherApi } from '../../apis';
 import type { ClassDto } from '../../apis/teacherApi';
 import type { ColumnsType } from 'antd/es/table';
@@ -84,141 +107,231 @@ export const ManageClasses = () => {
             title: 'Tên lớp',
             dataIndex: 'name',
             key: 'name',
-            render: (text: string) => <Text strong>{text}</Text>,
-            sorter: (a, b) => (a.name || '').localeCompare(b.name || '')
+            width: 200,
+            fixed: 'left' as const,
         },
         {
-            title: 'Mã lớp',
-            dataIndex: 'classCode',
-            key: 'classCode',
-            render: (text: string) => <Tag color="purple">{text}</Tag>
+            title: 'Email',
+            dataIndex: 'email',
+            key: 'email',
+            width: 250,
+            responsive: ['md' as Breakpoint],
         },
         {
-            title: 'Học kỳ',
-            dataIndex: 'semester',
-            key: 'semester',
-            sorter: (a, b) => (a.semester || '').localeCompare(b.semester || '')
+            title: 'MSSV',
+            dataIndex: 'studentId',
+            key: 'studentId',
+            width: 120,
         },
         {
-            title: 'Năm học',
-            dataIndex: 'year',
-            key: 'year',
-            align: 'center',
-            sorter: (a, b) => (a.year || 0) - (b.year || 0)
-        },
-        {
-            title: 'Số học sinh',
-            dataIndex: 'studentCount',
-            key: 'studentCount',
-            align: 'center',
-            render: (count?: number) => (
-                <Space>
-                    <TeamOutlined />
-                    <Text>{count ?? 0}</Text>
-                </Space>
+            title: 'Trạng thái',
+            dataIndex: 'status',
+            key: 'status',
+            width: 120,
+            render: (status: string) => (
+                <Tag color={status === 'Active' ? 'green' : 'red'}>
+                    {status}
+                </Tag>
             ),
-            sorter: (a, b) => (a.studentCount || 0) - (b.studentCount || 0)
+        },
+    ];
+
+    const testColumns = [
+        {
+            title: 'Tên bài kiểm tra',
+            dataIndex: 'title',
+            key: 'title',
+            width: 250,
+            fixed: 'left' as const,
         },
         {
-            title: 'Thao tác',
-            key: 'actions',
-            align: 'center',
-            render: (_, record) => (
-                <Space size="small">
-                    <Button
-                        type="primary"
-                        size="small"
-                        onClick={() => handleViewClass(record.id)}
-                    >
-                        Chi tiết
-                    </Button>
-                    <Button
-                        type="default"
-                        size="small"
-                        icon={<UserAddOutlined />}
-                        onClick={() => handleAddStudent(record.id)}
-                    >
-                        Thêm SV
-                    </Button>
-                </Space>
-            )
-        }
+            title: 'Ngày tạo',
+            dataIndex: 'createdAt',
+            key: 'createdAt',
+            width: 150,
+            responsive: ['md' as Breakpoint],
+        },
+        {
+            title: 'Thời gian (phút)',
+            dataIndex: 'duration',
+            key: 'duration',
+            width: 140,
+            responsive: ['sm' as Breakpoint],
+        },
+        {
+            title: 'Trạng thái',
+            dataIndex: 'status',
+            key: 'status',
+            width: 120,
+            render: (status: string) => {
+                const colorMap: Record<string, string> = {
+                    'Completed': 'blue',
+                    'In Progress': 'orange',
+                    'Upcoming': 'purple',
+                };
+                return (
+                    <Tag color={colorMap[status] || 'default'}>
+                        {status}
+                    </Tag>
+                );
+            },
+        },
     ];
 
     return (
-        <div className="p-8 max-w-7xl mx-auto">
-            <div className="mb-8 flex justify-between items-center">
-                <div>
-                    <Title level={2} className="mb-2 bg-linear-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
-                        Quản lý lớp học
-                    </Title>
-                    <Text type="secondary">Danh sách các lớp học bạn đang giảng dạy</Text>
-                </div>
-                <Space>
-                    <Button
-                        type="primary"
-                        icon={<PlusOutlined />}
-                        onClick={() => navigate('/teacher/classes/create')}
-                        size="large"
-                    >
-                        Tạo lớp học
-                    </Button>
-                    <Button
-                        type="default"
-                        icon={<ReloadOutlined />}
-                        onClick={fetchClasses}
-                        loading={loading}
-                    >
-                        Làm mới
-                    </Button>
-                </Space>
-            </div>
-
-            {loading && !classes.length ? (
+        <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
+            {loading ? (
                 <div className="flex flex-col items-center justify-center py-32">
                     <Spin size="large" />
                     <Text className="mt-4 text-gray-600">Đang tải dữ liệu...</Text>
                 </div>
-            ) : error ? (
-                <Alert
-                    message="Lỗi"
-                    description={error}
-                    type="error"
-                    showIcon
-                    action={
-                        <Button size="small" onClick={fetchClasses} icon={<ReloadOutlined />}>
-                            Thử lại
-                        </Button>
-                    }
-                />
-            ) : classes.length === 0 ? (
-                <Card className="shadow-sm">
-                    <Empty
-                        image={Empty.PRESENTED_IMAGE_SIMPLE}
-                        description={
-                            <Space direction="vertical" size="small">
-                                <Text type="secondary">Bạn chưa có lớp học nào</Text>
-                                <Text type="secondary" className="text-sm">
-                                    Liên hệ với quản trị viên để được phân công lớp học
-                                </Text>
-                            </Space>
-                        }
-                    />
-                </Card>
             ) : (
-                <Card className="shadow-sm">
-                    <Table
-                        columns={columns}
-                        dataSource={classes}
-                        rowKey="id"
-                        loading={loading}
-                        pagination={{
-                            pageSize: 10,
-                            showSizeChanger: true,
-                            showTotal: (total) => `Tổng số ${total} lớp học`
-                        }}
-                    />
-                </Card>
+                <>
+                    {/* Class Information Header */}
+                    <div className="mb-6 md:mb-8">
+                        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4 mb-6">
+                            <div className="flex-1 w-full">
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4">
+                                    <Title level={2} className="mb-0 bg-linear-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent text-xl sm:text-2xl">
+                                        {classInfo.name}
+                                    </Title>
+                                    {classes.length > 0 && (
+                                        <Select
+                                            value={classInfo.id}
+                                            onChange={handleClassChange}
+                                            className="w-full sm:w-auto sm:min-w-[200px] lg:min-w-[300px]"
+                                            placeholder="Chọn lớp học"
+                                            showSearch
+                                            optionFilterProp="children"
+                                            filterOption={(input, option) => {
+                                                const children = option?.children;
+                                                const label = typeof children === 'string' ? children : String(children);
+                                                return label.toLowerCase().includes(input.toLowerCase());
+                                            }}
+                                        >
+                                            {classes.map(cls => (
+                                                <Select.Option key={cls.id} value={cls.id}>
+                                                    {cls.name}
+                                                </Select.Option>
+                                            ))}
+                                        </Select>
+                                    )}
+                                </div>
+                                <Text className="text-gray-600 text-sm sm:text-base block mb-4">
+                                    {classInfo.description}
+                                </Text>
+                                <Row gutter={[16, 16]} className="mt-4">
+                                    <Col xs={24} sm={12}>
+                                        <Card>
+                                            <Statistic
+                                                title="Tổng số sinh viên"
+                                                value={classInfo.totalStudents}
+                                                prefix={<TeamOutlined />}
+                                                valueStyle={{ color: '#3f8600' }}
+                                            />
+                                        </Card>
+                                    </Col>
+                                    <Col xs={24} sm={12}>
+                                        <Card>
+                                            <Statistic
+                                                title="Tổng số bài kiểm tra"
+                                                value={classInfo.totalTests}
+                                                prefix={<FileTextOutlined />}
+                                                valueStyle={{ color: '#1890ff' }}
+                                            />
+                                        </Card>
+                                    </Col>
+                                </Row>
+                            </div>
+                            <div className="w-full lg:w-auto lg:ml-4">
+                                <Button
+                                    type="primary"
+                                    icon={<FileAddOutlined />}
+                                    size="large"
+                                    onClick={handleCreateTest}
+                                    className="bg-linear-to-r from-purple-600 to-purple-800 border-none w-full lg:w-auto"
+                                >
+                                    <span className="hidden sm:inline">Tạo bài kiểm tra mới</span>
+                                    <span className="sm:hidden">Tạo bài kiểm tra</span>
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Students Table */}
+                    <Card
+                        title={
+                            <div className="flex items-center gap-2">
+                                <UserOutlined />
+                                <span className="text-base sm:text-lg">Danh sách sinh viên</span>
+                            </div>
+                        }
+                        extra={
+                            <Button
+                                type="primary"
+                                icon={<PlusOutlined />}
+                                onClick={() => setAddStudentModalVisible(true)}
+                                size="small"
+                                className="w-full sm:w-auto"
+                            >
+                                <span className="hidden sm:inline">Thêm sinh viên</span>
+                                <span className="sm:hidden">Thêm</span>
+                            </Button>
+                        }
+                        className="mb-6 shadow-sm"
+                        styles={{ body: { padding: '12px' } }}
+                    >
+                        <div className="overflow-x-auto -mx-2 sm:mx-0">
+                            <Table
+                                columns={studentColumns}
+                                dataSource={students}
+                                rowKey="id"
+                                pagination={{
+                                    pageSize: 10,
+                                    showSizeChanger: false,
+                                    responsive: true,
+                                    simple: true,
+                                }}
+                                locale={{ emptyText: 'Chưa có sinh viên nào' }}
+                                scroll={{ x: 600 }}
+                                size="small"
+                            />
+                        </div>
+                    </Card>
+
+                    {/* Tests Table */}
+                    <Card
+                        title={
+                            <div className="flex items-center gap-2">
+                                <BookOutlined />
+                                <span className="text-base sm:text-lg">Danh sách bài kiểm tra</span>
+                            </div>
+                        }
+                        className="shadow-sm"
+                        styles={{ body: { padding: '12px' } }}
+                    >
+                        <div className="overflow-x-auto -mx-2 sm:mx-0">
+                            <Table
+                                columns={testColumns}
+                                dataSource={tests}
+                                rowKey="id"
+                                pagination={{
+                                    pageSize: 10,
+                                    showSizeChanger: false,
+                                    responsive: true,
+                                    simple: true,
+                                }}
+                                onRow={(record) => ({
+                                    onClick: () => handleTestClick(record.id),
+                                    style: { cursor: 'pointer' },
+                                })}
+                                locale={{ emptyText: 'Chưa có bài kiểm tra nào' }}
+                                scroll={{ x: 600 }}
+                                size="small"
+                            />
+                        </div>
+                    </Card>
+                </>
             )}
 
             {/* Add Student Modal */}

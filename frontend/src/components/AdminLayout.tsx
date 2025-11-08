@@ -62,9 +62,11 @@ export const AdminLayout = () => {
             {/* Desktop Sidebar */}
             <Sider
                 width={280}
-                className="bg-white shadow-lg shrink-0 hidden lg:flex fixed left-0 top-0 h-screen z-30"
+                breakpoint="lg"
+                collapsedWidth={0}
+                className="bg-white shadow-lg hidden lg:flex fixed left-0 top-0 h-screen z-30"
                 theme="light"
-                style={{ display: 'flex', flexDirection: 'column', position: 'sticky' }}
+                style={{ flexDirection: 'column', position: 'sticky' }}
             >
                 <div className="flex flex-col h-full">
                     {/* Header */}
