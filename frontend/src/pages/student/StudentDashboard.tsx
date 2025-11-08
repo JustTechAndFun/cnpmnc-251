@@ -28,10 +28,12 @@ export const StudentDashboard = () => {
 
     const fetchDashboardStats = async () => {
         setLoading(true);
+        setError(null);
         try {
-            // Fetch data from APIs
-            const [classesResponse, gradesResponse] = await Promise.all([
+            // Fetch data from APIs - use Promise.allSettled to handle partial failures
+            const [classesResponse, testsResponse, gradesResponse] = await Promise.allSettled([
                 studentApi.getMyClasses(),
+                studentApi.getAllStudentTests(),
                 studentApi.getMyGrades()
             ]);
 
@@ -41,32 +43,41 @@ export const StudentDashboard = () => {
             let averageGrade = 0;
 
             // Calculate from classes
-            if (!classesResponse.error && classesResponse.data) {
-                enrolledCourses = classesResponse.data.length;
+            if (classesResponse.status === 'fulfilled' && !classesResponse.value.error && classesResponse.value.data) {
+                enrolledCourses = classesResponse.value.data.length;
+            }
 
-                // Get tests from all classes to calculate assignments
-                const testPromises = classesResponse.data.map(cls =>
-                    studentApi.getTestsInClass(cls.id).catch(() => ({ error: true, data: [] }))
-                );
-                const testResults = await Promise.allSettled(testPromises);
-
-                let totalTests = 0;
-                for (const result of testResults) {
-                    if (result.status === 'fulfilled' && !result.value.error && result.value.data) {
-                        totalTests += result.value.data.length;
+            // Calculate from tests
+            if (testsResponse.status === 'fulfilled' && !testsResponse.value.error && testsResponse.value.data) {
+                activeAssignments = testsResponse.value.data.length;
+            } else if (testsResponse.status === 'rejected' || (testsResponse.status === 'fulfilled' && testsResponse.value.error)) {
+                // Fallback: if getAllStudentTests doesn't exist or fails, try to get tests from classes
+                if (classesResponse.status === 'fulfilled' && !classesResponse.value.error && classesResponse.value.data) {
+                    try {
+                        const testPromises = classesResponse.value.data.map(cls =>
+                            studentApi.getTestsInClass(cls.id).catch(() => ({ error: true, data: [] }))
+                        );
+                        const testResults = await Promise.allSettled(testPromises);
+                        let totalTests = 0;
+                        for (const result of testResults) {
+                            if (result.status === 'fulfilled' && !result.value.error && result.value.data) {
+                                totalTests += result.value.data.length;
+                            }
+                        }
+                        activeAssignments = totalTests;
+                    } catch (err) {
+                        console.warn('Failed to fetch tests from classes', err);
                     }
                 }
-
-                activeAssignments = totalTests;
             }
 
             // Calculate from grades
-            if (!gradesResponse.error && gradesResponse.data) {
-                const grades = gradesResponse.data;
+            if (gradesResponse.status === 'fulfilled' && !gradesResponse.value.error && gradesResponse.value.data) {
+                const grades = gradesResponse.value.data;
                 completedAssignments = grades.length;
 
                 if (grades.length > 0) {
-                    const totalScore = grades.reduce((sum, g) => sum + g.score, 0);
+                    const totalScore = grades.reduce((sum, g) => sum + (g.score || 0), 0);
                     averageGrade = totalScore / grades.length;
                 }
             }

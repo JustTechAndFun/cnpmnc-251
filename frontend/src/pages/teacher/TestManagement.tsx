@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import apiClient from '../../apis/axiosConfig';
+import { teacherApi } from '../../apis';
 import {
     Card,
     Table,
@@ -22,8 +23,7 @@ import {
     PlusOutlined,
     ClockCircleOutlined,
     KeyOutlined,
-    EyeOutlined,
-    FileTextOutlined
+    EyeOutlined
 } from '@ant-design/icons';
 import type { ApiResponse, Test, Question } from '../../types';
 import { ErrorModal } from '../../components/ErrorModal';
@@ -142,10 +142,10 @@ export const TestManagement = () => {
         }
     };
 
-    const handleEditTest = (test: Test) => {
+    const handleEditTest = (test: any) => {
         setSelectedTest(test);
         testInfoForm.setFieldsValue({
-            name: test.name,
+            name: test.title || test.name,
             description: test.description,
             duration: test.duration,
             passcode: test.passcode
@@ -170,19 +170,20 @@ export const TestManagement = () => {
                 passcode: values.passcode
             };
 
-            const response = await apiClient.put<ApiResponse<Test>>(
-                `/api/classes/${selectedTest.classId}/tests/${selectedTest.id}`,
+            const response = await teacherApi.updateTest(
+                selectedTest.classId,
+                selectedTest.id,
                 requestData
             );
 
-            if (!response.data.error && response.data.data) {
+            if (!response.error && response.data) {
                 setTestInfoModalVisible(false);
                 setSuccessMessage('Cập nhật thông tin test thành công');
                 setSuccessModalVisible(true);
                 fetchTests();
             } else {
                 setTestInfoModalVisible(false);
-                setErrorMessage(response.data.message || 'Không thể cập nhật test');
+                setErrorMessage(response.message || 'Không thể cập nhật test');
                 setErrorModalVisible(true);
             }
         } catch (error) {
@@ -202,12 +203,15 @@ export const TestManagement = () => {
         }
 
         try {
-            await apiClient.delete<ApiResponse<void>>(
-                `/api/classes/${testToDelete.classId}/tests/${testId}`
-            );
-            setSuccessMessage('Xóa test thành công');
-            setSuccessModalVisible(true);
-            fetchTests();
+            const response = await teacherApi.deleteTest(testToDelete.classId, testId);
+            if (!response.error) {
+                setSuccessMessage('Xóa test thành công');
+                setSuccessModalVisible(true);
+                fetchTests();
+            } else {
+                setErrorMessage(response.message || 'Không thể xóa test');
+                setErrorModalVisible(true);
+            }
         } catch (error) {
             console.error('Failed to delete test', error);
             setErrorMessage('Không thể xóa test. Vui lòng thử lại.');
@@ -465,7 +469,7 @@ export const TestManagement = () => {
                 const testRecord = record as any;
                 return (
                     <div>
-                        <Text strong className="block">{testRecord.title || record.name}</Text>
+                        <Text strong className="block">{testRecord.title}</Text>
                         <Text type="secondary" className="text-xs">{record.description}</Text>
                     </div>
                 );
@@ -504,13 +508,6 @@ export const TestManagement = () => {
             key: 'action',
             render: (_: unknown, record: Test) => (
                 <Space>
-                    <Button
-                        icon={<FileTextOutlined />}
-                        onClick={() => navigate(`/teacher/classes/${record.classId}/tests/${record.id}/questions`)}
-                        type="primary"
-                    >
-                        Câu hỏi
-                    </Button>
                     <Button
                         icon={<EyeOutlined />}
                         onClick={() => navigate(`/teacher/tests/${record.id}`)}

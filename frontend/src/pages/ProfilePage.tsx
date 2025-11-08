@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Card, Descriptions, Spin, Typography, Alert, Button, Space, Modal, Form, Input, message } from 'antd';
+import { Card, Descriptions, Spin, Typography, Alert, Button, Space, Modal, Form, Input } from 'antd';
 import { MailOutlined, BankOutlined, UserOutlined, ReloadOutlined, EditOutlined } from '@ant-design/icons';
 import type { Profile } from '../types';
 import { profileApi } from '../apis';
 import { ErrorModal } from '../components/ErrorModal';
+import { SuccessModal } from '../components/SuccessModal';
 
 const { Title, Text } = Typography;
 
@@ -13,6 +14,8 @@ export const ProfilePage = () => {
     const [error, setError] = useState<string | null>(null);
     const [errorModalVisible, setErrorModalVisible] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
+    const [successModalVisible, setSuccessModalVisible] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [form] = Form.useForm();
@@ -58,16 +61,19 @@ export const ProfilePage = () => {
             const response = await profileApi.updateProfile(values);
 
             if (!response.error && response.data) {
-                message.success('Cập nhật profile thành công');
+                setSuccessMessage('Cập nhật profile thành công');
+                setSuccessModalVisible(true);
                 setProfile(response.data);
                 setEditModalVisible(false);
                 form.resetFields();
             } else {
-                message.error(response.message || 'Không thể cập nhật profile');
+                setErrorMessage(response.message || 'Không thể cập nhật profile');
+                setErrorModalVisible(true);
             }
         } catch (error) {
             console.error('Failed to update profile', error);
-            message.error('Không thể cập nhật profile');
+            setErrorMessage('Không thể cập nhật profile');
+            setErrorModalVisible(true);
         } finally {
             setSubmitting(false);
         }
@@ -245,6 +251,12 @@ export const ProfilePage = () => {
                 open={errorModalVisible}
                 message={errorMessage}
                 onClose={() => setErrorModalVisible(false)}
+            />
+            {/* Success Modal */}
+            <SuccessModal
+                open={successModalVisible}
+                message={successMessage}
+                onClose={() => setSuccessModalVisible(false)}
             />
         </div>
     );

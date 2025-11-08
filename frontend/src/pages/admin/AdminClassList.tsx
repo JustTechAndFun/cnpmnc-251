@@ -5,6 +5,7 @@ import type { ColumnsType } from 'antd/es/table';
 import { adminApi } from '../../apis';
 import type { ClassDto, CreateClassRequest, TeacherDto } from '../../apis/adminApi';
 import { ErrorModal } from '../../components/ErrorModal';
+import { SuccessModal } from '../../components/SuccessModal';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -17,6 +18,8 @@ export const AdminClassList = () => {
     const [submitting, setSubmitting] = useState(false);
     const [errorModalVisible, setErrorModalVisible] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
+    const [successModalVisible, setSuccessModalVisible] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
     const [form] = Form.useForm();
 
     useEffect(() => {
@@ -59,16 +62,19 @@ export const AdminClassList = () => {
         try {
             const response = await adminApi.createClass(values);
             if (!response.error) {
-                message.success('Tạo lớp học thành công!');
+                setSuccessMessage('Tạo lớp học thành công!');
+                setSuccessModalVisible(true);
                 setModalVisible(false);
                 form.resetFields();
                 fetchData();
             } else {
-                message.error(response.message || 'Không thể tạo lớp học');
+                setErrorMessage(response.message || 'Không thể tạo lớp học');
+                setErrorModalVisible(true);
             }
         } catch (error) {
             console.error('Failed to create class', error);
-            message.error('Không thể kết nối đến server');
+            setErrorMessage('Không thể kết nối đến server');
+            setErrorModalVisible(true);
         } finally {
             setSubmitting(false);
         }
@@ -78,14 +84,17 @@ export const AdminClassList = () => {
         try {
             const response = await adminApi.deleteClass(id);
             if (!response.error) {
-                message.success(`Đã xóa lớp "${className}" thành công!`);
+                setSuccessMessage(`Đã xóa lớp "${className}" thành công!`);
+                setSuccessModalVisible(true);
                 fetchData();
             } else {
-                message.error(response.message || 'Không thể xóa lớp học');
+                setErrorMessage(response.message || 'Không thể xóa lớp học');
+                setErrorModalVisible(true);
             }
         } catch (error) {
             console.error('Failed to delete class', error);
-            message.error('Không thể kết nối đến server');
+            setErrorMessage('Không thể kết nối đến server');
+            setErrorModalVisible(true);
         }
     };
 
@@ -321,6 +330,12 @@ export const AdminClassList = () => {
                 open={errorModalVisible}
                 message={errorMessage}
                 onClose={() => setErrorModalVisible(false)}
+            />
+            {/* Success Modal */}
+            <SuccessModal
+                open={successModalVisible}
+                message={successMessage}
+                onClose={() => setSuccessModalVisible(false)}
             />
         </div>
     );

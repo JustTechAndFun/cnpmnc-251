@@ -307,7 +307,7 @@ export const GradeStudents = () => {
                                     >
                                         {tests.map(test => (
                                             <Option key={test.id} value={test.id}>
-                                                {test.name}
+                                                {test.title}
                                             </Option>
                                         ))}
                                     </Select>
