@@ -119,6 +119,29 @@ export const TestManagement = () => {
         }
     };
 
+    // Refresh questions for a specific test
+    const refreshTestQuestions = async (classId: string, testId: string) => {
+        try {
+            const response = await apiClient.get<ApiResponse<Question[]>>(
+                `/api/classes/${classId}/test/${testId}/questions`
+            );
+
+            if (!response.data.error && response.data.data) {
+                // Update the test's questions in the tests array
+                setTests(prevTests =>
+                    prevTests.map(test =>
+                        test.id === testId
+                            ? { ...test, questions: response.data.data }
+                            : test
+                    )
+                );
+            }
+        } catch (error) {
+            console.error('Failed to refresh test questions', error);
+            // Don't show error to user, just log it
+        }
+    };
+
     const handleEditTest = (test: Test) => {
         setSelectedTest(test);
         testInfoForm.setFieldsValue({
@@ -215,12 +238,14 @@ export const TestManagement = () => {
         }
 
         try {
+            // Use correct API endpoint
             await apiClient.delete<ApiResponse<void>>(
-                `/api/teacher/tests/${testId}/questions/${questionId}`
+                `/api/classes/${test.classId}/tests/${testId}/questions/${questionId}`
             );
             setSuccessMessage('Xóa câu hỏi thành công');
             setSuccessModalVisible(true);
-            fetchTests();
+            // Reload questions for this specific test
+            await refreshTestQuestions(test.classId, testId);
         } catch (error) {
             console.error('Failed to delete question', error);
             setErrorMessage('Không thể xóa câu hỏi. Vui lòng thử lại.');
@@ -276,9 +301,9 @@ export const TestManagement = () => {
 
         try {
             if (editingQuestion) {
-                // Update question
+                // Update question - Use correct API endpoint
                 const response = await apiClient.put<ApiResponse<Question>>(
-                    `/api/teacher/tests/${selectedTest.id}/questions/${editingQuestion.id}`,
+                    `/api/classes/${selectedTest.classId}/tests/${selectedTest.id}/questions/${editingQuestion.id}`,
                     questionData
                 );
                 if (!response.data.error) {
@@ -286,16 +311,17 @@ export const TestManagement = () => {
                     setEditingQuestion(null);
                     setSuccessMessage('Cập nhật câu hỏi thành công');
                     setSuccessModalVisible(true);
-                    fetchTests();
+                    // Reload questions for this specific test
+                    await refreshTestQuestions(selectedTest.classId, selectedTest.id);
                 } else {
                     setQuestionModalVisible(false);
                     setErrorMessage(response.data.message || 'Không thể cập nhật câu hỏi');
                     setErrorModalVisible(true);
                 }
             } else {
-                // Create question
+                // Create question - Use correct API endpoint
                 const response = await apiClient.post<ApiResponse<Question>>(
-                    `/api/teacher/tests/${selectedTest.id}/questions`,
+                    `/api/classes/${selectedTest.classId}/tests/${selectedTest.id}`,
                     questionData
                 );
                 if (!response.data.error) {
@@ -303,7 +329,8 @@ export const TestManagement = () => {
                     setEditingQuestion(null);
                     setSuccessMessage('Thêm câu hỏi thành công');
                     setSuccessModalVisible(true);
-                    fetchTests();
+                    // Reload questions for this specific test
+                    await refreshTestQuestions(selectedTest.classId, selectedTest.id);
                 } else {
                     setQuestionModalVisible(false);
                     setErrorMessage(response.data.message || 'Không thể thêm câu hỏi');
@@ -420,6 +447,13 @@ export const TestManagement = () => {
                 )}
             </div>
         );
+    };
+
+    // Handle row expand to load questions
+    const handleRowExpand = (expanded: boolean, record: Test) => {
+        if (expanded && !record.questions && record.classId) {
+            refreshTestQuestions(record.classId, record.id);
+        }
     };
 
     const columns = [
@@ -541,6 +575,7 @@ export const TestManagement = () => {
                         expandable={{
                             expandedRowRender: expandableRowRender,
                             expandIconColumnIndex: -1,
+                            onExpand: handleRowExpand,
                         }}
                         pagination={{
                             pageSize: 10,

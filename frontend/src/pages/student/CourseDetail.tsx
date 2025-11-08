@@ -80,7 +80,7 @@ export const CourseDetail = () => {
         navigate(`/student/exams/${testId}`);
     };
 
-    const getTestStatusTag = (test: TestDTO) => {
+    const getTestStatusTag = () => {
         // You can add more logic here based on test status if available
         return <Tag color="blue">Có sẵn</Tag>;
     };

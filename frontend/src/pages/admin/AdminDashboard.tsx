@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Card, Statistic, List, Avatar, Spin, Typography, Tag } from 'antd';
+import { Card, Statistic, List, Spin, Typography, Tag } from 'antd';
 import { UserOutlined, TeamOutlined, BookOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { adminApi } from '../../apis';
 import { ErrorModal } from '../../components/ErrorModal';
@@ -32,14 +32,14 @@ export const AdminDashboard = () => {
         setLoading(true);
         try {
             const response = await adminApi.getAllUsers();
-            
+
             if (!response.error && response.data) {
                 const users = response.data;
                 const totalUsers = users.length;
                 const totalTeachers = users.filter(u => u.role === 'TEACHER').length;
                 const totalStudents = users.filter(u => u.role === 'STUDENT').length;
                 const activeUsers = users.filter(u => u.activate).length;
-                
+
                 setStats({
                     totalUsers,
                     totalTeachers,
@@ -139,7 +139,7 @@ export const AdminDashboard = () => {
                             renderItem={(item) => (
                                 <List.Item className="hover:bg-gray-50 rounded-lg px-4 py-3 transition-colors">
                                     <List.Item.Meta
-                                        avatar={<Avatar icon={<span>{item.icon}</span>} className="bg-gray-100" />}
+                                        avatar={<span className="text-2xl">{item.icon}</span>}
                                         title={<Text strong>{item.title}</Text>}
                                         description={<Text type="secondary" className="text-xs">{item.time}</Text>}
                                     />

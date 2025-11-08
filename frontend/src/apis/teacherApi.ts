@@ -28,13 +28,14 @@ export interface AddStudentRequest {
 
 export interface TestDTO {
     id: string;
-    name: string;
+    title: string;  // Backend uses 'title'
+    name?: string;  // Keep for backward compatibility
     description?: string;
     duration: number;
     passcode?: string;
-    classId: string;
-    createdAt: string;
-    updatedAt: string;
+    classId?: string;
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 export interface AddTestRequestDTO {

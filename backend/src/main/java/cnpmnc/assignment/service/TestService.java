@@ -200,7 +200,7 @@ public class TestService {
         newQuestion.setChoiceC(questionDTO.getChoiceC());
         newQuestion.setChoiceD(questionDTO.getChoiceD());
         newQuestion.setAnswer(questionDTO.getAnswer().name());
-        newQuestion.setTestId(testId);
+        newQuestion.setTest(testEntity);  // Set the Test entity instead of testId
 
         Question savedQuestion = questionRepository.save(newQuestion);
         return QuestionDTO.fromQuestion(savedQuestion);

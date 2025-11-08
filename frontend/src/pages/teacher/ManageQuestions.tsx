@@ -37,7 +37,7 @@ export const ManageQuestions = () => {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [questions, setQuestions] = useState<QuestionDTO[]>([]);
-    const [testInfo, setTestInfo] = useState<{ name: string; description?: string } | null>(null);
+    const [testInfo, setTestInfo] = useState<{ title: string; description?: string } | null>(null);
     const [editingQuestion, setEditingQuestion] = useState<QuestionDTO | null>(null);
     const [modalVisible, setModalVisible] = useState(false);
 
@@ -52,28 +52,26 @@ export const ManageQuestions = () => {
 
         setLoading(true);
         try {
-            const response = await teacherApi.getTestDetail(classId, testId);
-            if (!response.error && response.data) {
+            // Fetch test info
+            const testResponse = await teacherApi.getTestDetail(classId, testId);
+            if (!testResponse.error && testResponse.data) {
                 setTestInfo({
-                    name: response.data.name,
-                    description: response.data.description
+                    title: testResponse.data.title,
+                    description: testResponse.data.description
                 });
-
-                // Map backend questions to QuestionDTO format
-                const mappedQuestions: QuestionDTO[] = (response.data.questions || []).map((q: any) => ({
-                    id: q.id,
-                    content: q.content,
-                    choiceA: q.options?.[0] || '',
-                    choiceB: q.options?.[1] || '',
-                    choiceC: q.options?.[2] || '',
-                    choiceD: q.options?.[3] || '',
-                    answer: q.correctAnswer || '',
-                    order: q.order || 0
-                }));
-
-                setQuestions(mappedQuestions);
             } else {
                 message.error('Không thể tải thông tin bài kiểm tra');
+                setLoading(false);
+                return;
+            }
+
+            // Fetch questions separately
+            const questionsResponse = await teacherApi.getTestQuestions(classId, testId);
+            if (!questionsResponse.error && questionsResponse.data) {
+                setQuestions(questionsResponse.data);
+            } else {
+                // If error, set empty array (test might have no questions yet)
+                setQuestions([]);
             }
         } catch (error) {
             console.error('Failed to fetch test detail', error);
@@ -197,7 +195,7 @@ export const ManageQuestions = () => {
                 </Title>
                 {testInfo && (
                     <>
-                        <Text strong className="text-lg block mb-1">{testInfo.name}</Text>
+                        <Text strong className="text-lg block mb-1">{testInfo.title}</Text>
                         {testInfo.description && (
                             <Text type="secondary">{testInfo.description}</Text>
                         )}
