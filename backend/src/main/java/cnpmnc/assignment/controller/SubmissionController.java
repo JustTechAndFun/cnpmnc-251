@@ -1,84 +1,124 @@
 package cnpmnc.assignment.controller;
 
 import cnpmnc.assignment.dto.ApiResponse;
-import cnpmnc.assignment.dto.QuestionResultDto;
-import cnpmnc.assignment.dto.SubmissionResponseDto;
-import cnpmnc.assignment.model.Choice;
+import cnpmnc.assignment.dto.AnswerDto;
+import cnpmnc.assignment.dto.SubmissionRequestDto;
 import cnpmnc.assignment.model.PersonalResult;
 import cnpmnc.assignment.model.Question;
-import cnpmnc.assignment.repository.ChoiceRepository;
+import cnpmnc.assignment.model.Choice;
 import cnpmnc.assignment.repository.PersonalResultRepository;
 import cnpmnc.assignment.repository.QuestionRepository;
+import cnpmnc.assignment.repository.ChoiceRepository;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/submissions")
-@Tag(name = "Submissions", description = "Submission related endpoints")
+@Tag(name = "Submissions", description = "Endpoints for submitting tests")
 public class SubmissionController {
 
-    private final PersonalResultRepository personalResultRepository;
     private final QuestionRepository questionRepository;
     private final ChoiceRepository choiceRepository;
+    private final PersonalResultRepository personalResultRepository;
 
-    public SubmissionController(PersonalResultRepository personalResultRepository,
-                                QuestionRepository questionRepository,
-                                ChoiceRepository choiceRepository) {
-        this.personalResultRepository = personalResultRepository;
+    public SubmissionController(QuestionRepository questionRepository,
+                                ChoiceRepository choiceRepository,
+                                PersonalResultRepository personalResultRepository) {
         this.questionRepository = questionRepository;
         this.choiceRepository = choiceRepository;
+        this.personalResultRepository = personalResultRepository;
     }
 
-    @GetMapping("/{id}")
-    @Operation(summary = "Get submission results by test id",
-               description = "Return totalScore, correctCount, wrongCount from personal_result and list of questions with selected and correct answers")
+    @PostMapping
+    @Operation(summary = "Submit answers for a test and record personal result")
     @SecurityRequirement(name = "cookieAuth")
-    public ResponseEntity<ApiResponse<SubmissionResponseDto>> getSubmission(
-            @Parameter(description = "Test id / submission id") @PathVariable String id) {
+    public ResponseEntity<ApiResponse<PersonalResult>> submitTest(@RequestBody SubmissionRequestDto body) {
 
-        // Fetch personal result (score summary)
-        PersonalResult pr = personalResultRepository.findByTestId(id).orElse(null);
+        String testId = body.getTestId();
+        List<AnswerDto> answers = body.getAnswers();
 
-        Double totalScore = pr != null ? pr.getTotalScore() : null;
-        Integer correctCount = pr != null ? pr.getCorrectCount() : null;
-        Integer wrongCount = pr != null ? pr.getWrongCount() : null;
+        // Fetch all questions that belong to the test
+        List<Question> questions = questionRepository.findByTestId(testId);
 
-        // Fetch questions for this test
-        List<Question> questions = questionRepository.findByTestId(id);
+        // Map correct answers by question id for quick lookup
+        Map<String, String> correctByQuestion = new HashMap<>();
+        for (Question q : questions) {
+            correctByQuestion.put(q.getId(), q.getAnswer());
+        }
 
-        // Fetch choices (selected answers) for this test
-        List<Choice> choices = choiceRepository.findByTestId(id);
+        // Fetch existing choices for this test to decide which submitted answers to insert
+        List<Choice> existingChoices = choiceRepository.findByTestId(testId);
+        Map<String, Choice> existingByQuestion = new HashMap<>();
+        for (Choice c : existingChoices) {
+            if (c.getQuestionId() != null) existingByQuestion.put(c.getQuestionId(), c);
+        }
 
-        Map<String, String> selectedByQuestion = new HashMap<>();
-        for (Choice c : choices) {
-            if (c.getQuestionId() != null) {
-                selectedByQuestion.put(c.getQuestionId(), c.getSelectedAnswer());
+        // Insert new choices only for question_ids that don't exist yet
+        if (answers != null) {
+            for (AnswerDto a : answers) {
+                String qid = a.getQuestionId();
+                if (qid == null) continue;
+                if (existingByQuestion.containsKey(qid)) {
+                    // already saved answer for this question in this test -> skip
+                    continue;
+                }
+                // only insert if question belongs to this test
+                if (!correctByQuestion.containsKey(qid)) {
+                    continue;
+                }
+                Choice toSave = new Choice();
+                toSave.setTestId(testId);
+                toSave.setQuestionId(qid);
+                toSave.setSelectedAnswer(a.getSubmitAnswer());
+                // set user id to satisfy DB constraint
+                toSave.setUserId(body.getUserId());
+                Choice savedChoice = choiceRepository.save(toSave);
+                existingByQuestion.put(qid, savedChoice);
             }
         }
 
-        List<QuestionResultDto> questionResults = questions.stream()
-                .map(q -> new QuestionResultDto(
-                        q.getId(),
-                        q.getContent(),
-                        selectedByQuestion.get(q.getId()),
-                        q.getAnswer()
-                ))
-                .collect(Collectors.toList());
+        // Re-fetch questions (already have) and use all choices (existingByQuestion) to compute totals.
+        int correctCount = 0;
+        int wrongCount = 0;
 
-        SubmissionResponseDto resp = new SubmissionResponseDto(totalScore, correctCount, wrongCount, questionResults);
+        for (Question q : questions) {
+            String qid = q.getId();
+            String correct = q.getAnswer();
+            Choice c = existingByQuestion.get(qid);
+            if (c == null) {
+                // no answer saved -> treat as wrong (counts as unanswered/wrong)
+                wrongCount++;
+                continue;
+            }
+            String selected = c.getSelectedAnswer();
+            if (selected != null && selected.equals(correct)) {
+                correctCount++;
+            } else {
+                wrongCount++;
+            }
+        }
 
-        return ResponseEntity.ok(ApiResponse.success(resp, "Submission retrieved"));
+        // Simple scoring: 1 point per correct answer.
+        double totalScore = (double) correctCount;
+
+        PersonalResult pr = new PersonalResult();
+        pr.setTestId(testId);
+        pr.setTotalScore(totalScore);
+        pr.setCorrectCount(correctCount);
+        pr.setWrongCount(wrongCount);
+
+        PersonalResult saved = personalResultRepository.save(pr);
+
+        return ResponseEntity.ok(ApiResponse.success(saved, "Submission recorded"));
     }
 }

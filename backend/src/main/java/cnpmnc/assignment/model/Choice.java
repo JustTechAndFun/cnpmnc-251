@@ -26,4 +26,7 @@ public class Choice {
     // selected answer by student for this question (e.g., "A", "B", etc.)
     @Column(name = "selected_answer", length = 255)
     private String selectedAnswer;
+
+    @Column(name = "user_id", length = 255)
+    private String userId;
 }
