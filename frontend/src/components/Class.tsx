@@ -279,7 +279,7 @@ export const ClassPage = () => {
                                 tests.map(test => (
                                     <tr key={test.id} onClick={() => handleTestClick(test.id)} className="clickable-row">
                                         <td>{test.name}</td>
-                                        <td>{new Date(test.createdAt).toLocaleDateString('vi-VN')}</td>
+                                        <td>{test.createdAt ? new Date(test.createdAt).toLocaleDateString('vi-VN') : 'N/A'}</td>
                                         <td>{test.duration}</td>
                                         <td>
                                             <span className="status completed">Completed</span>
