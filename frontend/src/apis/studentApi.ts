@@ -63,5 +63,5 @@ export const getTestDetail = async (classId: string, testId: string): Promise<Ap
     return response.data;
 };
 
-// Note: Additional student-specific endpoints (grades, assignments, etc.) 
+// Note: Additional student-specific endpoints (grades, assignments, etc.)
 // will need to be added as they are implemented on the backend

@@ -29,14 +29,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (storedUser) {
                 try {
                     const parsedUser = JSON.parse(storedUser);
-                    
+
                     // In dev mode, skip API call ONLY for fake users
                     if (isDevMode && parsedUser.id?.startsWith('fake-')) {
                         setUser(parsedUser);
                         setLoading(false);
                         return; // Don't make API call for fake users
                     }
-                    
+
                     // For real users, optimistically set user but still verify with backend
                     setUser(parsedUser);
                 } catch (e) {
@@ -135,25 +135,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         try {
             // Call logout API
             await authApi.logout();
-            
+
             // Clear all stored data
             localStorage.removeItem(USER_KEY);
             setUser(null);
-            
+
             // Small delay to show loading animation
             await new Promise(resolve => setTimeout(resolve, 800));
         } catch (error) {
             console.error('Logout error', error);
-            
+
             // Even if API fails, still clear local data
             localStorage.removeItem(USER_KEY);
             setUser(null);
-            
+
             // Small delay
             await new Promise(resolve => setTimeout(resolve, 800));
         } finally {
             setIsLoggingOut(false);
-            
+
             // Use window.location for full page reload to ensure clean state
             window.location.href = '/login';
         }

@@ -33,7 +33,7 @@ apiClient.interceptors.response.use(
         if (error.response) {
             // Server responded with error status
             const { status } = error.response;
-            
+
             if (status === 401) {
                 // Unauthorized - redirect to login if needed
                 console.error('Unauthorized access - please login again');
@@ -53,7 +53,7 @@ apiClient.interceptors.response.use(
             // Something else happened
             console.error('Error:', error.message);
         }
-        
+
         return Promise.reject(error);
     }
 );

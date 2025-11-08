@@ -55,7 +55,7 @@ export const getAllUsers = async (mail?: string, activate?: boolean): Promise<Ap
     const params: Record<string, string | boolean> = {};
     if (mail !== undefined) params.mail = mail;
     if (activate !== undefined) params.activate = activate;
-    
+
     const response = await apiClient.get<ApiResponse<UserDto[]>>('/api/admin/users', { params });
     return response.data;
 };
@@ -95,7 +95,7 @@ export const getAllTeachers = async (mail?: string, activate?: boolean): Promise
     const params: Record<string, string | boolean> = {};
     if (mail !== undefined) params.mail = mail;
     if (activate !== undefined) params.activate = activate;
-    
+
     const response = await apiClient.get<ApiResponse<TeacherDto[]>>('/api/admin/users/teachers', { params });
     return response.data;
 };

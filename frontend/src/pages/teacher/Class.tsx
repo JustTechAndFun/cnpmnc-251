@@ -82,7 +82,7 @@ export const ClassPage = () => {
     useEffect(() => {
         // Always fetch classes list first
         fetchClassesList();
-        
+
         // If no classId, try to get first class or use default
         if (!classId) {
             fetchFirstClass();
@@ -111,7 +111,7 @@ export const ClassPage = () => {
             } catch (error) {
                 console.error('Failed to fetch classes list', error);
             }
-            
+
             // If no classes found, use default/mock data
             const mockClasses: ClassInfo[] = [
                 {
@@ -527,9 +527,9 @@ export const ClassPage = () => {
     const handleAddStudent = async (values: { email: string; studentId: string; name: string }) => {
         const targetClassId = classId || classInfo.id;
         try {
-            await teacherApi.addStudentToClass(targetClassId, { 
-                email: values.email, 
-                studentId: values.studentId 
+            await teacherApi.addStudentToClass(targetClassId, {
+                email: values.email,
+                studentId: values.studentId
             });
 
             message.success('Thêm sinh viên thành công');
