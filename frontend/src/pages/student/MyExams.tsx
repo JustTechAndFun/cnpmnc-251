@@ -34,35 +34,71 @@ export const MyExams: React.FC = () => {
   const [passcode, setPasscode] = useState<string>("");
   const [passcodeEntered, setPasscodeEntered] = useState(false);
   const [loadingPasscode, setLoadingPasscode] = useState(false);
+  const [testTitle, setTestTitle] = useState<string>("");
+  const [actualTestId, setActualTestId] = useState<string>("");
 
-  const fetchQuestionsWithPasscode = async (passcodeValue: string) => {
-    if (!examId) return;
+  // Check if examId looks like a UUID (testId) or a passcode
+  const isUUID = (str: string) => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(str);
+  };
 
+  const fetchQuestionsWithPasscode = async (passcodeValue: string, testIdValue?: string) => {
     setLoadingPasscode(true);
     try {
-      const response = await studentApi.getExamQuestions(examId, passcodeValue);
-
-      if (!response.error && response.data) {
-        setQuestions(response.data);
-        setPasscodeEntered(true);
-        message.success("Đã tải câu hỏi thành công!");
+      let questionsData: QuestionForStudent[] = [];
+      let testId = testIdValue || examId || "";
+      let title = "";
+      
+      // If testIdValue is provided and looks like UUID, use old endpoint
+      if (testIdValue && isUUID(testIdValue)) {
+        const response = await studentApi.getExamQuestions(testIdValue, passcodeValue);
+        if (!response.error && response.data) {
+          questionsData = response.data;
+          testId = testIdValue;
+        } else {
+          throw new Error(response.message || "Không thể tải câu hỏi");
+        }
       } else {
-        message.error(response.message || "Mã truy cập không đúng hoặc không thể tải câu hỏi");
+        // Use new endpoint that accepts only passcode
+        const response = await studentApi.joinExamByPasscode(passcodeValue);
+        if (!response.error && response.data) {
+          questionsData = response.data.questions;
+          testId = response.data.testId;
+          title = response.data.testTitle;
+        } else {
+          throw new Error(response.message || "Không thể tải câu hỏi");
+        }
       }
-    } catch (error) {
+
+      setQuestions(questionsData);
+      setActualTestId(testId);
+      setTestTitle(title || passcodeValue);
+      setPasscodeEntered(true);
+      message.success("Đã tải câu hỏi thành công!");
+    } catch (error: any) {
       console.error("Failed to fetch questions", error);
-      message.error("Không thể kết nối đến server");
+      message.error(error.message || "Không thể kết nối đến server");
     } finally {
       setLoadingPasscode(false);
     }
   };
 
   const handlePasscodeSubmit = () => {
-    if (!passcode.trim()) {
+    const trimmedPasscode = passcode.trim().toUpperCase();
+    if (!trimmedPasscode) {
       message.warning("Vui lòng nhập mã truy cập");
       return;
     }
-    fetchQuestionsWithPasscode(passcode);
+    
+    // If examId exists and looks like UUID, use it as testId
+    if (examId && isUUID(examId)) {
+      fetchQuestionsWithPasscode(trimmedPasscode, examId);
+    } else {
+      // examId might be a passcode from URL, or we just use the entered passcode
+      const passcodeToUse = examId || trimmedPasscode;
+      fetchQuestionsWithPasscode(passcodeToUse);
+    }
   };
 
   const select = (questionId: string, choice: string) => {
@@ -77,8 +113,15 @@ export const MyExams: React.FC = () => {
 
   const handleSubmit = async () => {
     if (unanswered > 0) return;
-    if (!auth?.user?.id || !examId) {
+    if (!auth?.user?.id) {
       message.error("Thông tin người dùng không hợp lệ");
+      return;
+    }
+    
+    // Use actualTestId if available, otherwise fall back to examId
+    const testIdToSubmit = actualTestId || examId;
+    if (!testIdToSubmit) {
+      message.error("Không tìm thấy ID bài kiểm tra");
       return;
     }
 
@@ -89,7 +132,7 @@ export const MyExams: React.FC = () => {
         submitAnswer: choice
       }));
 
-      const response = await studentApi.submitExam(examId, auth.user.id, answers);
+      const response = await studentApi.submitExam(testIdToSubmit, auth.user.id, answers);
 
       if (!response.error) {
         message.success("Nộp bài thành công!");
@@ -148,7 +191,7 @@ export const MyExams: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center gap-4 p-4">
-      <Title level={3}>Bài thi {examId}</Title>
+      <Title level={3}>Bài thi {testTitle || examId || 'Không xác định'}</Title>
 
       {questions.map((q) => {
         const choices = [

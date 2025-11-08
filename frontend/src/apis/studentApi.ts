@@ -120,6 +120,27 @@ export const getExamQuestions = async (examId: string, passcode: string): Promis
 };
 
 /**
+ * Join exam by passcode only (simpler endpoint)
+ * @param passcode - Passcode to access the exam
+ */
+export const joinExamByPasscode = async (passcode: string): Promise<ApiResponse<{
+    testId: string;
+    testTitle: string;
+    duration: number;
+    questions: Array<{
+        id: string;
+        content: string;
+        choiceA: string;
+        choiceB: string;
+        choiceC: string;
+        choiceD: string;
+    }>;
+}>> => {
+    const response = await apiClient.get(`/api/exams/join/${passcode}`);
+    return response.data;
+};
+
+/**
  * Submit exam answers
  * @param examId - Exam/Test ID
  * @param userId - User ID

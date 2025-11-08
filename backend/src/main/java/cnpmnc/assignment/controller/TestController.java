@@ -283,6 +283,44 @@ public class TestController {
         return ResponseEntity.ok(ApiResponse.success(dto, "Test retrieved successfully"));
     }
 
+    @GetMapping("/exams/join/{passcode}")
+    @PreAuthorize("hasAnyAuthority('STUDENT')")
+    @Operation(summary = "Join exam by passcode", description = "Student joins exam using passcode and gets questions")
+    @SecurityRequirement(name = "cookieAuth")
+    public ResponseEntity<ApiResponse<ExamJoinResponseDTO>> joinExamByPasscode(
+            @Parameter(description = "Passcode") @PathVariable String passcode,
+            HttpSession session) {
+        User currentUser = (User) session.getAttribute("user");
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("User not authenticated"));
+        }
+
+        // Find test by passcode
+        Test testEntity = testRepository.findByPasscode(passcode.toUpperCase())
+                .orElseThrow(() -> new IllegalArgumentException("Test not found with this passcode"));
+
+        // Check if student is enrolled in the class
+        if (testEntity.getClazz().getStudents().stream()
+                .noneMatch(student -> student.getId().equals(currentUser.getId()))) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("You are not enrolled in the class for this test"));
+        }
+
+        // Get questions for student
+        List<QuestionDTOforStudent> questions = testService.getQuestionsForStudent(testEntity);
+        
+        // Create response with testId and questions
+        ExamJoinResponseDTO response = new ExamJoinResponseDTO(
+                testEntity.getId(),
+                testEntity.getTitle(),
+                testEntity.getDuration(),
+                questions
+        );
+        
+        return ResponseEntity.ok(ApiResponse.success(response, "Test joined successfully"));
+    }
+
     @GetMapping("student/tests")
     @PreAuthorize("hasAnyAuthority('STUDENT')")
     @Operation(summary = "Get tests of student", description = "Retrieve list of all test of student")

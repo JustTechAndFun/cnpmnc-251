@@ -99,7 +99,7 @@ export const TestDetail = () => {
                             closeTime: testData.closeTime ?? null,
                             createdAt: testData.createdAt
                         });
-                        
+
                         // Fetch questions separately
                         try {
                             const questionsResponse = await teacherApi.getTestQuestions(foundClassId, testId);
@@ -179,28 +179,28 @@ export const TestDetail = () => {
         setAddingQuestion(true);
         try {
             let correctAnswer: string | string[];
-            
+
             if (questionType === 'MULTIPLE_CHOICE') {
                 // Get valid options (non-empty) with their original indices
                 const validOptionsWithIndices = options
                     .map((opt, idx) => ({ value: opt.trim(), originalIndex: idx }))
                     .filter(item => item.value !== '');
-                
+
                 if (validOptionsWithIndices.length < 2) {
                     message.error('Cần ít nhất 2 đáp án cho câu hỏi trắc nghiệm');
                     setAddingQuestion(false);
                     return;
                 }
-                
+
                 // Find the correct answer in the valid options based on original index
                 const selectedOption = validOptionsWithIndices.find(item => item.originalIndex === correctAnswerIndex);
-                
+
                 if (!selectedOption) {
                     message.error('Vui lòng chọn đáp án đúng');
                     setAddingQuestion(false);
                     return;
                 }
-                
+
                 // Get correct answer value
                 correctAnswer = selectedOption.value;
             } else {
@@ -214,7 +214,7 @@ export const TestDetail = () => {
             }
 
             // Prepare final options array (filtered and trimmed)
-            const finalOptions = questionType === 'MULTIPLE_CHOICE' 
+            const finalOptions = questionType === 'MULTIPLE_CHOICE'
                 ? options.filter(opt => opt.trim() !== '').map(opt => opt.trim())
                 : undefined;
 
@@ -325,97 +325,96 @@ export const TestDetail = () => {
                     {/* Questions Section */}
                     <Card className="shadow-sm">
                         <div className="mt-6 md:mt-8">
-                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
-                            <Title level={3} className="mb-0 text-lg sm:text-xl">
-                                <QuestionCircleOutlined className="mr-2 text-purple-600" />
-                                Danh sách câu hỏi ({questions.length})
-                            </Title>
-                            <Button
-                                type="primary"
-                                icon={<PlusOutlined />}
-                                onClick={handleAddQuestion}
-                                className="bg-linear-to-r from-purple-600 to-purple-800 border-none w-full sm:w-auto"
-                            >
-                                Thêm câu hỏi
-                            </Button>
-                        </div>
+                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
+                                <Title level={3} className="mb-0 text-lg sm:text-xl">
+                                    <QuestionCircleOutlined className="mr-2 text-purple-600" />
+                                    Danh sách câu hỏi ({questions.length})
+                                </Title>
+                                <Button
+                                    type="primary"
+                                    icon={<PlusOutlined />}
+                                    onClick={handleAddQuestion}
+                                    className="bg-linear-to-r from-purple-600 to-purple-800 border-none w-full sm:w-auto"
+                                >
+                                    Thêm câu hỏi
+                                </Button>
+                            </div>
 
-                        {questions.length === 0 ? (
-                            <Card className="text-center py-8">
-                                <Text type="secondary">Chưa có câu hỏi nào. Hãy thêm câu hỏi để bắt đầu.</Text>
-                            </Card>
-                        ) : (
-                            <List
-                                dataSource={questions}
-                                renderItem={(question, index) => (
-                                    <Card className="mb-4 shadow-sm">
-                                        <div className="flex justify-between items-start mb-3">
-                                            <div className="flex-1">
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    <Text strong className="text-lg">
-                                                        Câu {index + 1}:
-                                                    </Text>
-                                                    <Tag color={question.questionType === 'MULTIPLE_CHOICE' ? 'blue' : 'green'}>
-                                                        {question.questionType === 'MULTIPLE_CHOICE' ? 'Trắc nghiệm' : 'Tự luận'}
-                                                    </Tag>
-                                                    <Tag color="purple">{question.points} điểm</Tag>
-                                                </div>
-                                                <Text className="text-base">{question.content}</Text>
-                                            </div>
-                                        </div>
-
-                                        {question.questionType === 'MULTIPLE_CHOICE' && question.options && (
-                                            <div className="mt-4">
-                                                <Text strong className="block mb-2">Các đáp án:</Text>
-                                                <List
-                                                    dataSource={question.options}
-                                                    renderItem={(option, optIndex) => {
-                                                        // Handle correctAnswer as string or string[]
-                                                        const correctAnswerValue = Array.isArray(question.correctAnswer) 
-                                                            ? question.correctAnswer[0] 
-                                                            : question.correctAnswer;
-                                                        
-                                                        // Compare trimmed strings
-                                                        const optionStr = String(option || '').trim();
-                                                        const correctStr = String(correctAnswerValue || '').trim();
-                                                        const isCorrect = optionStr === correctStr && optionStr !== '';
-                                                        
-                                                        return (
-                                                            <div className={`p-2 mb-2 rounded border ${
-                                                                isCorrect
-                                                                    ? 'bg-green-50 border-green-300' 
-                                                                    : 'bg-gray-50 border-gray-200'
-                                                            }`}>
-                                                                <Space>
-                                                                    {isCorrect && (
-                                                                        <CheckCircleOutlined className="text-green-600" />
-                                                                    )}
-                                    <Text className={isCorrect ? 'text-green-700 font-semibold' : ''}>
-                                        {String.fromCodePoint(65 + optIndex)}. {option}
-                                    </Text>
-                                                                    {isCorrect && (
-                                                                        <Tag color="green">Đáp án đúng</Tag>
-                                                                    )}
-                                                                </Space>
-                                                            </div>
-                                                        );
-                                                    }}
-                                                />
-                                            </div>
-                                        )}
-
-                                        {question.questionType === 'SHORT_ANSWER' && (
-                                            <div className="mt-4">
-                                                <Text strong className="block mb-2">Đáp án đúng:</Text>
-                                                <div className="p-3 bg-green-50 border border-green-300 rounded">
-                                                    <Text className="text-green-700">{question.correctAnswer}</Text>
+                            {questions.length === 0 ? (
+                                <Card className="text-center py-8">
+                                    <Text type="secondary">Chưa có câu hỏi nào. Hãy thêm câu hỏi để bắt đầu.</Text>
+                                </Card>
+                            ) : (
+                                <List
+                                    dataSource={questions}
+                                    renderItem={(question, index) => (
+                                        <Card className="mb-4 shadow-sm">
+                                            <div className="flex justify-between items-start mb-3">
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <Text strong className="text-lg">
+                                                            Câu {index + 1}:
+                                                        </Text>
+                                                        <Tag color={question.questionType === 'MULTIPLE_CHOICE' ? 'blue' : 'green'}>
+                                                            {question.questionType === 'MULTIPLE_CHOICE' ? 'Trắc nghiệm' : 'Tự luận'}
+                                                        </Tag>
+                                                        <Tag color="purple">{question.points} điểm</Tag>
+                                                    </div>
+                                                    <Text className="text-base">{question.content}</Text>
                                                 </div>
                                             </div>
-                                        )}
-                                    </Card>
-                                )}
-                            />
-                        )}
+
+                                            {question.questionType === 'MULTIPLE_CHOICE' && question.options && (
+                                                <div className="mt-4">
+                                                    <Text strong className="block mb-2">Các đáp án:</Text>
+                                                    <List
+                                                        dataSource={question.options}
+                                                        renderItem={(option, optIndex) => {
+                                                            // Handle correctAnswer as string or string[]
+                                                            const correctAnswerValue = Array.isArray(question.correctAnswer)
+                                                                ? question.correctAnswer[0]
+                                                                : question.correctAnswer;
+
+                                                            // Compare trimmed strings
+                                                            const optionStr = String(option || '').trim();
+                                                            const correctStr = String(correctAnswerValue || '').trim();
+                                                            const isCorrect = optionStr === correctStr && optionStr !== '';
+
+                                                            return (
+                                                                <div className={`p-2 mb-2 rounded border ${isCorrect
+                                                                        ? 'bg-green-50 border-green-300'
+                                                                        : 'bg-gray-50 border-gray-200'
+                                                                    }`}>
+                                                                    <Space>
+                                                                        {isCorrect && (
+                                                                            <CheckCircleOutlined className="text-green-600" />
+                                                                        )}
+                                                                        <Text className={isCorrect ? 'text-green-700 font-semibold' : ''}>
+                                                                            {String.fromCodePoint(65 + optIndex)}. {option}
+                                                                        </Text>
+                                                                        {isCorrect && (
+                                                                            <Tag color="green">Đáp án đúng</Tag>
+                                                                        )}
+                                                                    </Space>
+                                                                </div>
+                                                            );
+                                                        }}
+                                                    />
+                                                </div>
+                                            )}
+
+                                            {question.questionType === 'SHORT_ANSWER' && (
+                                                <div className="mt-4">
+                                                    <Text strong className="block mb-2">Đáp án đúng:</Text>
+                                                    <div className="p-3 bg-green-50 border border-green-300 rounded">
+                                                        <Text className="text-green-700">{question.correctAnswer}</Text>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </Card>
+                                    )}
+                                />
+                            )}
                         </div>
                     </Card>
                 </div>
@@ -493,41 +492,41 @@ export const TestDetail = () => {
 
                     {questionType === 'MULTIPLE_CHOICE' && (
                         <Form.Item label="Các đáp án">
-                                {options.map((option, index) => (
-                                    <div key={`option-${index}-${option}`} className="mb-3 flex items-center gap-2">
-                                        <Input
-                                            value={option}
-                                            onChange={(e) => handleOptionChange(index, e.target.value)}
-                                            placeholder={`Đáp án ${String.fromCodePoint(65 + index)}`}
-                                            size="large"
-                                            className="flex-1"
-                                        />
+                            {options.map((option, index) => (
+                                <div key={`option-${index}-${option}`} className="mb-3 flex items-center gap-2">
+                                    <Input
+                                        value={option}
+                                        onChange={(e) => handleOptionChange(index, e.target.value)}
+                                        placeholder={`Đáp án ${String.fromCodePoint(65 + index)}`}
+                                        size="large"
+                                        className="flex-1"
+                                    />
+                                    <Button
+                                        type={correctAnswerIndex === index ? 'primary' : 'default'}
+                                        icon={correctAnswerIndex === index ? <CheckCircleOutlined /> : null}
+                                        onClick={() => setCorrectAnswerIndex(index)}
+                                        className={correctAnswerIndex === index ? 'bg-green-600 border-green-600' : ''}
+                                    >
+                                        Đúng
+                                    </Button>
+                                    {options.length > 2 && (
                                         <Button
-                                            type={correctAnswerIndex === index ? 'primary' : 'default'}
-                                            icon={correctAnswerIndex === index ? <CheckCircleOutlined /> : null}
-                                            onClick={() => setCorrectAnswerIndex(index)}
-                                            className={correctAnswerIndex === index ? 'bg-green-600 border-green-600' : ''}
-                                        >
-                                            Đúng
-                                        </Button>
-                                        {options.length > 2 && (
-                                            <Button
-                                                danger
-                                                icon={<DeleteOutlined />}
-                                                onClick={() => handleRemoveOption(index)}
-                                            />
-                                        )}
-                                    </div>
-                                ))}
-                                <Button
-                                    type="dashed"
-                                    icon={<PlusOutlined />}
-                                    onClick={handleAddOption}
-                                    block
-                                    className="mt-2"
-                                >
-                                    Thêm đáp án
-                                </Button>
+                                            danger
+                                            icon={<DeleteOutlined />}
+                                            onClick={() => handleRemoveOption(index)}
+                                        />
+                                    )}
+                                </div>
+                            ))}
+                            <Button
+                                type="dashed"
+                                icon={<PlusOutlined />}
+                                onClick={handleAddOption}
+                                block
+                                className="mt-2"
+                            >
+                                Thêm đáp án
+                            </Button>
                         </Form.Item>
                     )}
 
