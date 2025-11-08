@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card, Typography, Table, Button, Space, Tag, Spin, Empty, Alert, Modal, Form, Input, Select, message, InputNumber } from 'antd';
-import { FileTextOutlined, PlusOutlined, ReloadOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';
+import { PlusOutlined, ReloadOutlined, EditOutlined, EyeOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router';
 import { teacherApi } from '../../apis';
 import type { ClassDto, TestDTO, AddTestRequestDTO } from '../../apis/teacherApi';

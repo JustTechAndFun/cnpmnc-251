@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card, Typography, Table, Select, Space, Tag, Spin, Empty, Alert, Button, Input, Modal, Form, InputNumber, message } from 'antd';
-import { LineChartOutlined, SearchOutlined, ReloadOutlined, EditOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { SearchOutlined, ReloadOutlined, EditOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { teacherApi } from '../../apis';
 import type { ClassDto, StudentDto, TestDTO } from '../../apis/teacherApi';
 import type { ColumnsType } from 'antd/es/table';
@@ -31,7 +31,6 @@ export const GradeStudents = () => {
     const [loading, setLoading] = useState(true);
     const [gradesLoading, setGradesLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [searchText, setSearchText] = useState('');
     const [gradeModalVisible, setGradeModalVisible] = useState(false);
     const [selectedStudent, setSelectedStudent] = useState<StudentGrade | null>(null);
     const [gradeForm] = Form.useForm();
@@ -96,7 +95,7 @@ export const GradeStudents = () => {
         }
     };
 
-    const fetchGrades = async (classId: string, testId: string) => {
+    const fetchGrades = async (_classId: string, testId: string) => {
         setGradesLoading(true);
         try {
             // TODO: Implement actual API call when backend endpoint is ready
@@ -106,7 +105,7 @@ export const GradeStudents = () => {
             const selectedTest = tests.find(t => t.id === testId);
             if (!selectedTest) return;
 
-            const mockGrades: StudentGrade[] = students.map((student, index) => {
+            const mockGrades: StudentGrade[] = students.map((student) => {
                 const isSubmitted = Math.random() > 0.2; // 80% submission rate
                 const isGraded = isSubmitted && Math.random() > 0.3; // 70% of submitted are graded
 
@@ -141,7 +140,7 @@ export const GradeStudents = () => {
         setGradeModalVisible(true);
     };
 
-    const handleSubmitGrade = async (values: { score: number }) => {
+    const handleSubmitGrade = async (_values: { score: number }) => {
         if (!selectedStudent) return;
 
         setSubmitting(true);
@@ -288,10 +287,7 @@ export const GradeStudents = () => {
         }
     ];
 
-    const filteredGrades = grades.filter(grade =>
-        grade.studentName.toLowerCase().includes(searchText.toLowerCase()) ||
-        grade.studentEmail.toLowerCase().includes(searchText.toLowerCase())
-    );
+    const filteredGrades = grades;
 
     const stats = {
         total: grades.length,
