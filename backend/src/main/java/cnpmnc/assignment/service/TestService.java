@@ -376,7 +376,9 @@ public class TestService {
         );
     }
     public List<QuestionDTOforStudent> getQuestionsForStudent(Test testEntity) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getQuestionsForStudent'");
+        // Get all questions for this test and convert to DTO without answers
+        return testEntity.getQuestions().stream()
+                .map(QuestionDTOforStudent::fromEntity)
+                .collect(Collectors.toList());
     }
 }

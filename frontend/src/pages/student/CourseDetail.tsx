@@ -209,7 +209,7 @@ export const CourseDetail = () => {
                                             <Title level={4} className="mb-0">
                                                 {test.title}
                                             </Title>
-                                            {getTestStatusTag(test)}
+                                            {getTestStatusTag()}
                                         </div>
 
                                         {test.description && (

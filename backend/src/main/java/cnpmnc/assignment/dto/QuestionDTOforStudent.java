@@ -12,6 +12,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class QuestionDTOforStudent {
+    private String id;  // Need id for frontend to track answers
     private String content;
     private String choiceA;
     private String choiceB;
@@ -21,6 +22,7 @@ public class QuestionDTOforStudent {
 
     public static QuestionDTOforStudent fromEntity(Question q) {
         return new QuestionDTOforStudent(
+                q.getId(),
                 q.getContent(),
                 q.getChoiceA(),
                 q.getChoiceB(),
