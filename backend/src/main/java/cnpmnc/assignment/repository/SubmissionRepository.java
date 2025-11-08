@@ -18,6 +18,9 @@ public interface SubmissionRepository extends JpaRepository<Submission, String> 
     
     List<Submission> findByStudentId(String studentId);
     
+    @Query("SELECT s FROM Submission s JOIN FETCH s.test t JOIN FETCH t.clazz WHERE s.student.id = :studentId")
+    List<Submission> findByStudentIdWithTestAndClass(@Param("studentId") String studentId);
+    
     Optional<Submission> findByTestAndStudent(Test test, User student);
     
     @Query("SELECT s FROM Submission s WHERE s.test.id = :testId ORDER BY s.score DESC")

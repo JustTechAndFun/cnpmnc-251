@@ -103,7 +103,8 @@ public class ViewPersonalResultController {
                     .body(ApiResponse.error("User not authenticated"));
         }
 
-        List<Submission> submissions = submissionRepository.findByStudentId(currentUser.getId());
+        // Use JOIN FETCH to avoid LazyInitializationException
+        List<Submission> submissions = submissionRepository.findByStudentIdWithTestAndClass(currentUser.getId());
         
         List<StudentGradeDTO> grades = submissions.stream()
                 .map(submission -> {
