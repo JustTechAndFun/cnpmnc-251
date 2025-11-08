@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Card, Statistic, List, Spin, Typography, Row, Col } from 'antd';
+import { Card, Statistic, List, Spin, Typography } from 'antd';
 import {
     BookOutlined,
     FileTextOutlined,
