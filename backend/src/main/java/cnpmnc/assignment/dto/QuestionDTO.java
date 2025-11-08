@@ -40,6 +40,11 @@ public class QuestionDTO {
         );
     }
 
+    // Alias method for compatibility
+    public static QuestionDTO fromQuestion(Question q) {
+        return fromEntity(q);
+    }
+
     // getters và setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }

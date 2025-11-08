@@ -123,7 +123,7 @@ export const TeacherDashboard = () => {
     return (
         <div className="p-8 max-w-7xl mx-auto">
             <div className="mb-8">
-                <Title level={2} className="mb-2 bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+                <Title level={2} className="mb-2 bg-linear-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
                     Dashboard
                 </Title>
                 <Text className="text-gray-600">Tổng quan công việc</Text>

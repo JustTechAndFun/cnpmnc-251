@@ -48,18 +48,59 @@ export const TestResults = () => {
 
     useEffect(() => {
         if (testId) {
-            fetchTestResults(testId);
+            fetchTestInfo(testId);
         } else {
             setError('Test ID is missing');
             setLoading(false);
         }
     }, [testId]);
 
-    const fetchTestResults = async (id: string) => {
+    const fetchTestInfo = async (id: string) => {
         try {
             setLoading(true);
             setError(null);
-            const response = await teacherApi.getTestResults(id);
+            
+            // First, get test info to find classId
+            // We need to fetch from all classes to find which class this test belongs to
+            const classesResponse = await teacherApi.getMyClasses();
+            
+            if (!classesResponse.error && classesResponse.data) {
+                const classes = classesResponse.data;
+                let foundClassId: string | null = null;
+                
+                // Check each class for this test
+                for (const cls of classes) {
+                    const testsResponse = await teacherApi.getTestsInClass(cls.id);
+                    if (!testsResponse.error && testsResponse.data) {
+                        const testExists = testsResponse.data.find(t => t.id === id);
+                        if (testExists) {
+                            foundClassId = cls.id;
+                            break;
+                        }
+                    }
+                }
+                
+                if (foundClassId) {
+                    fetchTestResults(foundClassId, id);
+                } else {
+                    setError('Test not found in any of your classes');
+                    setLoading(false);
+                }
+            } else {
+                setError('Failed to load classes');
+                setLoading(false);
+            }
+        } catch (err) {
+            console.error('Failed to fetch test info', err);
+            setError('Failed to load test information. Please try again.');
+            setLoading(false);
+        }
+    };
+
+    const fetchTestResults = async (clsId: string, id: string) => {
+        try {
+            setError(null);
+            const response = await teacherApi.getTestResults(clsId, id);
 
             if (!response.error && response.data) {
                 setData(response.data);
@@ -225,7 +266,7 @@ export const TestResults = () => {
                     Quay lại
                 </Button>
                 <div>
-                    <Title level={2} className="mb-2 bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+                    <Title level={2} className="mb-2 bg-linear-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
                         Kết quả bài thi
                     </Title>
                     <Text type="secondary" className="text-lg">

@@ -68,6 +68,7 @@ export interface Test {
     duration: number; // in minutes
     passcode: string;
     teacherId: string;
+    classId?: string; // Optional - added by frontend when fetching tests
     createdAt: string;
     updatedAt: string;
     questions: Question[];

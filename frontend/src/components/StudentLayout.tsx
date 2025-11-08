@@ -76,7 +76,7 @@ export const StudentLayout = () => {
                         <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center text-white">
                             <BookOutlined className="text-xl" />
                         </div>
-                        <Text strong className="text-lg bg-gradient-to-r from-green-600 to-green-800 bg-clip-text text-transparent">
+                        <Text strong className="text-lg bg-linear-to-r from-green-600 to-green-800 bg-clip-text text-transparent">
                             Học sinh
                         </Text>
                     </div>
@@ -132,7 +132,7 @@ export const StudentLayout = () => {
                     {/* Mobile Top Bar */}
                     <div className="lg:hidden sticky top-0 z-40 bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3">
                         <Button type="text" icon={<MenuOutlined />} onClick={() => setMobileMenuOpen(true)} />
-                        <Text strong className="bg-gradient-to-r from-green-600 to-green-800 bg-clip-text text-transparent">
+                        <Text strong className="bg-linear-to-r from-green-600 to-green-800 bg-clip-text text-transparent">
                             Học sinh
                         </Text>
                     </div>
@@ -155,7 +155,7 @@ export const StudentLayout = () => {
                         <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center text-white">
                             <BookOutlined className="text-xl" />
                         </div>
-                        <Text strong className="text-lg bg-gradient-to-r from-green-600 to-green-800 bg-clip-text text-transparent">
+                        <Text strong className="text-lg bg-linear-to-r from-green-600 to-green-800 bg-clip-text text-transparent">
                             Học sinh
                         </Text>
                     </div>

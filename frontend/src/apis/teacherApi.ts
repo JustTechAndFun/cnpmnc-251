@@ -122,10 +122,12 @@ export const getTestDetail = async (classId: string, testId: string): Promise<Ap
 };
 
 /**
- * Get test results for all students
+ * Get test results (submissions and statistics)
+ * @param classId - Class ID
  * @param testId - Test ID
+ * @returns Test results with submissions and summary statistics
  */
-export const getTestResults = async (testId: string): Promise<ApiResponse<import('../types').TestResultsResponse>> => {
-    const response = await apiClient.get<ApiResponse<import('../types').TestResultsResponse>>(`/api/teacher/tests/${testId}/results`);
+export const getTestResults = async (classId: string, testId: string): Promise<ApiResponse<any>> => {
+    const response = await apiClient.get<ApiResponse<any>>(`/api/classes/${classId}/tests/${testId}/results`);
     return response.data;
 };

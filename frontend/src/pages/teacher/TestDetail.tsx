@@ -123,7 +123,7 @@ export const TestDetail = () => {
             ) : test ? (
                 <div className="space-y-6">
                     <Card className="shadow-sm">
-                        <Title level={2} className="mb-4 bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+                        <Title level={2} className="mb-4 bg-linear-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
                             {test.name}
                         </Title>
 

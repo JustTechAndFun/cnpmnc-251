@@ -54,7 +54,7 @@ export const LoginPage = () => {
                     disabled={isLoading || !login}
                     loading={isLoading}
                     block
-                    className="h-12 text-base font-medium mb-6 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 border-0"
+                    className="h-12 text-base font-medium mb-6 bg-linear-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 border-0"
                 >
                     {isLoading ? 'Đang chuyển hướng...' : 'Đăng nhập với Google'}
                 </Button>

@@ -72,7 +72,7 @@ export const AdminLayout = () => {
                         <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white">
                             <DashboardOutlined className="text-xl" />
                         </div>
-                        <Text strong className="text-lg bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+                        <Text strong className="text-lg bg-linear-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
                             Admin Panel
                         </Text>
                     </div>
@@ -128,7 +128,7 @@ export const AdminLayout = () => {
                     {/* Mobile Top Bar */}
                     <div className="lg:hidden sticky top-0 z-40 bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3">
                         <Button type="text" icon={<MenuOutlined />} onClick={() => setMobileMenuOpen(true)} />
-                        <Text strong className="bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+                        <Text strong className="bg-linear-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
                             Admin Panel
                         </Text>
                     </div>
@@ -151,7 +151,7 @@ export const AdminLayout = () => {
                         <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white">
                             <DashboardOutlined className="text-xl" />
                         </div>
-                        <Text strong className="text-lg bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+                        <Text strong className="text-lg bg-linear-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
                             Admin Panel
                         </Text>
                     </div>

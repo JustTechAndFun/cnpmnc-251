@@ -59,11 +59,46 @@ export const TestManagement = () => {
             setLoading(true);
             const response = await apiClient.get<ApiResponse<Test[]>>('/api/teacher/tests');
 
-            if (!response.data.error && response.data.data) {
-                setTests(response.data.data);
+            if (!classesResponse.data.error && classesResponse.data.data) {
+                const classes = classesResponse.data.data;
+
+                // Fetch tests from all classes
+                const allTestsPromises = classes.map(cls =>
+                    axios.get<ApiResponse<Test[]>>(
+                        `${API_BASE_URL}/api/classes/${cls.id}/tests`,
+                        {
+                            headers: token ? { Authorization: `Bearer ${token}` } : {},
+                            withCredentials: true
+                        }
+                    ).then(response => ({
+                        classId: cls.id,
+                        response
+                    }))
+                    .catch(error => {
+                        console.error(`Failed to fetch tests for class ${cls.id}`, error);
+                        return { classId: cls.id, response: { data: { error: true, data: [] } } };
+                    })
+                );
+
+                const testsResponses = await Promise.all(allTestsPromises);
+
+                // Combine all tests from all classes and add classId to each test
+                const allTests: Test[] = [];
+                testsResponses.forEach(({ classId, response }) => {
+                    if (!response.data.error && response.data.data) {
+                        const testsWithClassId = response.data.data.map(test => ({
+                            ...test,
+                            classId
+                        }));
+                        allTests.push(...testsWithClassId);
+                    }
+                });
+
+                setTests(allTests);
             } else {
                 const errorMsg = response.data.message || 'Không thể tải danh sách test';
                 setErrorMessage(errorMsg);
+                setErrorMessage('Không thể tải danh sách lớp học');
                 setErrorModalVisible(true);
                 setTests([]);
             }
@@ -105,7 +140,7 @@ export const TestManagement = () => {
         duration: number;
         passcode: string;
     }) => {
-        if (!selectedTest) return;
+        if (!selectedTest || !selectedTest.classId) return;
 
         try {
             const response = await apiClient.put<ApiResponse<Test>>(
@@ -132,6 +167,13 @@ export const TestManagement = () => {
     };
 
     const handleDeleteTest = async (testId: string) => {
+        const testToDelete = tests.find(t => t.id === testId);
+        if (!testToDelete || !testToDelete.classId) {
+            setErrorMessage('Không tìm thấy thông tin lớp học của test');
+            setErrorModalVisible(true);
+            return;
+        }
+
         try {
             await apiClient.delete<ApiResponse<void>>(
                 `/api/teacher/tests/${testId}`
@@ -161,6 +203,13 @@ export const TestManagement = () => {
     };
 
     const handleDeleteQuestion = async (testId: string, questionId: string) => {
+        const test = tests.find(t => t.id === testId);
+        if (!test || !test.classId) {
+            setErrorMessage('Không tìm thấy thông tin lớp học của test');
+            setErrorModalVisible(true);
+            return;
+        }
+
         try {
             await apiClient.delete<ApiResponse<void>>(
                 `/api/teacher/tests/${testId}/questions/${questionId}`
@@ -193,9 +242,14 @@ export const TestManagement = () => {
         correctAnswer: string;
         points: number;
     }) => {
-        if (!selectedTest) return;
+        if (!selectedTest || !selectedTest.classId) return;
 
         const questionType = values.questionType;
+
+        // Parse options into individual choices
+        const optionsArray = questionType === 'MULTIPLE_CHOICE' && values.options
+            ? values.options.split('\n').filter(o => o.trim())
+            : [];
 
         let correctAnswer: string | string[];
         if (questionType === 'TRUE_FALSE') {
@@ -206,14 +260,14 @@ export const TestManagement = () => {
             correctAnswer = values.correctAnswer.split('\n').filter(a => a.trim());
         }
 
+        // Backend expects choiceA, choiceB, choiceC, choiceD format and answer enum
         const questionData = {
             content: values.content,
-            questionType: questionType,
-            options: questionType === 'MULTIPLE_CHOICE' && values.options
-                ? values.options.split('\n').filter(o => o.trim())
-                : undefined,
-            correctAnswer,
-            points: values.points
+            choiceA: optionsArray[0] || '',
+            choiceB: optionsArray[1] || '',
+            choiceC: optionsArray[2] || '',
+            choiceD: optionsArray[3] || '',
+            answer: Array.isArray(correctAnswer) ? correctAnswer[0] : correctAnswer
         };
 
         try {
@@ -441,7 +495,7 @@ export const TestManagement = () => {
         <div className="p-8 max-w-7xl mx-auto">
             <div className="mb-8 flex justify-between items-center">
                 <div>
-                    <Title level={2} className="mb-2 bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+                    <Title level={2} className="mb-2 bg-linear-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
                         Quản lý Tests
                     </Title>
                     <Text type="secondary">Xem và quản lý tất cả các test bạn đã tạo</Text>
