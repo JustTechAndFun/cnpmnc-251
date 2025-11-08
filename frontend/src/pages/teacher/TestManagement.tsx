@@ -13,7 +13,6 @@ import {
     Space,
     Tag,
     Popconfirm,
-    message,
     Spin,
     Empty
 } from 'antd';
@@ -25,7 +24,6 @@ import {
     KeyOutlined,
     EyeOutlined
 } from '@ant-design/icons';
-import { useNavigate } from 'react-router';
 import type { ApiResponse, Test, Question } from '../../types';
 import { ErrorModal } from '../../components/ErrorModal';
 import { SuccessModal } from '../../components/SuccessModal';

@@ -74,7 +74,7 @@ export const TestResults = () => {
         }
     };
 
-    const handleTableChange: TableProps<StudentSubmission>['onChange'] = (pagination, filters, sorter) => {
+    const handleTableChange: TableProps<StudentSubmission>['onChange'] = (_pagination, _filters, sorter) => {
         if (Array.isArray(sorter)) {
             // Multiple sorters - not used in this case
             return;

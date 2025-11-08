@@ -58,10 +58,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
                 // Save user data to localStorage for offline access
                 localStorage.setItem(USER_KEY, JSON.stringify(userObject));
-
-                if (isDevMode) {
-                    console.log('[Auth] User authenticated successfully');
-                }
             } else {
                 // Session invalid or expired - clear data
                 console.log('[Auth] No valid session found, clearing data');
