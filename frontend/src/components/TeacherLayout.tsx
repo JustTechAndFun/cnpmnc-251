@@ -1,6 +1,14 @@
 import { useNavigate, useLocation, Outlet } from 'react-router';
 import { Layout, Menu, Avatar, Button, Spin, Typography } from 'antd';
-import { DashboardOutlined, BookOutlined, FileTextOutlined, LineChartOutlined, ProfileOutlined, LogoutOutlined } from '@ant-design/icons';
+import { 
+    DashboardOutlined, 
+    BookOutlined, 
+    FileTextOutlined, 
+    ProfileOutlined, 
+    LogoutOutlined, 
+    PlusCircleOutlined,
+    FileAddOutlined 
+} from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
 
 const { Sider, Content } = Layout;
@@ -26,14 +34,19 @@ export const TeacherLayout = () => {
             label: 'Lớp học',
         },
         {
-            key: '/teacher/assignments',
-            icon: <FileTextOutlined />,
-            label: 'Bài tập',
+            key: '/teacher/classes/create',
+            icon: <PlusCircleOutlined />,
+            label: 'Tạo lớp học',
         },
         {
-            key: '/teacher/grades',
-            icon: <LineChartOutlined />,
-            label: 'Chấm điểm',
+            key: '/teacher/tests',
+            icon: <FileTextOutlined />,
+            label: 'Bài kiểm tra',
+        },
+        {
+            key: '/teacher/tests/create',
+            icon: <FileAddOutlined />,
+            label: 'Tạo bài kiểm tra',
         },
         {
             key: '/teacher/profile',

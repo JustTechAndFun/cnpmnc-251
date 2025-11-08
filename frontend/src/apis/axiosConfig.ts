@@ -32,13 +32,13 @@ apiClient.interceptors.response.use(
             if (setCookieHeader) {
                 console.log('[API] Received Set-Cookie header:', setCookieHeader);
             }
-            
+
             // Log all cookies currently in browser
             if (typeof document !== 'undefined') {
                 console.log('[API] Current browser cookies:', document.cookie);
             }
         }
-        
+
         return response;
     },
     (error) => {

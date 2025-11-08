@@ -74,7 +74,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
                 // Save user data to localStorage for offline access
                 localStorage.setItem(USER_KEY, JSON.stringify(userObject));
-                
+
                 if (isDevMode) {
                     console.log('[Auth] User authenticated successfully');
                 }
@@ -118,7 +118,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const handleCallbackMemo = useCallback(async (code: string) => {
         try {
             console.log('[Auth] Processing callback with code:', code.substring(0, 10) + '...');
-            
+
             const response = await authApi.handleGoogleCallback(code, GOOGLE_REDIRECT_URI);
 
             console.log('[Auth] Callback response:', {
@@ -151,7 +151,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
                 return true;
             }
-            
+
             console.error('[Auth] Callback failed:', response.message);
             return false;
         } catch (error) {

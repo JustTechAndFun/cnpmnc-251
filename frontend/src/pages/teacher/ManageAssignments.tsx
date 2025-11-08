@@ -153,7 +153,7 @@ export const ManageAssignments = () => {
             dataIndex: 'passcode',
             key: 'passcode',
             align: 'center',
-            render: (passcode?: string) => 
+            render: (passcode?: string) =>
                 passcode ? <Tag color="green">{passcode}</Tag> : <Text type="secondary">Không có</Text>
         },
         {

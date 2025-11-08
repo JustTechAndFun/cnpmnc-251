@@ -47,10 +47,10 @@ export const MyGrades = () => {
         try {
             // TODO: Implement actual API call when backend endpoint is ready
             // const response = await studentApi.getMyGrades();
-            
+
             // Mock data for demonstration
             await new Promise(resolve => setTimeout(resolve, 1000));
-            
+
             const mockGrades: GradeRecord[] = [
                 {
                     id: '1',
@@ -203,8 +203,8 @@ export const MyGrades = () => {
         }
     ];
 
-    const filteredGrades = selectedClass === 'all' 
-        ? grades 
+    const filteredGrades = selectedClass === 'all'
+        ? grades
         : grades.filter(g => g.className === selectedClass);
 
     const uniqueClasses = Array.from(new Set(grades.map(g => g.className)));

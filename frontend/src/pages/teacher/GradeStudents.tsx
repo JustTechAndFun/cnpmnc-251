@@ -151,7 +151,7 @@ export const GradeStudents = () => {
             message.success('Chấm điểm thành công');
             setGradeModalVisible(false);
             gradeForm.resetFields();
-            
+
             // Refresh grades
             if (selectedClassId && selectedTestId) {
                 fetchGrades(selectedClassId, selectedTestId);
@@ -260,7 +260,7 @@ export const GradeStudents = () => {
             title: 'Ngày nộp',
             dataIndex: 'submittedAt',
             key: 'submittedAt',
-            render: (date?: string) => 
+            render: (date?: string) =>
                 date ? new Date(date).toLocaleDateString('vi-VN') : <Text type="secondary">-</Text>,
             sorter: (a, b) => {
                 if (!a.submittedAt) return 1;
@@ -294,8 +294,8 @@ export const GradeStudents = () => {
         graded: grades.filter(g => g.status === 'graded').length,
         pending: grades.filter(g => g.status === 'submitted').length,
         notSubmitted: grades.filter(g => g.status === 'not-submitted').length,
-        avgScore: grades.filter(g => g.score !== undefined).reduce((sum, g) => sum + (g.score || 0), 0) / 
-                  grades.filter(g => g.score !== undefined).length || 0
+        avgScore: grades.filter(g => g.score !== undefined).reduce((sum, g) => sum + (g.score || 0), 0) /
+            grades.filter(g => g.score !== undefined).length || 0
     };
 
     return (

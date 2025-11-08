@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card, Typography, Table, Button, Space, Tag, Spin, Empty, Alert, Modal, Form, Input, Select, message } from 'antd';
-import { UserAddOutlined, ReloadOutlined, TeamOutlined } from '@ant-design/icons';
+import { UserAddOutlined, ReloadOutlined, TeamOutlined, PlusOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router';
 import { teacherApi } from '../../apis';
 import type { ClassDto } from '../../apis/teacherApi';
@@ -56,7 +56,7 @@ export const ManageClasses = () => {
 
         setSubmitting(true);
         try {
-            const request = values.searchType === 'email' 
+            const request = values.searchType === 'email'
                 ? { email: values.searchValue }
                 : { studentId: values.searchValue };
 
@@ -240,7 +240,7 @@ export const ManageClasses = () => {
 
                     <Form.Item
                         noStyle
-                        shouldUpdate={(prevValues, currentValues) => 
+                        shouldUpdate={(prevValues, currentValues) =>
                             prevValues.searchType !== currentValues.searchType
                         }
                     >
@@ -252,7 +252,7 @@ export const ManageClasses = () => {
                                     label={searchType === 'email' ? 'Email sinh viên' : 'Mã số sinh viên'}
                                     rules={[
                                         { required: true, message: `Vui lòng nhập ${searchType === 'email' ? 'email' : 'mã số sinh viên'}` },
-                                        searchType === 'email' 
+                                        searchType === 'email'
                                             ? { type: 'email', message: 'Email không hợp lệ' }
                                             : {}
                                     ]}
