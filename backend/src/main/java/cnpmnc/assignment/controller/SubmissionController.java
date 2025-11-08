@@ -48,7 +48,7 @@ public class SubmissionController {
         List<AnswerDto> answers = body.getAnswers();
 
         // Fetch all questions that belong to the test
-        List<Question> questions = questionRepository.findByTestId(testId);
+        List<Question> questions = questionRepository.findByTest_Id(testId);
 
         // Map correct answers by question id for quick lookup
         Map<String, String> correctByQuestion = new HashMap<>();

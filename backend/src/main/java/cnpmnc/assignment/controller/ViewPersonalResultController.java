@@ -66,7 +66,7 @@ public class ViewPersonalResultController {
         Integer wrongCount = pr != null ? pr.getWrongCount() : null;
 
         // Fetch questions for this test
-        List<Question> questions = questionRepository.findByTestId(id);
+        List<Question> questions = questionRepository.findByTest_Id(id);
 
         // Fetch choices (selected answers) for this test
         List<Choice> choices = choiceRepository.findByTestId(id);
