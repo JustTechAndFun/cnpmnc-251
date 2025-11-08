@@ -1,417 +1,298 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router';
-import {
-    Card,
-    Table,
-    Button,
-    Typography,
-    Tag,
-    Spin,
-    message,
-    Modal,
-    Input,
-    Form,
-    Statistic,
-    Row,
-    Col,
-    Select
-} from 'antd';
-import type { Breakpoint } from 'antd';
-import {
-    PlusOutlined,
-    FileAddOutlined,
-    UserOutlined,
-    BookOutlined,
-    TeamOutlined,
-    FileTextOutlined
-} from '@ant-design/icons';
+import { Navigate, useParams, useNavigate } from 'react-router';
+import { useAuth } from '../../contexts/AuthContext';
+import { Role } from '../../types';
 import { teacherApi } from '../../apis';
-import type { ClassDto } from '../../apis/teacherApi';
-import type { ColumnsType } from 'antd/es/table';
+import type { StudentDto, TestDTO } from '../../apis/teacherApi';
+import { Spin, Alert, Empty, Button, Space, message, Popconfirm } from 'antd';
+import { ReloadOutlined, ExclamationCircleOutlined, DeleteOutlined } from '@ant-design/icons';
+import '../styles/class.css';
 
-const { Title, Text } = Typography;
-const { Option } = Select;
+interface ClassInfo {
+    id: string;
+    name: string;
+    description: string;
+    totalStudents: number;
+    totalTests: number;
+}
 
-export const ManageClasses = () => {
-    const [classes, setClasses] = useState<ClassDto[]>([]);
+export const ClassPage = () => {
+    const auth = useAuth();
+    const navigate = useNavigate();
+    const { classId } = useParams<{ classId: string }>();
+    const user = auth?.user;
+
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [addStudentModalVisible, setAddStudentModalVisible] = useState(false);
-    const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
-    const [addStudentForm] = Form.useForm();
-    const [submitting, setSubmitting] = useState(false);
-    const navigate = useNavigate();
+    const [classInfo, setClassInfo] = useState<ClassInfo | null>(null);
+    const [students, setStudents] = useState<StudentDto[]>([]);
+    const [tests, setTests] = useState<TestDTO[]>([]);
+
+    // Kiểm tra quyền truy cập
+    if (!user || user.role !== Role.TEACHER) {
+        return <Navigate to="/unauthorized" replace />;
+    }
 
     useEffect(() => {
-        fetchClasses();
-    }, []);
+        if (classId) {
+            loadClassData();
+        }
+    }, [classId]);
 
-    const fetchClasses = async () => {
+    const loadClassData = async () => {
+        if (!classId) return;
+
         setLoading(true);
         setError(null);
+
         try {
-            const response = await teacherApi.getMyClasses();
-            if (!response.error && response.data) {
-                setClasses(response.data);
+            // Load class info
+            const classInfoResponse = await teacherApi.getClassInfo(classId);
+            if (!classInfoResponse.error && classInfoResponse.data) {
+                const cls = classInfoResponse.data;
+                setClassInfo({
+                    id: cls.id,
+                    name: cls.className,
+                    description: `${cls.classCode} - Học kỳ ${cls.semester} năm ${cls.year}`,
+                    totalStudents: cls.studentCount || 0,
+                    totalTests: 0
+                });
             } else {
-                setError(response.message || 'Không thể tải danh sách lớp học');
+                throw new Error(classInfoResponse.message || 'Failed to load class');
             }
-        } catch (error) {
-            console.error('Failed to fetch classes', error);
-            setError('Không thể kết nối đến server');
+
+            // Load students
+            const studentsResponse = await teacherApi.getClassStudents(classId);
+            if (!studentsResponse.error && studentsResponse.data) {
+                setStudents(studentsResponse.data);
+            } else {
+                console.warn('Failed to load students:', studentsResponse.message);
+                setStudents([]);
+            }
+
+            // Load tests
+            const testsResponse = await teacherApi.getTestsInClass(classId);
+            if (!testsResponse.error && testsResponse.data) {
+                setTests(testsResponse.data);
+                setClassInfo(prev => prev ? { ...prev, totalTests: testsResponse.data.length } : null);
+            } else {
+                console.warn('Failed to load tests:', testsResponse.message);
+                setTests([]);
+            }
+        } catch (err: any) {
+            console.error('Failed to load class data:', err);
+            setError(err.message || 'Không thể tải thông tin lớp học');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleViewClass = (classId: string) => {
+    const handleAddStudent = () => {
         navigate(`/teacher/classes/${classId}`);
+        message.info('Chức năng thêm sinh viên. Vui lòng sử dụng trang quản lý lớp học.');
     };
 
-    const handleAddStudent = (classId: string) => {
-        setSelectedClassId(classId);
-        setAddStudentModalVisible(true);
-        addStudentForm.resetFields();
+    const handleCreateTest = () => {
+        navigate('/teacher/tests/create', {
+            state: { preselectedClassId: classId }
+        });
     };
 
-    const handleAddStudentSubmit = async (values: { searchType: 'email' | 'studentId'; searchValue: string }) => {
-        if (!selectedClassId) return;
+    const handleTestClick = (testId: string) => {
+        navigate(`/teacher/tests/${testId}`);
+    };
 
-        setSubmitting(true);
+    const handleRemoveStudent = async (studentId: string, studentName: string) => {
+        if (!classId) return;
+
         try {
-            const request = values.searchType === 'email'
-                ? { email: values.searchValue }
-                : { studentId: values.searchValue };
-
-            const response = await teacherApi.addStudentToClass(selectedClassId, request);
+            const response = await teacherApi.removeStudentFromClass(classId, studentId);
 
             if (!response.error) {
-                message.success('Thêm học sinh thành công');
-                setAddStudentModalVisible(false);
-                addStudentForm.resetFields();
-                // Refresh class list to update student count
-                fetchClasses();
+                message.success(`Đã xóa sinh viên ${studentName} khỏi lớp`);
+                // Reload students list
+                loadClassData();
             } else {
-                message.error(response.message || 'Không thể thêm học sinh');
+                message.error(response.message || 'Không thể xóa sinh viên');
             }
         } catch (error) {
-            console.error('Failed to add student', error);
-            message.error('Không thể thêm học sinh vào lớp');
-        } finally {
-            setSubmitting(false);
+            console.error('Failed to remove student', error);
+            message.error('Không thể xóa sinh viên khỏi lớp');
         }
     };
 
-    const columns: ColumnsType<ClassDto> = [
-        {
-            title: 'Tên lớp',
-            dataIndex: 'name',
-            key: 'name',
-            width: 200,
-            fixed: 'left' as const,
-        },
-        {
-            title: 'Email',
-            dataIndex: 'email',
-            key: 'email',
-            width: 250,
-            responsive: ['md' as Breakpoint],
-        },
-        {
-            title: 'MSSV',
-            dataIndex: 'studentId',
-            key: 'studentId',
-            width: 120,
-        },
-        {
-            title: 'Trạng thái',
-            dataIndex: 'status',
-            key: 'status',
-            width: 120,
-            render: (status: string) => (
-                <Tag color={status === 'Active' ? 'green' : 'red'}>
-                    {status}
-                </Tag>
-            ),
-        },
-    ];
-
-    const testColumns = [
-        {
-            title: 'Tên bài kiểm tra',
-            dataIndex: 'title',
-            key: 'title',
-            width: 250,
-            fixed: 'left' as const,
-        },
-        {
-            title: 'Ngày tạo',
-            dataIndex: 'createdAt',
-            key: 'createdAt',
-            width: 150,
-            responsive: ['md' as Breakpoint],
-        },
-        {
-            title: 'Thời gian (phút)',
-            dataIndex: 'duration',
-            key: 'duration',
-            width: 140,
-            responsive: ['sm' as Breakpoint],
-        },
-        {
-            title: 'Trạng thái',
-            dataIndex: 'status',
-            key: 'status',
-            width: 120,
-            render: (status: string) => {
-                const colorMap: Record<string, string> = {
-                    'Completed': 'blue',
-                    'In Progress': 'orange',
-                    'Upcoming': 'purple',
-                };
-                return (
-                    <Tag color={colorMap[status] || 'default'}>
-                        {status}
-                    </Tag>
-                );
-            },
-        },
-    ];
-
-    return (
-        <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
-            {loading ? (
+    // Loading state
+    if (loading) {
+        return (
+            <div className="class-container">
                 <div className="flex flex-col items-center justify-center py-32">
                     <Spin size="large" />
-                    <Text className="mt-4 text-gray-600">Đang tải dữ liệu...</Text>
+                    <div className="mt-4 text-gray-600">Đang tải dữ liệu...</div>
                 </div>
-            ) : (
-                <>
-                    {/* Class Information Header */}
-                    <div className="mb-6 md:mb-8">
-                        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4 mb-6">
-                            <div className="flex-1 w-full">
-                                <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4">
-                                    <Title level={2} className="mb-0 bg-linear-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent text-xl sm:text-2xl">
-                                        {classInfo.name}
-                                    </Title>
-                                    {classes.length > 0 && (
-                                        <Select
-                                            value={classInfo.id}
-                                            onChange={handleClassChange}
-                                            className="w-full sm:w-auto sm:min-w-[200px] lg:min-w-[300px]"
-                                            placeholder="Chọn lớp học"
-                                            showSearch
-                                            optionFilterProp="children"
-                                            filterOption={(input, option) => {
-                                                const children = option?.children;
-                                                const label = typeof children === 'string' ? children : String(children);
-                                                return label.toLowerCase().includes(input.toLowerCase());
-                                            }}
-                                        >
-                                            {classes.map(cls => (
-                                                <Select.Option key={cls.id} value={cls.id}>
-                                                    {cls.name}
-                                                </Select.Option>
-                                            ))}
-                                        </Select>
-                                    )}
-                                </div>
-                                <Text className="text-gray-600 text-sm sm:text-base block mb-4">
-                                    {classInfo.description}
-                                </Text>
-                                <Row gutter={[16, 16]} className="mt-4">
-                                    <Col xs={24} sm={12}>
-                                        <Card>
-                                            <Statistic
-                                                title="Tổng số sinh viên"
-                                                value={classInfo.totalStudents}
-                                                prefix={<TeamOutlined />}
-                                                valueStyle={{ color: '#3f8600' }}
-                                            />
-                                        </Card>
-                                    </Col>
-                                    <Col xs={24} sm={12}>
-                                        <Card>
-                                            <Statistic
-                                                title="Tổng số bài kiểm tra"
-                                                value={classInfo.totalTests}
-                                                prefix={<FileTextOutlined />}
-                                                valueStyle={{ color: '#1890ff' }}
-                                            />
-                                        </Card>
-                                    </Col>
-                                </Row>
-                            </div>
-                            <div className="w-full lg:w-auto lg:ml-4">
-                                <Button
-                                    type="primary"
-                                    icon={<FileAddOutlined />}
-                                    size="large"
-                                    onClick={handleCreateTest}
-                                    className="bg-linear-to-r from-purple-600 to-purple-800 border-none w-full lg:w-auto"
-                                >
-                                    <span className="hidden sm:inline">Tạo bài kiểm tra mới</span>
-                                    <span className="sm:hidden">Tạo bài kiểm tra</span>
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
+            </div>
+        );
+    }
 
-                    {/* Students Table */}
-                    <Card
-                        title={
-                            <div className="flex items-center gap-2">
-                                <UserOutlined />
-                                <span className="text-base sm:text-lg">Danh sách sinh viên</span>
-                            </div>
-                        }
-                        extra={
-                            <Button
-                                type="primary"
-                                icon={<PlusOutlined />}
-                                onClick={() => setAddStudentModalVisible(true)}
-                                size="small"
-                                className="w-full sm:w-auto"
-                            >
-                                <span className="hidden sm:inline">Thêm sinh viên</span>
-                                <span className="sm:hidden">Thêm</span>
-                            </Button>
-                        }
-                        className="mb-6 shadow-sm"
-                        styles={{ body: { padding: '12px' } }}
-                    >
-                        <div className="overflow-x-auto -mx-2 sm:mx-0">
-                            <Table
-                                columns={studentColumns}
-                                dataSource={students}
-                                rowKey="id"
-                                pagination={{
-                                    pageSize: 10,
-                                    showSizeChanger: false,
-                                    responsive: true,
-                                    simple: true,
-                                }}
-                                locale={{ emptyText: 'Chưa có sinh viên nào' }}
-                                scroll={{ x: 600 }}
-                                size="small"
-                            />
-                        </div>
-                    </Card>
-
-                    {/* Tests Table */}
-                    <Card
-                        title={
-                            <div className="flex items-center gap-2">
-                                <BookOutlined />
-                                <span className="text-base sm:text-lg">Danh sách bài kiểm tra</span>
-                            </div>
-                        }
-                        className="shadow-sm"
-                        styles={{ body: { padding: '12px' } }}
-                    >
-                        <div className="overflow-x-auto -mx-2 sm:mx-0">
-                            <Table
-                                columns={testColumns}
-                                dataSource={tests}
-                                rowKey="id"
-                                pagination={{
-                                    pageSize: 10,
-                                    showSizeChanger: false,
-                                    responsive: true,
-                                    simple: true,
-                                }}
-                                onRow={(record) => ({
-                                    onClick: () => handleTestClick(record.id),
-                                    style: { cursor: 'pointer' },
-                                })}
-                                locale={{ emptyText: 'Chưa có bài kiểm tra nào' }}
-                                scroll={{ x: 600 }}
-                                size="small"
-                            />
-                        </div>
-                    </Card>
-                </>
-            )}
-
-            {/* Add Student Modal */}
-            <Modal
-                title="Thêm học sinh vào lớp"
-                open={addStudentModalVisible}
-                onCancel={() => {
-                    setAddStudentModalVisible(false);
-                    addStudentForm.resetFields();
-                }}
-                footer={null}
-            >
-                <Form
-                    form={addStudentForm}
-                    layout="vertical"
-                    onFinish={handleAddStudentSubmit}
-                    initialValues={{ searchType: 'email' }}
-                >
-                    <Form.Item
-                        name="searchType"
-                        label="Tìm kiếm theo"
-                        rules={[{ required: true, message: 'Vui lòng chọn loại tìm kiếm' }]}
-                    >
-                        <Select>
-                            <Option value="email">Email</Option>
-                            <Option value="studentId">Mã số sinh viên</Option>
-                        </Select>
-                    </Form.Item>
-
-                    <Form.Item
-                        noStyle
-                        shouldUpdate={(prevValues, currentValues) =>
-                            prevValues.searchType !== currentValues.searchType
-                        }
-                    >
-                        {({ getFieldValue }) => {
-                            const searchType = getFieldValue('searchType');
-                            return (
-                                <Form.Item
-                                    name="searchValue"
-                                    label={searchType === 'email' ? 'Email sinh viên' : 'Mã số sinh viên'}
-                                    rules={[
-                                        { required: true, message: `Vui lòng nhập ${searchType === 'email' ? 'email' : 'mã số sinh viên'}` },
-                                        searchType === 'email'
-                                            ? { type: 'email', message: 'Email không hợp lệ' }
-                                            : {}
-                                    ]}
-                                >
-                                    <Input
-                                        placeholder={searchType === 'email' ? 'example@student.edu.vn' : 'SV123456'}
-                                    />
-                                </Form.Item>
-                            );
-                        }}
-                    </Form.Item>
-
-                    <Form.Item className="mb-0">
-                        <Space className="w-full justify-end">
-                            <Button
-                                onClick={() => {
-                                    setAddStudentModalVisible(false);
-                                    addStudentForm.resetFields();
-                                }}
-                            >
-                                Hủy
-                            </Button>
-                            <Button
-                                type="primary"
-                                htmlType="submit"
-                                loading={submitting}
-                                icon={<UserAddOutlined />}
-                            >
-                                Thêm sinh viên
+    // Error state
+    if (error) {
+        return (
+            <div className="class-container">
+                <Alert
+                    message="Lỗi tải dữ liệu"
+                    description={error}
+                    type="error"
+                    showIcon
+                    icon={<ExclamationCircleOutlined />}
+                    action={
+                        <Space>
+                            <Button size="small" type="primary" onClick={loadClassData} icon={<ReloadOutlined />}>
+                                Thử lại
                             </Button>
                         </Space>
-                    </Form.Item>
-                </Form>
-            </Modal>
+                    }
+                />
+            </div>
+        );
+    }
+
+    // Empty state
+    if (!classInfo) {
+        return (
+            <div className="class-container">
+                <Empty
+                    description="Không tìm thấy thông tin lớp học"
+                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                >
+                    <Button type="primary" onClick={() => navigate('/teacher/classes')}>
+                        Quay lại danh sách lớp
+                    </Button>
+                </Empty>
+            </div>
+        );
+    }
+
+    return (
+        <div className="class-container">
+            {/* Thông tin lớp học */}
+            <div className="class-header">
+                <div className="class-info">
+                    <h1>{classInfo.name}</h1>
+                    <p className="description">{classInfo.description}</p>
+                    <div className="stats">
+                        <div className="stat-item">
+                            <span className="stat-label">Tổng số sinh viên:</span>
+                            <span className="stat-value">{classInfo.totalStudents}</span>
+                        </div>
+                        <div className="stat-item">
+                            <span className="stat-label">Tổng số bài kiểm tra:</span>
+                            <span className="stat-value">{classInfo.totalTests}</span>
+                        </div>
+                    </div>
+                </div>
+                <button className="create-test-btn" onClick={handleCreateTest}>
+                    Tạo bài kiểm tra mới
+                </button>
+            </div>
+
+            {/* Danh sách sinh viên */}
+            <div className="section">
+                <div className="section-header">
+                    <h2>Danh sách sinh viên</h2>
+                    <button className="add-student-btn" onClick={handleAddStudent}>
+                        Thêm sinh viên
+                    </button>
+                </div>
+                <div className="table-container">
+                    <table className="data-table">
+                        <thead>
+                            <tr>
+                                <th>Họ và tên</th>
+                                <th>Email</th>
+                                <th>MSSV</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {students.length === 0 ? (
+                                <tr>
+                                    <td colSpan={5} className="text-center py-4">
+                                        <Empty description="Chưa có sinh viên nào" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                                    </td>
+                                </tr>
+                            ) : (
+                                students.map(student => (
+                                    <tr key={student.id}>
+                                        <td>{student.name}</td>
+                                        <td>{student.email}</td>
+                                        <td>{student.studentId || '-'}</td>
+                                        <td>
+                                            <span className="status active">Active</span>
+                                        </td>
+                                        <td>
+                                            <Popconfirm
+                                                title="Xóa sinh viên"
+                                                description={`Bạn có chắc chắn muốn xóa ${student.name} khỏi lớp?`}
+                                                onConfirm={() => handleRemoveStudent(student.id, student.name || student.email)}
+                                                okText="Xóa"
+                                                cancelText="Hủy"
+                                                okButtonProps={{ danger: true }}
+                                            >
+                                                <Button
+                                                    danger
+                                                    size="small"
+                                                    icon={<DeleteOutlined />}
+                                                >
+                                                    Xóa
+                                                </Button>
+                                            </Popconfirm>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {/* Danh sách bài kiểm tra */}
+            <div className="section">
+                <h2>Danh sách bài kiểm tra</h2>
+                <div className="table-container">
+                    <table className="data-table">
+                        <thead>
+                            <tr>
+                                <th>Tên bài kiểm tra</th>
+                                <th>Ngày tạo</th>
+                                <th>Thời gian (phút)</th>
+                                <th>Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {tests.length === 0 ? (
+                                <tr>
+                                    <td colSpan={4} className="text-center py-4">
+                                        <Empty description="Chưa có bài kiểm tra nào" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                                    </td>
+                                </tr>
+                            ) : (
+                                tests.map(test => (
+                                    <tr key={test.id} onClick={() => handleTestClick(test.id)} className="clickable-row">
+                                        <td>{test.name}</td>
+                                        <td>{new Date(test.createdAt).toLocaleDateString('vi-VN')}</td>
+                                        <td>{test.duration}</td>
+                                        <td>
+                                            <span className="status completed">Completed</span>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     );
 };
 
-export default ManageClasses;
+export default ClassPage;

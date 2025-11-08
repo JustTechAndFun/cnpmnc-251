@@ -199,8 +199,8 @@ public class TestService {
         newQuestion.setChoiceB(questionDTO.getChoiceB());
         newQuestion.setChoiceC(questionDTO.getChoiceC());
         newQuestion.setChoiceD(questionDTO.getChoiceD());
-        newQuestion.setAnswer(questionDTO.getAnswer());
-        newQuestion.setTest(testEntity);
+        newQuestion.setAnswer(questionDTO.getAnswer().name());
+        newQuestion.setTestId(testId);
 
         Question savedQuestion = questionRepository.save(newQuestion);
         return QuestionDTO.fromQuestion(savedQuestion);
@@ -222,7 +222,7 @@ public class TestService {
         }
 
         // Verify question belongs to this test
-        if (!questionEntity.getTest().getId().equals(testId)) {
+        if (!questionEntity.getTestId().equals(testId)) {
             throw new IllegalArgumentException("Question does not belong to this test");
         }
 
@@ -248,7 +248,7 @@ public class TestService {
             questionEntity.setChoiceD(updateDTO.getChoiceD());
         }
         if (updateDTO.getAnswer() != null) {
-            questionEntity.setAnswer(updateDTO.getAnswer());
+            questionEntity.setAnswer(updateDTO.getAnswer().name());
         }
 
         Question savedQuestion = questionRepository.save(questionEntity);
@@ -271,7 +271,7 @@ public class TestService {
         }
 
         // Verify question belongs to this test
-        if (!questionEntity.getTest().getId().equals(testId)) {
+        if (!questionEntity.getTestId().equals(testId)) {
             throw new IllegalArgumentException("Question does not belong to this test");
         }
 
