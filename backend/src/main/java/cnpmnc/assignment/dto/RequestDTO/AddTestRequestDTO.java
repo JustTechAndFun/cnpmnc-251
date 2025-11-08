@@ -30,5 +30,5 @@ public class AddTestRequestDTO {
     private LocalDateTime closeTime;
     
     @Min(1)
-    private long duration;
+    private Long duration;
 }

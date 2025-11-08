@@ -1,11 +1,15 @@
 package cnpmnc.assignment.service;
 
+import cnpmnc.assignment.dto.QuestionDTO;
+import cnpmnc.assignment.dto.RequestDTO.AddQuestions;
 import cnpmnc.assignment.dto.RequestDTO.AddTestRequestDTO;
 import cnpmnc.assignment.dto.TestDTO;
 import cnpmnc.assignment.model.Class;
+import cnpmnc.assignment.model.Question;
 import cnpmnc.assignment.model.Test;
 import cnpmnc.assignment.model.User;
 import cnpmnc.assignment.repository.ClassRepository;
+import cnpmnc.assignment.repository.QuestionRepository;
 import cnpmnc.assignment.repository.TestRepository;
 import cnpmnc.assignment.util.constant.TestStatus;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +26,7 @@ public class TestService {
 
     private final ClassRepository classRepository;
     private final TestRepository testRepository;
+    private final QuestionRepository questionRepository;
     private static final String ALPHANUM = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     private static final SecureRandom RAND = new SecureRandom();
 
@@ -95,5 +100,203 @@ public class TestService {
             throw new SecurityException("You are not authorized to access this test");
         }
         return TestDTO.fromTest(testEntity);
+    }
+
+    public TestDTO updateTest(String classId, String testId, AddTestRequestDTO updateDTO, User currentUser) {
+        Test testEntity = testRepository.findById(testId)
+                .orElseThrow(() -> new IllegalArgumentException("Test not found"));
+        
+        Class classEntity = classRepository.findById(classId)
+                .orElseThrow(() -> new IllegalArgumentException("Class not found"));
+
+        // Check authorization - only teacher can update
+        if (!classEntity.getTeacher().getId().equals(currentUser.getId())) {
+            throw new SecurityException("You are not authorized to update this test");
+        }
+
+        // Verify test belongs to this class
+        if (!testEntity.getClazz().getId().equals(classId)) {
+            throw new IllegalArgumentException("Test does not belong to this class");
+        }
+
+        // Update fields
+        if (updateDTO.getTitle() != null) {
+            testEntity.setTitle(updateDTO.getTitle());
+        }
+        if (updateDTO.getDescription() != null) {
+            testEntity.setDescription(updateDTO.getDescription());
+        }
+        if (updateDTO.getOpenTime() != null) {
+            testEntity.setOpenTime(updateDTO.getOpenTime());
+        }
+        if (updateDTO.getCloseTime() != null) {
+            testEntity.setCloseTime(updateDTO.getCloseTime());
+        }
+        if (updateDTO.getDuration() != null) {
+            testEntity.setDuration(updateDTO.getDuration());
+        }
+        if (updateDTO.getPasscode() != null && !updateDTO.getPasscode().trim().isEmpty()) {
+            String newPasscode = updateDTO.getPasscode().trim().toUpperCase();
+            // Check if passcode is different and not already taken
+            if (!newPasscode.equals(testEntity.getPasscode()) && 
+                testRepository.existsByPasscode(newPasscode)) {
+                throw new IllegalArgumentException("Passcode already exists");
+            }
+            testEntity.setPasscode(newPasscode);
+        }
+
+        Test savedTest = testRepository.save(testEntity);
+        return TestDTO.fromTest(savedTest);
+    }
+
+    public void deleteTest(String classId, String testId, User currentUser) {
+        Test testEntity = testRepository.findById(testId)
+                .orElseThrow(() -> new IllegalArgumentException("Test not found"));
+        
+        Class classEntity = classRepository.findById(classId)
+                .orElseThrow(() -> new IllegalArgumentException("Class not found"));
+
+        // Check authorization - only teacher can delete
+        if (!classEntity.getTeacher().getId().equals(currentUser.getId())) {
+            throw new SecurityException("You are not authorized to delete this test");
+        }
+
+        // Verify test belongs to this class
+        if (!testEntity.getClazz().getId().equals(classId)) {
+            throw new IllegalArgumentException("Test does not belong to this class");
+        }
+
+        testRepository.delete(testEntity);
+    }
+
+    public QuestionDTO addQuestionToTest(String classId, String testId, AddQuestions questionDTO, User currentUser) {
+        Test testEntity = testRepository.findById(testId)
+                .orElseThrow(() -> new IllegalArgumentException("Test not found"));
+        
+        Class classEntity = classRepository.findById(classId)
+                .orElseThrow(() -> new IllegalArgumentException("Class not found"));
+
+        // Check authorization - only teacher can add questions
+        if (!classEntity.getTeacher().getId().equals(currentUser.getId())) {
+            throw new SecurityException("You are not authorized to add questions to this test");
+        }
+
+        // Verify test belongs to this class
+        if (!testEntity.getClazz().getId().equals(classId)) {
+            throw new IllegalArgumentException("Test does not belong to this class");
+        }
+
+        Question newQuestion = new Question();
+        newQuestion.setContent(questionDTO.getContent());
+        newQuestion.setChoiceA(questionDTO.getChoiceA());
+        newQuestion.setChoiceB(questionDTO.getChoiceB());
+        newQuestion.setChoiceC(questionDTO.getChoiceC());
+        newQuestion.setChoiceD(questionDTO.getChoiceD());
+        newQuestion.setAnswer(questionDTO.getAnswer());
+        newQuestion.setTest(testEntity);
+
+        Question savedQuestion = questionRepository.save(newQuestion);
+        return QuestionDTO.fromQuestion(savedQuestion);
+    }
+
+    public QuestionDTO updateQuestion(String classId, String testId, String questionId, AddQuestions updateDTO, User currentUser) {
+        Question questionEntity = questionRepository.findById(questionId)
+                .orElseThrow(() -> new IllegalArgumentException("Question not found"));
+        
+        Test testEntity = testRepository.findById(testId)
+                .orElseThrow(() -> new IllegalArgumentException("Test not found"));
+        
+        Class classEntity = classRepository.findById(classId)
+                .orElseThrow(() -> new IllegalArgumentException("Class not found"));
+
+        // Check authorization - only teacher can update questions
+        if (!classEntity.getTeacher().getId().equals(currentUser.getId())) {
+            throw new SecurityException("You are not authorized to update this question");
+        }
+
+        // Verify question belongs to this test
+        if (!questionEntity.getTest().getId().equals(testId)) {
+            throw new IllegalArgumentException("Question does not belong to this test");
+        }
+
+        // Verify test belongs to this class
+        if (!testEntity.getClazz().getId().equals(classId)) {
+            throw new IllegalArgumentException("Test does not belong to this class");
+        }
+
+        // Update fields
+        if (updateDTO.getContent() != null) {
+            questionEntity.setContent(updateDTO.getContent());
+        }
+        if (updateDTO.getChoiceA() != null) {
+            questionEntity.setChoiceA(updateDTO.getChoiceA());
+        }
+        if (updateDTO.getChoiceB() != null) {
+            questionEntity.setChoiceB(updateDTO.getChoiceB());
+        }
+        if (updateDTO.getChoiceC() != null) {
+            questionEntity.setChoiceC(updateDTO.getChoiceC());
+        }
+        if (updateDTO.getChoiceD() != null) {
+            questionEntity.setChoiceD(updateDTO.getChoiceD());
+        }
+        if (updateDTO.getAnswer() != null) {
+            questionEntity.setAnswer(updateDTO.getAnswer());
+        }
+
+        Question savedQuestion = questionRepository.save(questionEntity);
+        return QuestionDTO.fromQuestion(savedQuestion);
+    }
+
+    public void deleteQuestion(String classId, String testId, String questionId, User currentUser) {
+        Question questionEntity = questionRepository.findById(questionId)
+                .orElseThrow(() -> new IllegalArgumentException("Question not found"));
+        
+        Test testEntity = testRepository.findById(testId)
+                .orElseThrow(() -> new IllegalArgumentException("Test not found"));
+        
+        Class classEntity = classRepository.findById(classId)
+                .orElseThrow(() -> new IllegalArgumentException("Class not found"));
+
+        // Check authorization - only teacher can delete questions
+        if (!classEntity.getTeacher().getId().equals(currentUser.getId())) {
+            throw new SecurityException("You are not authorized to delete this question");
+        }
+
+        // Verify question belongs to this test
+        if (!questionEntity.getTest().getId().equals(testId)) {
+            throw new IllegalArgumentException("Question does not belong to this test");
+        }
+
+        // Verify test belongs to this class
+        if (!testEntity.getClazz().getId().equals(classId)) {
+            throw new IllegalArgumentException("Test does not belong to this class");
+        }
+
+        questionRepository.delete(questionEntity);
+    }
+
+    public List<QuestionDTO> getQuestionOfTest(String classId, String testId, User currentUser) {
+        Test testEntity = testRepository.findById(testId)
+                .orElseThrow(() -> new IllegalArgumentException("Test not found"));
+        
+        Class classEntity = classRepository.findById(classId)
+                .orElseThrow(() -> new IllegalArgumentException("Class not found"));
+
+        // Check authorization
+        Set<User> students = classEntity.getStudents();
+        if (!classEntity.getTeacher().getId().equals(currentUser.getId())
+                && !students.contains(currentUser)) {
+            throw new SecurityException("You are not authorized to access this test");
+        }
+
+        // Verify test belongs to this class
+        if (!testEntity.getClazz().getId().equals(classId)) {
+            throw new IllegalArgumentException("Test does not belong to this class");
+        }
+
+        return testEntity.getQuestions().stream()
+                .map(QuestionDTO::fromQuestion)
+                .collect(Collectors.toList());
     }
 }

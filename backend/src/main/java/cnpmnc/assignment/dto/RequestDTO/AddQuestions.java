@@ -1,18 +1,12 @@
 package cnpmnc.assignment.dto.RequestDTO;
 
-import cnpmnc.assignment.model.Test;
 import cnpmnc.assignment.util.constant.Answer;
-import cnpmnc.assignment.util.constant.TestStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Getter
 @Setter

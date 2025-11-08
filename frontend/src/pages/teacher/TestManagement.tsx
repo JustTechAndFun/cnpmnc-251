@@ -81,19 +81,27 @@ export const TestManagement = () => {
                             headers: token ? { Authorization: `Bearer ${token}` } : {},
                             withCredentials: true
                         }
-                    ).catch(error => {
+                    ).then(response => ({
+                        classId: cls.id,
+                        response
+                    }))
+                    .catch(error => {
                         console.error(`Failed to fetch tests for class ${cls.id}`, error);
-                        return { data: { error: true, data: [] } };
+                        return { classId: cls.id, response: { data: { error: true, data: [] } } };
                     })
                 );
 
                 const testsResponses = await Promise.all(allTestsPromises);
 
-                // Combine all tests from all classes
+                // Combine all tests from all classes and add classId to each test
                 const allTests: Test[] = [];
-                testsResponses.forEach(response => {
+                testsResponses.forEach(({ classId, response }) => {
                     if (!response.data.error && response.data.data) {
-                        allTests.push(...response.data.data);
+                        const testsWithClassId = response.data.data.map(test => ({
+                            ...test,
+                            classId
+                        }));
+                        allTests.push(...testsWithClassId);
                     }
                 });
 
@@ -130,13 +138,18 @@ export const TestManagement = () => {
         duration: number;
         passcode: string;
     }) => {
-        if (!selectedTest) return;
+        if (!selectedTest || !selectedTest.classId) return;
 
         try {
             const token = localStorage.getItem('auth_token');
             const response = await axios.put<ApiResponse<Test>>(
-                `${API_BASE_URL}/api/teacher/tests/${selectedTest.id}`,
-                values,
+                `${API_BASE_URL}/api/classes/${selectedTest.classId}/tests/${selectedTest.id}`,
+                {
+                    title: values.name, // Backend expects 'title' not 'name'
+                    description: values.description,
+                    duration: values.duration,
+                    passcode: values.passcode
+                },
                 {
                     headers: token ? { Authorization: `Bearer ${token}` } : {},
                     withCredentials: true
@@ -162,10 +175,17 @@ export const TestManagement = () => {
     };
 
     const handleDeleteTest = async (testId: string) => {
+        const testToDelete = tests.find(t => t.id === testId);
+        if (!testToDelete || !testToDelete.classId) {
+            setErrorMessage('Không tìm thấy thông tin lớp học của test');
+            setErrorModalVisible(true);
+            return;
+        }
+
         try {
             const token = localStorage.getItem('auth_token');
             await axios.delete<ApiResponse<void>>(
-                `${API_BASE_URL}/api/teacher/tests/${testId}`,
+                `${API_BASE_URL}/api/classes/${testToDelete.classId}/tests/${testId}`,
                 {
                     headers: token ? { Authorization: `Bearer ${token}` } : {},
                     withCredentials: true
@@ -196,10 +216,17 @@ export const TestManagement = () => {
     };
 
     const handleDeleteQuestion = async (testId: string, questionId: string) => {
+        const test = tests.find(t => t.id === testId);
+        if (!test || !test.classId) {
+            setErrorMessage('Không tìm thấy thông tin lớp học của test');
+            setErrorModalVisible(true);
+            return;
+        }
+
         try {
             const token = localStorage.getItem('auth_token');
             await axios.delete<ApiResponse<void>>(
-                `${API_BASE_URL}/api/teacher/tests/${testId}/questions/${questionId}`,
+                `${API_BASE_URL}/api/classes/${test.classId}/tests/${testId}/questions/${questionId}`,
                 {
                     headers: token ? { Authorization: `Bearer ${token}` } : {},
                     withCredentials: true
@@ -233,9 +260,14 @@ export const TestManagement = () => {
         correctAnswer: string;
         points: number;
     }) => {
-        if (!selectedTest) return;
+        if (!selectedTest || !selectedTest.classId) return;
 
         const questionType = values.questionType;
+
+        // Parse options into individual choices
+        const optionsArray = questionType === 'MULTIPLE_CHOICE' && values.options
+            ? values.options.split('\n').filter(o => o.trim())
+            : [];
 
         let correctAnswer: string | string[];
         if (questionType === 'TRUE_FALSE') {
@@ -246,14 +278,14 @@ export const TestManagement = () => {
             correctAnswer = values.correctAnswer.split('\n').filter(a => a.trim());
         }
 
+        // Backend expects choiceA, choiceB, choiceC, choiceD format and answer enum
         const questionData = {
             content: values.content,
-            questionType: questionType,
-            options: questionType === 'MULTIPLE_CHOICE' && values.options
-                ? values.options.split('\n').filter(o => o.trim())
-                : undefined,
-            correctAnswer,
-            points: values.points
+            choiceA: optionsArray[0] || '',
+            choiceB: optionsArray[1] || '',
+            choiceC: optionsArray[2] || '',
+            choiceD: optionsArray[3] || '',
+            answer: Array.isArray(correctAnswer) ? correctAnswer[0] : correctAnswer
         };
 
         try {
@@ -261,7 +293,7 @@ export const TestManagement = () => {
             if (editingQuestion) {
                 // Update question
                 const response = await axios.put<ApiResponse<Question>>(
-                    `${API_BASE_URL}/api/teacher/tests/${selectedTest.id}/questions/${editingQuestion.id}`,
+                    `${API_BASE_URL}/api/classes/${selectedTest.classId}/tests/${selectedTest.id}/questions/${editingQuestion.id}`,
                     questionData,
                     {
                         headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -282,7 +314,7 @@ export const TestManagement = () => {
             } else {
                 // Create question
                 const response = await axios.post<ApiResponse<Question>>(
-                    `${API_BASE_URL}/api/teacher/tests/${selectedTest.id}/questions`,
+                    `${API_BASE_URL}/api/classes/${selectedTest.classId}/tests/${selectedTest.id}`,
                     questionData,
                     {
                         headers: token ? { Authorization: `Bearer ${token}` } : {},
