@@ -1,12 +1,11 @@
 import { createContext, useContext, useState, useEffect, useMemo, useCallback, type ReactNode } from 'react';
-import axios from 'axios';
-import { Role, type User, type AuthContextType, type ApiResponse } from '../types';
+import { Role, type User, type AuthContextType } from '../types';
+import { authApi } from '../apis';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-const GOOGLE_REDIRECT_URI = import.meta.env.VITE_GOOGLE_REDIRECT_URI || 'http://localhost:3000/authenticate';
+const GOOGLE_REDIRECT_URI = import.meta.env.VITE_GOOGLE_REDIRECT_URI || 'https://cnpmnc-251.vercel.app/authenticate';
 
 const USER_KEY = 'user_data';
 
@@ -46,17 +45,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 }
             }
 
-            const response = await axios.get<ApiResponse<{
-                email: string;
-                name: string;
-                picture: string;
-                role: string;
-            }>>(`${API_BASE_URL}/api/auth/user`, {
-                withCredentials: true
-            });
+            const response = await authApi.getCurrentUser();
 
-            if (!response.data.error && response.data.data) {
-                const userData = response.data.data;
+            if (!response.error && response.data) {
+                const userData = response.data;
                 const userObject = {
                     id: userData.email,
                     email: userData.email,
@@ -111,20 +103,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const handleCallbackMemo = useCallback(async (code: string) => {
         try {
-            const response = await axios.post<ApiResponse<{
-                email: string;
-                name: string;
-                picture: string;
-                role: string;
-            }>>(`${API_BASE_URL}/api/auth/google/callback`, {
-                code,
-                redirectUri: GOOGLE_REDIRECT_URI
-            }, {
-                withCredentials: true
-            });
+            const response = await authApi.handleGoogleCallback(code, GOOGLE_REDIRECT_URI);
 
-            if (!response.data.error && response.data.data) {
-                const userData = response.data.data;
+            if (!response.error && response.data) {
+                const userData = response.data;
                 const userObject = {
                     id: userData.email,
                     email: userData.email,
@@ -153,19 +135,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const logoutCallback = useCallback(async () => {
         setIsLoggingOut(true);
         try {
-            await axios.post(`${API_BASE_URL}/api/auth/logout`, {}, {
-                withCredentials: true
-            });
-        } catch (error) {
-            console.error('Logout error', error);
-        } finally {
+            // Call logout API
+            await authApi.logout();
+            
             // Clear all stored data
             localStorage.removeItem(USER_KEY);
             setUser(null);
-            // Small delay to show loading, then redirect to login page
-            setTimeout(() => {
-                window.location.href = '/login';
-            }, 500);
+            
+            // Small delay to show loading animation
+            await new Promise(resolve => setTimeout(resolve, 800));
+        } catch (error) {
+            console.error('Logout error', error);
+            
+            // Even if API fails, still clear local data
+            localStorage.removeItem(USER_KEY);
+            setUser(null);
+            
+            // Small delay
+            await new Promise(resolve => setTimeout(resolve, 800));
+        } finally {
+            setIsLoggingOut(false);
+            
+            // Use window.location for full page reload to ensure clean state
+            window.location.href = '/login';
         }
     }, []);
 

@@ -1,12 +1,9 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
 import { Card, Statistic, List, Avatar, Spin, Typography, Tag } from 'antd';
 import { UserOutlined, TeamOutlined, BookOutlined, CheckCircleOutlined } from '@ant-design/icons';
-import type { ApiResponse } from '../../types';
+import { adminApi } from '../../apis';
 
 const { Title, Text } = Typography;
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 interface DashboardStats {
     totalUsers: number;
@@ -30,17 +27,22 @@ export const AdminDashboard = () => {
 
     const fetchDashboardStats = async () => {
         try {
-            const token = localStorage.getItem('auth_token');
-            const response = await axios.get<ApiResponse<DashboardStats>>(
-                `${API_BASE_URL}/admin/stats`,
-                {
-                    headers: token ? { Authorization: `Bearer ${token}` } : {},
-                    withCredentials: true
-                }
-            );
-
-            if (!response.data.error && response.data.data) {
-                setStats(response.data.data);
+            // Calculate stats from users list
+            const usersResponse = await adminApi.getAllUsers();
+            
+            if (!usersResponse.error && usersResponse.data) {
+                const users = usersResponse.data;
+                const totalUsers = users.length;
+                const totalTeachers = users.filter(u => u.role === 'TEACHER').length;
+                const totalStudents = users.filter(u => u.role === 'STUDENT').length;
+                const activeUsers = users.filter(u => u.activate).length;
+                
+                setStats({
+                    totalUsers,
+                    totalTeachers,
+                    totalStudents,
+                    activeUsers
+                });
             }
         } catch (error) {
             console.error('Failed to fetch dashboard stats', error);

@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { Navigate } from 'react-router';
-import { Card, Button, Typography, Divider, Space } from 'antd';
-import { GoogleOutlined, UserOutlined, BookOutlined, IdcardOutlined } from '@ant-design/icons';
+import { Card, Button, Typography } from 'antd';
+import { GoogleOutlined, UserOutlined } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
-import { Role } from '../types';
 
 const { Title, Text } = Typography;
 
@@ -12,12 +11,10 @@ const isDevMode = import.meta.env.DEV;
 export const LoginPage = () => {
     const auth = useAuth();
     const [isLoading, setIsLoading] = useState(false);
-    const [isFakeLogging, setIsFakeLogging] = useState(false);
 
     // Safe access to auth values
     const login = auth?.login;
     const isAuthenticated = auth?.isAuthenticated ?? false;
-    const fakeLogin = auth?.fakeLogin;
 
     // Only redirect if authenticated in production mode
     // In dev mode, allow showing login page even if authenticated (for testing different roles)
@@ -32,13 +29,6 @@ export const LoginPage = () => {
         }
     };
 
-    const handleFakeLogin = (role: Role) => {
-        if (fakeLogin) {
-            setIsFakeLogging(true);
-            fakeLogin(role);
-        }
-    };
-
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 relative overflow-hidden">
             {/* Animated background blobs */}
@@ -49,7 +39,7 @@ export const LoginPage = () => {
             </div>
 
             {/* Login Card */}
-            <Card 
+            <Card
                 className="w-full max-w-md mx-4 shadow-2xl border-0 backdrop-blur-lg bg-white/90"
                 bordered={false}
             >
@@ -69,7 +59,7 @@ export const LoginPage = () => {
                     disabled={isLoading || !login}
                     loading={isLoading}
                     block
-                    className="h-12 text-base font-medium mb-6 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 border-0"
+                    className="h-12 text-base font-medium mb-6 bg-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 border-0"
                 >
                     {isLoading ? 'Đang chuyển hướng...' : 'Đăng nhập với Google'}
                 </Button>
@@ -78,49 +68,6 @@ export const LoginPage = () => {
                     Bằng cách đăng nhập, bạn đồng ý với các điều khoản sử dụng
                 </Text>
 
-                {/* Dev Mode Test Login Buttons */}
-                {isDevMode && fakeLogin && (
-                    <div className="mt-8">
-                        <Divider>
-                            <Text type="secondary" className="text-xs font-semibold">HOẶC</Text>
-                        </Divider>
-                        <Text className="text-xs text-gray-500 block text-center mb-4">
-                            Test Login (Development Mode)
-                        </Text>
-                        <Space direction="vertical" size="middle" className="w-full">
-                            <Button
-                                icon={<UserOutlined />}
-                                onClick={() => handleFakeLogin(Role.ADMIN)}
-                                disabled={isFakeLogging || !fakeLogin}
-                                loading={isFakeLogging}
-                                block
-                                className="h-12 border-purple-300 text-purple-600 hover:bg-purple-50"
-                            >
-                                👨‍💼 Login as Admin
-                            </Button>
-                            <Button
-                                icon={<BookOutlined />}
-                                onClick={() => handleFakeLogin(Role.TEACHER)}
-                                disabled={isFakeLogging || !fakeLogin}
-                                loading={isFakeLogging}
-                                block
-                                className="h-12 border-purple-300 text-purple-600 hover:bg-purple-50"
-                            >
-                                👨‍🏫 Login as Teacher
-                            </Button>
-                            <Button
-                                icon={<IdcardOutlined />}
-                                onClick={() => handleFakeLogin(Role.STUDENT)}
-                                disabled={isFakeLogging || !fakeLogin}
-                                loading={isFakeLogging}
-                                block
-                                className="h-12 border-green-300 text-green-600 hover:bg-green-50"
-                            >
-                                🎓 Login as Student
-                            </Button>
-                        </Space>
-                    </div>
-                )}
             </Card>
 
             <style>{`

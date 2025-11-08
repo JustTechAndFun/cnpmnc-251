@@ -9,7 +9,6 @@ import { ClassPage } from '../pages/teacher/Class';
 import { TestDetail } from '../pages/teacher/TestDetail';
 import { TestManagement } from '../pages/teacher/TestManagement';
 import { ProfilePage } from '../pages/ProfilePage';
-import { ManageClasses } from '../pages/teacher/ManageClasses';
 
 export const teacherRoutes: RouteObject[] = [
     {
@@ -26,7 +25,7 @@ export const teacherRoutes: RouteObject[] = [
             },
             {
                 path: 'classes',
-                element: <ManageClasses />
+                element: <ClassPage />
             },
             {
                 path: 'classes/:classId',
